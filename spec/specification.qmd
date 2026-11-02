@@ -221,8 +221,13 @@ No p-value is reported for the sequence as a whole. Overall size is a property t
 
 ## Original (Dolado–Jenkinson–Sosvilla-Rivero / Enders)
 
-::: {.callout-warning}
-The branch logic below is the intended structure. **It must be checked line by line against Enders' Supplementary Manual (Section 4.4) before coding**, and the inferential conventions that the source leaves open must be stated explicitly.
+::: {.callout-note}
+**Verified** (2 November 2026) against Enders, *Supplementary Manual*, 4th ed., Section 4.4 (Steps 1–4 and Figure A2.1), which follows Dolado, Jenkinson and Sosvilla-Rivero (1990).
+
+- *Notation.* Enders writes $\gamma$ for the coefficient on $y_{t-1}$ and $a_2$ for the trend coefficient; this specification writes $b$ and $\gamma$ respectively.
+- *Conventions not fixed by the source.* The manual says to test the lagged-level coefficient "using a t-distribution" without stating the tail, and to test the deterministic coefficients with a "standard t-test". The tails and reference distribution are therefore this specification's convention (Decision D5), not Enders'.
+- *Figure A2.1.* At the constant-only stage the figure says "Go to Step 2" where the text returns to the constant-only regression; the text governs.
+- *Interpretation of the terminal branches.* When the trend is retained and $b = 0$ is not rejected, Enders concludes that the series has a unit root and a quadratic trend; when the constant is retained and $b = 0$ is not rejected, a unit root with drift.
 :::
 
 **Stage T** (regression `ct`):
@@ -285,6 +290,8 @@ Three levels:
 3. **Statistical reproducibility:** required for Monte Carlo results. Rejection frequencies agree within Monte Carlo error (two-proportion test).
 
 Decision agreement is checked separately. Any disagreement is logged with $|\text{statistic} - \text{critical value}|$; disagreements are acceptable only within numerical tolerance of the boundary.
+
+**Published fixture for the strategies.** Enders' U.S. real-GDP example (log real GDP, 1947Q1–2012Q4, one lagged difference, 244 usable observations) reports $\tau_3 = -1.49$, $\phi_3 = 2.97$, $\tau_2 = -2.05$, $\phi_1 = 25.49$ and $t(a_0) = 6.80$ in the auxiliary regression; the original procedure then rejects through the conditional $t$ test. Enders uses the $T = 250$ table row for $N = 244$ (nearest size); this specification uses the largest size not exceeding $N$ ($T = 100$). The decisions in the example are the same under both rules.
 
 References are independent of the implementation under test: independent QR or high-precision (`mpmath`) calculations, published examples, and backend packages.
 
