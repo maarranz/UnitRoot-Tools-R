@@ -7,3 +7,6 @@
 spec/*.html
 spec/*_files/
 refs/
+inst/doc
+doc
+Meta

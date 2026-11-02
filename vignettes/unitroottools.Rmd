@@ -1,0 +1,153 @@
+---
+title: "Unit-root testing with unitroottools"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Unit-root testing with unitroottools}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+This vignette shows the main functions of `unitroottools` with one data set:
+the logarithm of U.S. real GDP, 1947Q1–2012Q4, used by Enders to illustrate
+the testing of unit roots when the deterministic terms are unknown. The data
+are included in the package.
+
+```{r}
+library(unitroottools)
+
+gdp <- read.csv(system.file("fixtures", "enders_rgdp.csv", package = "unitroottools"))
+lgdp <- ts(log(gdp$rgdp), start = c(1947, 1), frequency = 4)
+plot(lgdp, ylab = "log real GDP")
+```
+
+## 1. The augmented Dickey-Fuller test
+
+The ADF test regression is
+
+$$
+\Delta y_t = a + \gamma t + b\, y_{t-1} + \sum_{j=1}^{k} \beta_j \Delta y_{t-j} + \varepsilon_t ,
+$$
+
+and the null hypothesis of a unit root is $H_0: b = 0$ against $H_1: b < 0$.
+The `trend` argument chooses the deterministic terms: `"n"` (none), `"c"`
+(constant) or `"ct"` (constant and trend).
+
+```{r}
+adf(lgdp, trend = "ct", lags = 1)
+```
+
+Every result states the hypotheses in words, the deterministic terms, how
+many lags were used and how they were chosen, the effective sample, the
+critical values, and the decision. `summary()` adds where the critical values
+come from, the accompanying $\phi$ statistics and the test regression:
+
+```{r}
+summary(adf(lgdp, trend = "ct", lags = 1))
+```
+
+## 2. Choosing the number of lags
+
+If `lags` is not given, the number of lagged differences is chosen by an
+information criterion; the default is the modified AIC (MAIC) of Ng and Perron
+(2001). All candidate lag orders are compared **on the same observations**,
+and the whole table is shown, not only the winner:
+
+```{r}
+select_lags(lgdp, trend = "ct")
+```
+
+`adf()` uses this selection automatically:
+
+```{r}
+adf(lgdp, trend = "ct")
+```
+
+## 3. Which deterministic terms? Specification strategies
+
+The ADF test depends on the deterministic terms, but we rarely know which
+ones belong in the regression. `ur_strategy()` implements three answers, and
+records every step.
+
+**The original procedure** (Dolado, Jenkinson and Sosvilla-Rivero, as set out
+by Enders) starts with constant and trend and tests its way down:
+
+```{r}
+ur_strategy(lgdp, "original", lags = 1)
+```
+
+It ends by rejecting the unit root with a conventional t test, so it
+concludes that log GDP is stationary around a *constant* mean. Enders himself
+calls this result nonsense: the procedure has removed the trend and then
+justified a t test by the presence of the constant.
+
+**The conservative variant** stops when $\tau_2$ does not reject, keeping the
+constant:
+
+```{r}
+ur_strategy(lgdp, "conservative", lags = 1)
+```
+
+**Hamilton's rule** does not test for the deterministic terms at all: you
+decide, by looking at the data and thinking about the economics, whether the
+series is trending. Log GDP clearly is:
+
+```{r}
+ur_strategy(lgdp, "hamilton", trending = TRUE, lags = 1)
+```
+
+There is no default for `trending`: the choice is yours, and the result says
+so. `summary()` on any strategy shows each step with its null hypothesis,
+the critical value and its source, and the reason for the next step.
+Note that the history separates rejections of the unit root from rejections
+that only decide the *path* (the $\phi$ tests and the tests of the
+deterministic terms).
+
+## 4. Other tests
+
+The Phillips-Perron test corrects for serial correlation non-parametrically
+instead of adding lagged differences; DF-GLS detrends by GLS, which improves
+power; and the KPSS test **reverses the null hypothesis**: it tests
+stationarity against a unit root.
+
+```{r}
+pp(lgdp, trend = "ct")
+dfgls(lgdp, trend = "ct", lags = 1)
+kpss(lgdp, trend = "ct")
+```
+
+A non-rejection is not evidence for the null. Using tests with both nulls is
+one way to see how strong the evidence is in each direction.
+
+## 5. Why special critical values?
+
+Under the unit-root null, the t ratio of $b$ does **not** have a normal or
+Student t distribution. `simulate_df()` shows this by simulation:
+
+```{r}
+s <- simulate_df(T = 100, R = 2000, trend = "c", seed = 1)
+s
+plot(s)
+```
+
+The simulated quantiles agree with MacKinnon's critical values, which are far
+to the left of the normal ones. Using the normal 5% value would reject a true
+unit root much more often than 5% of the time.
+
+## 6. Data formats
+
+The functions accept numeric vectors, `ts`, `zoo` and `xts` series, data
+frames, tibbles and tsibbles. When there are several numeric columns, name
+the one to test with `var`:
+
+```{r}
+df <- data.frame(date = as.Date(gdp$date), lgdp = log(gdp$rgdp),
+                 growth = c(NA, diff(log(gdp$rgdp))))
+adf(df, var = "lgdp", trend = "ct", lags = 1)$statistic
+```
+
+Missing values are never dropped silently: the `growth` column above starts
+with `NA`, and testing it gives an error that says where the problem is.

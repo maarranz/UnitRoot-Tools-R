@@ -16,15 +16,19 @@ Encoding: UTF-8
 Depends:
     R (>= 4.1.0)
 Imports:
+    graphics,
     stats,
+    urca,
     utils
 Suggests:
+    knitr,
+    rmarkdown,
     testthat (>= 3.0.0),
     tibble,
     tsibble,
-    urca,
     xts,
     zoo
 Config/testthat/edition: 3
+VignetteBuilder: knitr
 Roxygen: list(markdown = TRUE)
 Config/roxygen2/version: 8.1.1
