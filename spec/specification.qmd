@@ -125,6 +125,10 @@ with $\tilde y_t$ the detrended series and $\hat\beta_0$ the coefficient on $\ti
 
 Deterministic parameters are common to all candidates and do not enter the penalty.
 
+AIC and BIC are computed from the ADF regression itself (with its deterministic terms). MAIC and MBIC are computed, as in Ng and Perron (2001), from the regression of $\Delta\tilde y_t$ on $\tilde y_{t-1}$ and $k$ lagged differences of the detrended series, with no deterministic terms; both $\hat\sigma^2_k$ and $\tau_N(k)$ come from that regression. The detrending is OLS on the deterministic terms over the full sample $t = 1,\dots,T$ (none for `"n"`).
+
+When the user fixes the lag order, no selection takes place and the regression uses the maximal sample $t = k+2,\dots,T$ (as urca does).
+
 ::: {.callout-important}
 **Decision D2 (settled): detrending used inside MAIC/MBIC.**
 Convention: OLS detrending under the test's deterministic specification for ADF. For GLS-based tests (Phase 2), Perron and Qu (2007) is to be followed. Each implementation conforms; any existing divergence is recorded.
@@ -152,10 +156,12 @@ Each result records its **calibration**: the method, the source and any approxim
 
 ::: {.callout-important}
 **Decision D4 (settled): source of $\tau$ critical values.**
-Convention: MacKinnon (2010) finite-sample response surfaces at the 1%, 5% and 10% levels, evaluated at the effective $N$. P-values (MacKinnon 1994/1996) are reported only when the implementation computes them. Each implementation conforms, since decisions near the boundary depend on the source.
+Convention: MacKinnon (2010) finite-sample response surfaces at the 1%, 5% and 10% levels, evaluated at the effective $N$. For `"n"`, which MacKinnon (2010) did not update, the MacKinnon (1996) surface is used; the result records which. P-values (MacKinnon 1994/1996) are reported only when the implementation computes them. Each implementation conforms, since decisions near the boundary depend on the source.
 :::
 
-**$\phi$ critical values (v0.1):** Dickey–Fuller (1981), as reproduced in Enders' Table B. Lookup rule (as in Python): use the largest tabulated sample size not exceeding $N$, capped at 500. This is a documented approximation, recorded as such in the result, and is scheduled for replacement by response surfaces in Phase 2.
+**$\phi$ critical values (v0.1):** Dickey–Fuller (1981), as reproduced in Enders' Table B. Lookup rule (as in Python): use the largest tabulated sample size not exceeding $N$, capped at 500. This is a documented approximation, recorded as such in the result (with the table row used), and is scheduled for replacement by response surfaces in Phase 2. For $N < 25$ the $T = 25$ row is used and flagged as an extrapolation.
+
+Two differences from urca 1.3-4 are deliberate: (i) urca uses the next *larger* tabulated sample size (e.g. the $T = 50$ row for $25 \le N < 50$), which is less conservative; (ii) urca's $\phi_3$ row for $T = 250$ repeats the $T = 100$ values at 5% and 10% (6.49, 5.47); the published values are 6.34 and 5.39.
 
 # The result contract {#sec-contract}
 
@@ -179,6 +185,7 @@ Every test returns an object of class `ur_test` (R) / `URTestResult` (Python) wi
 | `calibration` | record | Method, source, approximation note (e.g. "table lookup at N=100") |
 | `level`, `reject` | number, logical | Decision at the chosen level (default 0.05): from the critical value at that level when available, otherwise from the p-value; an error if neither exists |
 | `other_statistics` | named numbers | e.g. the $\phi$ statistics accompanying $\tau_3$ |
+| `other_critical_values` | named list | Optional: critical values for entries of `other_statistics` (same format as `critical_values`, upper tail), each with its source |
 | `engine` | string | e.g. `"internal 0.1.0"`, `"urca 1.3-4"` |
 | `warnings` | strings | Small-sample and approximation warnings |
 | `regression` | record or null | Fitted regression (coefficients, standard errors, RSS, residuals); may be omitted for speed |

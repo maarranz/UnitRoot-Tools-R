@@ -45,6 +45,10 @@ required_levels <- c(0.01, 0.05, 0.10)
 #' @param level Significance level for the reported decision.
 #' @param other_statistics Named numeric vector of accompanying statistics
 #'   (e.g. the \eqn{\phi} statistics reported with \eqn{\tau_3}).
+#' @param other_critical_values Optional named list, one element per entry
+#'   of `other_statistics` that has critical values: a named numeric vector
+#'   in the same format as `critical_values`, optionally with a `source`
+#'   attribute. These statistics are upper-tail (reject for large values).
 #' @param engine Engine that computed the result, e.g. `"internal 0.1.0"`
 #'   or `"urca 1.3-4"`.
 #' @param warnings Character vector of warnings (small samples,
@@ -63,6 +67,7 @@ new_ur_test <- function(method, test, statistic_name, statistic,
                         p_value = NA_real_,
                         calibration, level = 0.05,
                         other_statistics = numeric(),
+                        other_critical_values = list(),
                         engine, warnings = character(),
                         regression = NULL, call = NULL) {
   tail <- match.arg(tail)
@@ -86,6 +91,7 @@ new_ur_test <- function(method, test, statistic_name, statistic,
     level = level,
     reject = NA,
     other_statistics = other_statistics,
+    other_critical_values = other_critical_values,
     engine = engine,
     warnings = as.character(warnings),
     regression = regression,
@@ -186,6 +192,18 @@ validate_ur_test <- function(x) {
   if (!is.numeric(os) || (length(os) > 0L && is.null(names(os)))) {
     fail("`other_statistics` must be a named numeric vector.")
   }
+  ocv <- x$other_critical_values
+  if (!is.list(ocv) || (length(ocv) > 0L && (is.null(names(ocv)) ||
+      !all(names(ocv) %in% names(os))))) {
+    fail("`other_critical_values` must be a list named after entries of `other_statistics`.")
+  }
+  for (nm in names(ocv)) {
+    v <- ocv[[nm]]
+    lvv <- suppressWarnings(as.numeric(names(v)))
+    if (!is.numeric(v) || anyNA(lvv) || any(!is.finite(v))) {
+      fail("`other_critical_values$", nm, "` must be a named numeric vector of finite values.")
+    }
+  }
   if (!is.null(x$regression) && !is.list(x$regression)) {
     fail("`regression` must be NULL or a list.")
   }
@@ -279,21 +297,42 @@ print.summary.ur_test <- function(x, ...) {
               if (is.na(r$p_value)) "not provided by this calibration"
               else fmt_pvalue(r$p_value)))
   if (length(r$other_statistics) > 0L) {
-    cat("\nOther statistics\n")
+    cat("\nAccompanying statistics\n")
     for (n in names(r$other_statistics)) {
-      cat(sprintf("  %-8s %s\n", n, fmt_num(r$other_statistics[[n]])))
+      cv <- r$other_critical_values[[n]]
+      if (is.null(cv)) {
+        cat(sprintf("  %-6s %9s\n", n, fmt_num(r$other_statistics[[n]])))
+      } else {
+        lv <- as.numeric(names(cv))
+        i5 <- which(abs(lv - r$level) < 1e-12)
+        dec <- if (length(i5) == 1L) {
+          if (r$other_statistics[[n]] > cv[[i5]]) "  reject" else "  do not reject"
+        } else ""
+        cat(sprintf("  %-6s %9s   %s%s\n", n, fmt_num(r$other_statistics[[n]]),
+                    fmt_cvs(cv), dec))
+        if (!is.null(attr(cv, "source"))) {
+          cat(sprintf("  %-6s %9s   [%s]\n", "", "", attr(cv, "source")))
+        }
+      }
     }
   }
   ls <- r$lag_selection
   if (!is.null(ls)) {
     cat(sprintf("\nLag selection: %s, kmax = %d", ls$method, as.integer(ls$kmax)))
     if (!is.null(ls$detrending)) cat(sprintf(", detrending: %s", ls$detrending))
+    if (!is.null(ls$final_sample)) cat(sprintf(", test regression on the %s sample", ls$final_sample))
     cat("\n")
-    if (!is.null(ls$table)) print(ls$table, row.names = FALSE)
+    if (!is.null(ls$table)) {
+      tab <- ls$table
+      shown <- tab
+      for (cn in setdiff(names(tab), "k")) shown[[cn]] <- sprintf("%.4f", tab[[cn]])
+      shown[[" "]] <- ifelse(tab$k == r$lags, "  <-", "")
+      print(shown, row.names = FALSE, right = TRUE)
+    }
   }
   if (!is.null(r$regression$coefficients)) {
     cat("\nTest regression\n")
-    print(r$regression$coefficients)
+    print(r$regression$coefficients, digits = 4)
   }
   cat(sprintf("\nEngine: %s\n", r$engine))
   invisible(x)

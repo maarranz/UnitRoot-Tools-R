@@ -24,6 +24,7 @@ new_ur_test(
   calibration,
   level = 0.05,
   other_statistics = numeric(),
+  other_critical_values = list(),
   engine,
   warnings = character(),
   regression = NULL,
@@ -80,6 +81,11 @@ and, optionally, \code{note} (e.g. an approximation used).}
 
 \item{other_statistics}{Named numeric vector of accompanying statistics
 (e.g. the \eqn{\phi} statistics reported with \eqn{\tau_3}).}
+
+\item{other_critical_values}{Optional named list, one element per entry
+of \code{other_statistics} that has critical values: a named numeric vector
+in the same format as \code{critical_values}, optionally with a \code{source}
+attribute. These statistics are upper-tail (reject for large values).}
 
 \item{engine}{Engine that computed the result, e.g. \code{"internal 0.1.0"}
 or \code{"urca 1.3-4"}.}
