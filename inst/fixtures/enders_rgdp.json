@@ -1,0 +1,29 @@
+{
+  "id": "enders_rgdp",
+  "description": "Enders' U.S. real GDP example of the Dolado-Jenkinson-Sosvilla-Rivero procedure: log real GDP, 1947Q1-2012Q4, one lagged difference.",
+  "source": {
+    "publication": "Enders, W., Supplementary Manual to accompany Applied Econometric Time Series, 4th ed., Section 4.4, equations (A2.1)-(A2.3)",
+    "data_url": "https://time-series.net/assets/docs/rgdp.350347.xls",
+    "data_file": "enders_rgdp.csv",
+    "data_extract": "DATE and RGDP columns of sheet PCECC96; copied from UnitRoot-Tools validation/enders/rgdp.csv",
+    "csv_sha256": "9a857973fcf968ac62bcce3e9ace55d52af993c6003169178706e39daadd74d9",
+    "xls_sha256": "3c0f3055c0c51fcb8f61d71a5447747d724633e058816ad18c5d7da6796a32be"
+  },
+  "data": "log of column rgdp in enders_rgdp.csv (264 observations)",
+  "settings": {"lags": 1, "level": 0.05, "nobs": 262},
+  "expected": {
+    "ct_coefficients": {"const": 0.1248, "trend": 0.0001, "y_lag1": -0.0156, "dy_lag1": 0.3663},
+    "ct_t_values": {"const": 1.58, "trend": 1.31, "y_lag1": -1.49, "dy_lag1": 6.26},
+    "phi3": 2.97,
+    "c_coefficients": {"const": 0.0215, "y_lag1": -0.0019, "dy_lag1": 0.3539},
+    "c_t_values": {"const": 2.64, "y_lag1": -2.05, "dy_lag1": 6.12},
+    "phi1": 25.49,
+    "aux_const_t": 6.80,
+    "original": {"tests": ["tau3", "phi3", "tau2", "phi1", "aux_const", "cond_c"], "unit_root_rejected": true, "specification": "c"},
+    "conservative": {"tests": ["tau3", "phi3", "tau2"], "unit_root_rejected": false, "specification": "c"}
+  },
+  "tolerance": {
+    "published": "half a unit in the last printed digit (values are printed rounded)",
+    "exception": "the intercept t value in (A2.3) is printed as 2.64 but equals 2.646; it is checked with tolerance 0.01 (truncation in the source)"
+  }
+}

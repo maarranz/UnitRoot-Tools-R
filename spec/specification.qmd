@@ -197,6 +197,12 @@ Methods (R): `print`, `summary`, `tidy`, `glance` (via `generics`). `print` stat
 
 ## Common structure
 
+R interface: `ur_strategy(y, strategy = c("original", "conservative", "hamilton"), trending, allow_no_constant, lags, max_lags, criterion, level)`. Every test in a sequence uses the same `level`, which must be one of the tabulated levels (0.01, 0.05, 0.10).
+
+The decision logic is a pure function of the individual rejection decisions (no data). All statistics a strategy may need are computed first, on one common sample with one lag order, and the path is then read off. This makes every branch testable with constructed decisions and the whole procedure bootstrappable (Phase 4).
+
+The tests in a history are labelled `tau3`, `phi3`, `aux_trend` (t test of the trend with $b = 0$ imposed), `cond_ct` (conditional t test of $b$ with the trend retained), `tau2`, `phi1`, `aux_const`, `cond_c` and `tau1`. The terminal test is returned as a `ur_test`: an ADF result for the $\tau$ tests, or a conditional $t$ test (calibration `conventional_t`, Student $t$ with the residual degrees of freedom, with a p-value) for `cond_ct` and `cond_c`.
+
 A strategy returns an object of class `ur_strategy` with:
 
 - `strategy`, `settings` (including permissions such as `allow_no_constant`);
@@ -291,7 +297,7 @@ Three levels:
 
 Decision agreement is checked separately. Any disagreement is logged with $|\text{statistic} - \text{critical value}|$; disagreements are acceptable only within numerical tolerance of the boundary.
 
-**Published fixture for the strategies.** Enders' U.S. real-GDP example (log real GDP, 1947Q1–2012Q4, one lagged difference, 244 usable observations) reports $\tau_3 = -1.49$, $\phi_3 = 2.97$, $\tau_2 = -2.05$, $\phi_1 = 25.49$ and $t(a_0) = 6.80$ in the auxiliary regression; the original procedure then rejects through the conditional $t$ test. Enders uses the $T = 250$ table row for $N = 244$ (nearest size); this specification uses the largest size not exceeding $N$ ($T = 100$). The decisions in the example are the same under both rules.
+**Published fixture for the strategies.** Enders' U.S. real-GDP example (log real GDP, 1947Q1–2012Q4, one lagged difference) is stored in `inst/fixtures/enders_rgdp.csv` with its provenance and expected values in `enders_rgdp.json`. The regressions have $N = 262$ observations (Enders' text mentions 244, but the regression output and the data imply 262). The example reports $\tau_3 = -1.49$, $\phi_3 = 2.97$, $\tau_2 = -2.05$, $\phi_1 = 25.49$ and $t(a_0) = 6.80$ in the auxiliary regression; the original procedure then rejects through the conditional $t$ test, while the conservative procedure retains the constant and does not reject. With $N = 262$, both Enders and this specification use the $T = 250$ table row for $\phi$. Published values are rounded, so they are checked to half a unit in the last printed digit; the intercept $t$ value in (A2.3), printed as 2.64, equals 2.646 (truncation in the source).
 
 References are independent of the implementation under test: independent QR or high-precision (`mpmath`) calculations, published examples, and backend packages.
 

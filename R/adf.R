@@ -83,6 +83,12 @@ adf <- function(y, trend = "c", lags = NULL, max_lags = NULL,
   }
 
   r <- adf_regression(y, trend, k, first)
+  adf_result(r, selection, level, call)
+}
+
+# Builds the ur_test for an ADF regression (used by adf() and the strategies).
+adf_result <- function(r, selection, level, call) {
+  trend <- r$trend
   warn <- character()
   if (r$nobs < 25L) {
     warn <- c(warn, sprintf(
@@ -108,7 +114,7 @@ adf <- function(y, trend = "c", lags = NULL, max_lags = NULL,
     null = "unit root",
     alternative = adf_alternatives[[trend]],
     trend = trend,
-    lags = k,
+    lags = r$k,
     lag_selection = selection,
     nobs = r$nobs,
     sample = unname(r$sample),
