@@ -1,0 +1,22 @@
+Package: unitroottools
+Title: Transparent Unit-Root Testing and Deterministic-Specification Strategies
+Version: 0.0.0.9000
+Authors@R:
+    person("Miguel A.", "Arranz", email = "CHANGE-ME@example.org",
+           role = c("aut", "cre"))
+Description: A unified interface to unit-root and stationarity tests, with
+    deterministic-specification strategies (Dolado-Jenkinson-Sosvilla-Rivero
+    and Enders, a conservative variant, and Hamilton's rule-based choice)
+    that record every step of the decision. Designed for teaching and
+    reproducible research; companion to the Python package UnitRoot-Tools.
+License: MIT + file LICENSE
+URL: https://github.com/maarranz/UnitRoot-Tools-R
+BugReports: https://github.com/maarranz/UnitRoot-Tools-R/issues
+Encoding: UTF-8
+Depends:
+    R (>= 4.1.0)
+Suggests:
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Roxygen: list(markdown = TRUE)
+Config/roxygen2/version: 8.1.1

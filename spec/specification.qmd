@@ -1,0 +1,320 @@
+---
+title: "unitroottools: Common Specification"
+subtitle: "Conventions, result contract and specification strategies for the R and Python implementations"
+author: "Miguel A. Arranz"
+date: today
+date-format: long
+toc: true
+number-sections: true
+format:
+  html:
+    embed-resources: true
+---
+
+::: {.callout-note}
+**Status:** draft 0.1 (Phase 0). Sections marked **Decision** record a convention that both implementations must follow. Decisions marked *open* must be settled before the corresponding code is written. The R and Python packages are independent implementations of this specification, not translations of each other.
+:::
+
+# Purpose and scope
+
+This document defines the econometric conventions shared by the R package `unitroottools` and the Python package UnitRoot-Tools. It is language-neutral: it states *what* is computed and *how results are reported*, not how either language implements it.
+
+Rules:
+
+1. The specification is updated **before** the code.
+2. Each implementation may cover a different subset of the specification, but anything it implements must conform to it.
+3. Conformance is checked through shared numerical fixtures (@sec-validation).
+4. A backend (e.g. urca) may compute a result only if the result can be reported in the form required by @sec-contract. Every result records which engine computed it.
+
+# Data and deterministic specifications
+
+## Input series
+
+- The input is a real, finite, one-dimensional, equally spaced series $y_1,\dots,y_T$ (R: `numeric`, `ts` or `zoo`).
+- Missing or non-finite values are an **error**. Nothing is dropped silently.
+- Irregularly spaced `zoo` series are an error.
+- Backends that drop missing values internally (e.g. `urca::ur.ers`, which applies `na.omit`) are only called after these checks.
+
+## Deterministic specifications
+
+| Code | Meaning | Accepted aliases |
+|---|---|---|
+| `"n"` | no constant, no trend | `"none"` |
+| `"c"` | constant | `"drift"` (urca), `"constant"`, `"intercept"` (bootUR) |
+| `"ct"` | constant and linear trend | `"trend"` |
+
+Aliases are mapped to the canonical code on input; results always report the canonical code. `"ctt"` (quadratic trend) is reserved and not part of v0.1.
+
+The time index is $t = 1,\dots,T$ in the original sample, so the trend coefficient has the same meaning in every regression of a procedure regardless of the effective sample.
+
+# The ADF regression
+
+## Regressions
+
+$$
+\Delta y_t = a + \gamma t + b\,y_{t-1} + \sum_{j=1}^{k}\beta_j \Delta y_{t-j} + \varepsilon_t,
+$$
+
+with $a=\gamma=0$ imposed for `"n"` and $\gamma = 0$ for `"c"`. The unit-root null is $H_0: b = 0$ against $H_1: b<0$.
+
+## Statistics
+
+| Statistic | Regression | Null | Reference distribution |
+|---|---|---|---|
+| $\tau_1$ | `n` | $b=0$ | Dickey–Fuller, no deterministics |
+| $\tau_2$ ($\tau_\mu$) | `c` | $b=0$ | Dickey–Fuller, constant |
+| $\tau_3$ ($\tau_\tau$) | `ct` | $b=0$ | Dickey–Fuller, constant and trend |
+| $\phi_1$ | `c` | $a=b=0$ | Dickey–Fuller (1981) |
+| $\phi_2$ | `ct` | $a=\gamma=b=0$ | Dickey–Fuller (1981) |
+| $\phi_3$ | `ct` | $\gamma=b=0$ | Dickey–Fuller (1981) |
+
+The $\phi$ statistics are computed from nested regressions **on the same effective sample**:
+
+$$
+\phi = \frac{(RSS_R - RSS_U)/r}{RSS_U/(N - p_U)},
+$$
+
+where $r$ is the number of restrictions, $N$ the effective sample size and $p_U$ the number of parameters in the unrestricted regression.
+
+$\phi_2$ is computed and reported but is not used by any strategy in @sec-strategies; it is included because users (and urca) expect it.
+
+## Effective sample
+
+With $k$ lagged differences, observations $t = k+2,\dots,T$ are usable, so $N = T-k-1$.
+
+When lags are selected from $0,\dots,k_{\max}$, all candidates are estimated on the **common sample** $t = k_{\max}+2,\dots,T$, with $N = T - k_{\max} - 1$.
+
+::: {.callout-important}
+**Decision D1 (open): sample of the final regression after lag selection.**
+
+- (a) *Common sample*: the final regression keeps $t = k_{\max}+2,\dots,T$.
+- (b) *Maximal sample*: the final regression is re-estimated on $t = k^*+2,\dots,T$ for the selected $k^*$.
+
+Proposed convention: (a) by default, with (b) available as `final_sample = "maximal"`. Inside a specification strategy, all regressions use one common sample (required for the $\phi$ statistics and for comparable decisions). **To be settled on econometric grounds; each implementation then conforms, and any existing divergence is recorded.**
+:::
+
+## Minimum sample
+
+- The fit is refused if $N \le p_U + 1$.
+- A warning is issued when $N < 25$, the smallest sample size in the tabulated critical values.
+- Specification strategies require $N \ge 25$ (as in Python).
+
+# Lag selection
+
+## Criteria
+
+Candidates are $k = 0,\dots,k_{\max}$, all on the common sample of size $N = T-k_{\max}-1$. With $\hat\sigma^2_k = N^{-1}\sum \hat e_{t,k}^2$:
+
+| Criterion | Definition |
+|---|---|
+| AIC | $\ln\hat\sigma^2_k + 2k/N$ |
+| BIC | $\ln\hat\sigma^2_k + k\ln N / N$ |
+| MAIC | $\ln\hat\sigma^2_k + 2\{\tau_N(k)+k\}/N$ |
+| MBIC | $\ln\hat\sigma^2_k + \ln N\,\{\tau_N(k)+k\}/N$ |
+
+where (Ng and Perron 2001)
+
+$$
+\tau_N(k) = \hat\sigma_k^{-2}\,\hat\beta_0^2 \sum_{t} \tilde y_{t-1}^2 ,
+$$
+
+with $\tilde y_t$ the detrended series and $\hat\beta_0$ the coefficient on $\tilde y_{t-1}$ in the regression of $\Delta\tilde y_t$ on $\tilde y_{t-1}$ and $k$ lagged differences of $\tilde y_t$.
+
+Deterministic parameters are common to all candidates and do not enter the penalty.
+
+::: {.callout-important}
+**Decision D2 (open): detrending used inside MAIC/MBIC.**
+Proposed: OLS detrending under the test's deterministic specification for ADF (Perron and Qu 2007 recommend OLS-detrended MAIC also for GLS-based tests). **To be settled on econometric grounds; each implementation then conforms, and any existing divergence is recorded.**
+:::
+
+::: {.callout-important}
+**Decision D3 (open): default $k_{\max}$.**
+Proposed: $k_{\max} = \lfloor 12\,(T/100)^{1/4} \rfloor$ (Schwert 1989), always reported in the result. **To be settled on econometric grounds; each implementation then conforms, and any existing divergence is recorded.**
+:::
+
+## Reporting
+
+`select_lags()` returns the full criterion table (every $k$ and every criterion), the selected $k^*$, $k_{\max}$, the common sample and the detrending used, not only the selected order. Ties are broken in favour of the smaller $k$.
+
+# Critical values and calibration
+
+Each result records its **calibration**: the method, the source and any approximation.
+
+| Method | Use in v0.1 |
+|---|---|
+| `table` | Tabulated finite-sample critical values |
+| `response_surface` | Critical values or p-values from a response-surface regression |
+| `conventional_t` | Student-$t$ reference distribution (conditional tests in strategies) |
+| `bootstrap` | Phase 2 onwards (bootUR adapter), Phase 3 (own engine) |
+
+::: {.callout-important}
+**Decision D4 (open): source of $\tau$ critical values.**
+Proposed: MacKinnon (2010) finite-sample response surfaces at the 1%, 5% and 10% levels, evaluated at the effective $N$. P-values (MacKinnon 1994/1996) are reported only when the implementation computes them. **To be settled on econometric grounds**, since decisions near the boundary depend on it; each implementation then conforms.
+:::
+
+**$\phi$ critical values (v0.1):** Dickey–Fuller (1981), as reproduced in Enders' Table B. Lookup rule (as in Python): use the largest tabulated sample size not exceeding $N$, capped at 500. This is a documented approximation, recorded as such in the result, and is scheduled for replacement by response surfaces in Phase 2.
+
+# The result contract {#sec-contract}
+
+Every test returns an object of class `ur_test` (R) / `URTestResult` (Python) with the following fields, whatever engine computed it.
+
+| Field | Type | Content |
+|---|---|---|
+| `test` | string | Test family, e.g. `"ADF"`, `"KPSS"` |
+| `statistic_name` | string | e.g. `"tau3"`, `"phi3"`, `"Z_tau"` |
+| `statistic` | number | Value of the statistic |
+| `null`, `alternative` | string | Hypotheses in words, e.g. `"unit root"` / `"stationary around a linear trend"` |
+| `trend` | string | Canonical deterministic code |
+| `lags` | integer | Lagged differences (ADF-type) or bandwidth (PP/KPSS); `bandwidth_rule` stated separately |
+| `lag_selection` | record or null | Method, $k_{\max}$, criterion table, detrending (null when lags were fixed by the user) |
+| `nobs` | integer | Effective sample size $N$ |
+| `sample` | pair of integers | First and last $t$ of the effective sample |
+| `critical_values` | named numbers | At least levels 0.01, 0.05, 0.10 |
+| `p_value` | number or missing | Only when the calibration provides one; never interpolated from three critical values |
+| `calibration` | record | Method, source, approximation note (e.g. "table lookup at N=100") |
+| `level`, `reject` | number, logical | Decision at the chosen level (default 0.05) |
+| `other_statistics` | named numbers | e.g. the $\phi$ statistics accompanying $\tau_3$ |
+| `engine` | string | e.g. `"internal 0.1.0"`, `"urca 1.3-4"` |
+| `warnings` | strings | Small-sample and approximation warnings |
+| `regression` | record or null | Fitted regression (coefficients, standard errors, RSS, residuals); may be omitted for speed |
+| `call` | language | The call (R only) |
+
+Methods (R): `print`, `summary`, `tidy`, `glance` (via `generics`). `print` states the null hypothesis, statistic, critical value and decision in words.
+
+# Specification strategies {#sec-strategies}
+
+## Common structure
+
+A strategy returns an object of class `ur_strategy` with:
+
+- `strategy`, `settings` (including permissions such as `allow_no_constant`);
+- `specification`: the chosen deterministic code;
+- `terminal`: the `ur_test` of the terminal test;
+- `unit_root_rejected`: logical, the final decision;
+- `lags`, `nobs`, `sample`: shared by every regression in the sequence;
+- `history`: one row per step (below);
+- `engine`, `call`.
+
+Lag order: selected **once** under `"ct"` (method and $k_{\max}$ as supplied) and held fixed throughout the sequence, as in Python. For Hamilton's rule, lags are selected under the declared specification.
+
+**History columns:** `step`, `stage` (`T`, `C`, `N`), `regression` (`ct`, `c`, `n`, `aux_ct`, `aux_c`), `test`, `null` (in words), `statistic`, `critical_value`, `level`, `calibration`, `reject`, `rejection_type`, `next_action`, `reason`.
+
+`rejection_type` distinguishes three cases that must never be confused:
+
+1. `unit_root`: rejection of the unit-root null by a $\tau$ or terminal conditional test;
+2. `joint_restriction`: rejection by $\phi_1$ or $\phi_3$ (a decision about the path, not about the unit root);
+3. `deterministic`: rejection of a deterministic-coefficient restriction in an auxiliary regression (also a path decision).
+
+No p-value is reported for the sequence as a whole. Overall size is a property to be established by simulation or by bootstrapping the whole procedure (Phases 3–4).
+
+## Original (Dolado–Jenkinson–Sosvilla-Rivero / Enders)
+
+::: {.callout-warning}
+The branch logic below is the intended structure. **It must be checked line by line against Enders' Supplementary Manual (Section 4.4) before coding**, and the inferential conventions that the source leaves open must be stated explicitly.
+:::
+
+**Stage T** (regression `ct`):
+
+1. Test $b=0$ with $\tau_3$. Rejection: stop; no unit root, specification `ct`.
+2. Otherwise test $\gamma=b=0$ with $\phi_3$. Non-rejection: go to Stage C.
+3. If $\phi_3$ rejects: in the auxiliary regression imposing $b=0$, test $\gamma=0$ (two-sided $t$).
+   - Not significant: go to Stage C.
+   - Significant: the trend is retained. Test $b=0$ in the `ct` regression with the conditional conventional $t$ test (lower tail). Terminal.
+
+**Stage C** (regression `c`):
+
+4. Test $b=0$ with $\tau_2$. Rejection: stop; no unit root, specification `c`.
+5. Otherwise test $a=b=0$ with $\phi_1$. Non-rejection: go to Stage N.
+6. If $\phi_1$ rejects: in the auxiliary regression imposing $b=0$, test $a=0$ (two-sided $t$).
+   - Not significant: go to Stage N.
+   - Significant: test $b=0$ in the `c` regression with the conditional conventional $t$ test (lower tail). Terminal.
+
+**Stage N** (regression `n`):
+
+7. Test $b=0$ with $\tau_1$. Terminal.
+
+::: {.callout-important}
+**Decision D5 (open): conditional tests.** Proposed: Student-$t$ reference with the residual degrees of freedom of the regression concerned; lower tail for $b$, two-sided for $a$ and $\gamma$. **To be settled.**
+:::
+
+## Conservative
+
+Identical to the original at Stage T and at step 4. If $\tau_2$ does not reject, the constant is **retained** and the procedure stops: the terminal decision is the non-rejection by $\tau_2$. No conditional conventional $t$ test is used to justify retention.
+
+With `allow_no_constant = TRUE`, the original steps 5–7 are evaluated. This is permission to consider the restricted model, not an instruction to select it.
+
+The conservative strategy is an experimental proposal; its documentation must say that its overall size has not been established.
+
+## Hamilton (rule-based)
+
+Hamilton (1994, ch. 17) chooses the regression so that both hypotheses are plausible descriptions of the series. The choice is made **by the user, before testing**:
+
+- `trending = TRUE`: regression `ct`, terminal test $\tau_3$ (Hamilton's Case 4);
+- `trending = FALSE`: regression `c`, terminal test $\tau_2$ (Case 2).
+
+Rules:
+
+- `trending` has **no default** and no data-driven fallback. A data-driven choice would turn the rule into another pre-test procedure.
+- The result records that the specification came from a user declaration (`reason = "declared by user"`).
+- A descriptive helper (plot and sample mean of $\Delta y_t$) may be offered; its output is labelled descriptive, not inferential.
+
+**Case 3 (optional, experimental):** regression `c` with a non-zero drift under the null, where the $t$ statistic on $b$ is asymptotically $N(0,1)$ (West 1988). Available only as `inference = "west_normal"`. The result reports the estimated drift relative to its standard error and warns when that ratio is small, since the normal approximation is then poor.
+
+::: {.callout-important}
+**Decision D6 (open):** threshold for the Case 3 warning, and whether Case 3 is in v0.1 or deferred.
+:::
+
+# Validation standard {#sec-validation}
+
+Three levels:
+
+1. **Bitwise reproducibility:** desirable, not required.
+2. **Numerical reproducibility:** required, with justified tolerances. Default: $|x - x_{\text{ref}}| \le 10^{-10}|x_{\text{ref}}| + 10^{-12}$ for statistics, coefficients and critical values computed by formula; looser tolerances must be justified in the fixture.
+3. **Statistical reproducibility:** required for Monte Carlo results. Rejection frequencies agree within Monte Carlo error (two-proportion test).
+
+Decision agreement is checked separately. Any disagreement is logged with $|\text{statistic} - \text{critical value}|$; disagreements are acceptable only within numerical tolerance of the boundary.
+
+References are independent of the implementation under test: independent QR or high-precision (`mpmath`) calculations, published examples, and backend packages.
+
+**Shared fixtures** live in `inst/fixtures/` (R) and the equivalent Python directory, as JSON files with: `id`, `description`, `source` (with provenance and data hash), `data`, `settings`, `expected`, `tolerance`.
+
+# Known backend limitations (urca 1.3-4)
+
+Checked against the urca 1.3-4 reference documentation. Each limitation is the documented reason for replacing an adapter with an internal implementation.
+
+| Function | Limitation | Consequence for `unitroottools` |
+|---|---|---|
+| `ur.df` | Lag selection only `"Fixed"`, `"AIC"`, `"BIC"`; no MAIC/MBIC; sample convention for comparing lags not documented | ADF is internal from v0.1 |
+| `ur.df` | Object reports tabulated critical values, no p-value (urca does export MacKinnon p-value functions separately) | Calibration handled in our own layer |
+| `ur.df` | No auxiliary regressions, conditional tests or decision sequence | Strategies are internal |
+| `ur.pp` | Bartlett kernel only; bandwidth `"short"`/`"long"` or user-specified; `model` only `"constant"`/`"trend"` | Adapter exposes exactly these options; internal version in Phase 2 |
+| `ur.kpss` | Bandwidth `"short"`/`"long"`/`"nil"` or user-specified; no automatic (Newey–West, Andrews) bandwidth | As above |
+| `ur.ers` | DF-GLS: `lag.max` is the fixed number of lagged differences, no lag selection; P-test selects lags by BIC; applies `na.omit` internally | Adapter validates input first; MAIC version in Phase 2 |
+| — | No Ng–Perron M-tests | Internal implementation in Phase 2 |
+| all | S4 objects, no common result, no decision or provenance | `ur_test` contract over every backend |
+
+# Open decisions
+
+| ID | Topic | Proposed | Status |
+|---|---|---|---|
+| D1 | Final-regression sample after lag selection | Common sample by default | Open |
+| D2 | Detrending inside MAIC/MBIC | OLS detrending | Open |
+| D3 | Default $k_{\max}$ | Schwert $\lfloor 12(T/100)^{1/4}\rfloor$ | Open |
+| D4 | $\tau$ critical values | MacKinnon (2010) response surfaces | Open |
+| D5 | Conditional tests in strategies | Student-$t$, lower tail for $b$ | Open |
+| D6 | Hamilton Case 3 | Optional, warning threshold to be set | Open |
+
+# References
+
+- Dickey, D. A. and Fuller, W. A. (1981). Likelihood ratio statistics for autoregressive time series with a unit root. *Econometrica*, 49, 1057–1072.
+- Dolado, J. J., Jenkinson, T. and Sosvilla-Rivero, S. (1990). Cointegration and unit roots. *Journal of Economic Surveys*, 4, 249–273.
+- Elliott, G., Rothenberg, T. J. and Stock, J. H. (1996). Efficient tests for an autoregressive unit root. *Econometrica*, 64, 813–836.
+- Enders, W. *Supplementary Manual to accompany Applied Econometric Time Series*, 4th ed., Section 4.4 and Table B.
+- Hamilton, J. D. (1994). *Time Series Analysis*. Princeton University Press, ch. 17.
+- MacKinnon, J. G. (1996). Numerical distribution functions for unit root and cointegration tests. *Journal of Applied Econometrics*, 11, 601–618.
+- MacKinnon, J. G. (2010). Critical values for cointegration tests. Queen's Economics Department Working Paper 1227.
+- Ng, S. and Perron, P. (2001). Lag length selection and the construction of unit root tests with good size and power. *Econometrica*, 69, 1519–1554.
+- Perron, P. and Qu, Z. (2007). A simple modification to improve the finite sample properties of Ng and Perron's unit root tests. *Economics Letters*, 94, 12–19.
+- Pfaff, B. urca: Unit Root and Cointegration Tests for Time Series Data, R package version 1.3-4.
+- Schwert, G. W. (1989). Tests for unit roots: a Monte Carlo investigation. *Journal of Business & Economic Statistics*, 7, 147–159.
+- West, K. D. (1988). Asymptotic normality, when regressors have a unit root. *Econometrica*, 56, 1397–1417.
