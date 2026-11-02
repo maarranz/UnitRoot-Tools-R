@@ -30,9 +30,12 @@ Rules:
 
 ## Input series
 
-- The input is a real, finite, one-dimensional, equally spaced series $y_1,\dots,y_T$ (R: `numeric`, `ts` or `zoo`).
+- The input is a real, finite, one-dimensional, equally spaced series $y_1,\dots,y_T$. R accepts `numeric`, `ts`, `zoo` and `xts`, and also tidy objects: data frames, tibbles and tsibbles.
+- When the object has several columns, the series is the column named by `var`, or the only numeric column if there is exactly one (e.g. a tibble with a date column and a value column). Otherwise `var` is required.
+- A tsibble must hold a single series (at most one key value), be regular, and have no implicit gaps; gaps must be filled explicitly by the user.
+- A plain data frame carries no frequency, so equal spacing cannot be checked; if it has exactly one date-time column, that column must be strictly increasing.
 - Missing or non-finite values are an **error**. Nothing is dropped silently.
-- Irregularly spaced `zoo` series are an error.
+- Irregularly spaced `zoo`/`xts` series are an error.
 - Backends that drop missing values internally (e.g. `urca::ur.ers`, which applies `na.omit`) are only called after these checks.
 
 ## Deterministic specifications
