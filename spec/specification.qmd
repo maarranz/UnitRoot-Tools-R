@@ -12,7 +12,7 @@ format:
 ---
 
 ::: {.callout-note}
-**Status:** draft 0.1 (Phase 0). Sections marked **Decision** record a convention that both implementations must follow. Decisions marked *open* must be settled before the corresponding code is written. The R and Python packages are independent implementations of this specification, not translations of each other.
+**Status:** draft 0.1 (Phase 0). Sections marked **Decision** record a convention that both implementations must follow. All decisions D1–D6 were settled on 2 November 2026; new decisions are added as *open* and must be settled before the corresponding code is written. The R and Python packages are independent implementations of this specification, not translations of each other.
 :::
 
 # Purpose and scope
@@ -85,12 +85,12 @@ With $k$ lagged differences, observations $t = k+2,\dots,T$ are usable, so $N = 
 When lags are selected from $0,\dots,k_{\max}$, all candidates are estimated on the **common sample** $t = k_{\max}+2,\dots,T$, with $N = T - k_{\max} - 1$.
 
 ::: {.callout-important}
-**Decision D1 (open): sample of the final regression after lag selection.**
+**Decision D1 (settled): sample of the final regression after lag selection.**
 
 - (a) *Common sample*: the final regression keeps $t = k_{\max}+2,\dots,T$.
 - (b) *Maximal sample*: the final regression is re-estimated on $t = k^*+2,\dots,T$ for the selected $k^*$.
 
-Proposed convention: (a) by default, with (b) available as `final_sample = "maximal"`. Inside a specification strategy, all regressions use one common sample (required for the $\phi$ statistics and for comparable decisions). **To be settled on econometric grounds; each implementation then conforms, and any existing divergence is recorded.**
+Convention: (a) by default, with (b) available as `final_sample = "maximal"` (useful in small samples, where (a) discards $k_{\max}-k^*$ observations). Inside a specification strategy, all regressions use one common sample (required for the $\phi$ statistics and for comparable decisions). Each implementation conforms; any existing divergence is recorded.
 :::
 
 ## Minimum sample
@@ -123,13 +123,13 @@ with $\tilde y_t$ the detrended series and $\hat\beta_0$ the coefficient on $\ti
 Deterministic parameters are common to all candidates and do not enter the penalty.
 
 ::: {.callout-important}
-**Decision D2 (open): detrending used inside MAIC/MBIC.**
-Proposed: OLS detrending under the test's deterministic specification for ADF (Perron and Qu 2007 recommend OLS-detrended MAIC also for GLS-based tests). **To be settled on econometric grounds; each implementation then conforms, and any existing divergence is recorded.**
+**Decision D2 (settled): detrending used inside MAIC/MBIC.**
+Convention: OLS detrending under the test's deterministic specification for ADF. For GLS-based tests (Phase 2), Perron and Qu (2007) is to be followed. Each implementation conforms; any existing divergence is recorded.
 :::
 
 ::: {.callout-important}
-**Decision D3 (open): default $k_{\max}$.**
-Proposed: $k_{\max} = \lfloor 12\,(T/100)^{1/4} \rfloor$ (Schwert 1989), always reported in the result. **To be settled on econometric grounds; each implementation then conforms, and any existing divergence is recorded.**
+**Decision D3 (settled): default $k_{\max}$.**
+Convention: $k_{\max} = \lfloor 12\,(T/100)^{1/4} \rfloor$ (Schwert 1989), as used with MAIC by Ng and Perron (2001); always reported in the result. Each implementation conforms; any existing divergence is recorded.
 :::
 
 ## Reporting
@@ -148,8 +148,8 @@ Each result records its **calibration**: the method, the source and any approxim
 | `bootstrap` | Phase 2 onwards (bootUR adapter), Phase 3 (own engine) |
 
 ::: {.callout-important}
-**Decision D4 (open): source of $\tau$ critical values.**
-Proposed: MacKinnon (2010) finite-sample response surfaces at the 1%, 5% and 10% levels, evaluated at the effective $N$. P-values (MacKinnon 1994/1996) are reported only when the implementation computes them. **To be settled on econometric grounds**, since decisions near the boundary depend on it; each implementation then conforms.
+**Decision D4 (settled): source of $\tau$ critical values.**
+Convention: MacKinnon (2010) finite-sample response surfaces at the 1%, 5% and 10% levels, evaluated at the effective $N$. P-values (MacKinnon 1994/1996) are reported only when the implementation computes them. Each implementation conforms, since decisions near the boundary depend on the source.
 :::
 
 **$\phi$ critical values (v0.1):** Dickey–Fuller (1981), as reproduced in Enders' Table B. Lookup rule (as in Python): use the largest tabulated sample size not exceeding $N$, capped at 500. This is a documented approximation, recorded as such in the result, and is scheduled for replacement by response surfaces in Phase 2.
@@ -160,6 +160,7 @@ Every test returns an object of class `ur_test` (R) / `URTestResult` (Python) wi
 
 | Field | Type | Content |
 |---|---|---|
+| `method` | string | Full name of the test, e.g. `"Augmented Dickey-Fuller test"` |
 | `test` | string | Test family, e.g. `"ADF"`, `"KPSS"` |
 | `statistic_name` | string | e.g. `"tau3"`, `"phi3"`, `"Z_tau"` |
 | `statistic` | number | Value of the statistic |
@@ -170,9 +171,10 @@ Every test returns an object of class `ur_test` (R) / `URTestResult` (Python) wi
 | `nobs` | integer | Effective sample size $N$ |
 | `sample` | pair of integers | First and last $t$ of the effective sample |
 | `critical_values` | named numbers | At least levels 0.01, 0.05, 0.10 |
+| `tail` | string | `"lower"` (rejects for small values: unit-root tests) or `"upper"` (rejects for large values: KPSS, $\phi$); critical values must be ordered consistently |
 | `p_value` | number or missing | Only when the calibration provides one; never interpolated from three critical values |
 | `calibration` | record | Method, source, approximation note (e.g. "table lookup at N=100") |
-| `level`, `reject` | number, logical | Decision at the chosen level (default 0.05) |
+| `level`, `reject` | number, logical | Decision at the chosen level (default 0.05): from the critical value at that level when available, otherwise from the p-value; an error if neither exists |
 | `other_statistics` | named numbers | e.g. the $\phi$ statistics accompanying $\tau_3$ |
 | `engine` | string | e.g. `"internal 0.1.0"`, `"urca 1.3-4"` |
 | `warnings` | strings | Small-sample and approximation warnings |
@@ -234,7 +236,7 @@ The branch logic below is the intended structure. **It must be checked line by l
 7. Test $b=0$ with $\tau_1$. Terminal.
 
 ::: {.callout-important}
-**Decision D5 (open): conditional tests.** Proposed: Student-$t$ reference with the residual degrees of freedom of the regression concerned; lower tail for $b$, two-sided for $a$ and $\gamma$. **To be settled.**
+**Decision D5 (settled): conditional tests.** Convention: Student-$t$ reference with the residual degrees of freedom of the regression concerned (asymptotically equivalent to $N(0,1)$, slightly more conservative in small samples); lower tail for $b$, two-sided for $a$ and $\gamma$.
 :::
 
 ## Conservative
@@ -261,7 +263,7 @@ Rules:
 **Case 3 (optional, experimental):** regression `c` with a non-zero drift under the null, where the $t$ statistic on $b$ is asymptotically $N(0,1)$ (West 1988). Available only as `inference = "west_normal"`. The result reports the estimated drift relative to its standard error and warns when that ratio is small, since the normal approximation is then poor.
 
 ::: {.callout-important}
-**Decision D6 (open):** threshold for the Case 3 warning, and whether Case 3 is in v0.1 or deferred.
+**Decision D6 (settled):** Case 3 is deferred to Phase 2, where it is introduced together with the Monte Carlo harness (which can show how the normal approximation degrades as the drift shrinks). The warning threshold is set then.
 :::
 
 # Validation standard {#sec-validation}
@@ -293,16 +295,16 @@ Checked against the urca 1.3-4 reference documentation. Each limitation is the d
 | — | No Ng–Perron M-tests | Internal implementation in Phase 2 |
 | all | S4 objects, no common result, no decision or provenance | `ur_test` contract over every backend |
 
-# Open decisions
+# Decisions
 
-| ID | Topic | Proposed | Status |
+| ID | Topic | Convention | Status |
 |---|---|---|---|
-| D1 | Final-regression sample after lag selection | Common sample by default | Open |
-| D2 | Detrending inside MAIC/MBIC | OLS detrending | Open |
-| D3 | Default $k_{\max}$ | Schwert $\lfloor 12(T/100)^{1/4}\rfloor$ | Open |
-| D4 | $\tau$ critical values | MacKinnon (2010) response surfaces | Open |
-| D5 | Conditional tests in strategies | Student-$t$, lower tail for $b$ | Open |
-| D6 | Hamilton Case 3 | Optional, warning threshold to be set | Open |
+| D1 | Final-regression sample after lag selection | Common sample by default; maximal as option | Settled |
+| D2 | Detrending inside MAIC/MBIC | OLS detrending | Settled |
+| D3 | Default $k_{\max}$ | Schwert $\lfloor 12(T/100)^{1/4}\rfloor$ | Settled |
+| D4 | $\tau$ critical values | MacKinnon (2010) response surfaces | Settled |
+| D5 | Conditional tests in strategies | Student-$t$, lower tail for $b$ | Settled |
+| D6 | Hamilton Case 3 | Deferred to Phase 2 | Settled |
 
 # References
 

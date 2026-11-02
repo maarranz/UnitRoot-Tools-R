@@ -6,3 +6,4 @@
 *.tar.gz
 spec/*.html
 spec/*_files/
+refs/
