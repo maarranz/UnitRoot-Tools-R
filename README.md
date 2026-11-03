@@ -23,7 +23,8 @@ remotes::install_github("maarranz/UnitRoot-Tools-R", build_vignettes = TRUE)
 
 `build_vignettes = TRUE` also builds the tutorial described below. It needs
 [pandoc](https://pandoc.org), which comes with RStudio. If you do not use
-RStudio and do not have pandoc, install without the vignette:
+RStudio and do not have pandoc, install without the vignette (it can be read
+[on the web](https://maarranz.github.io/UnitRoot-Tools-R/vignette.html)):
 
 ```r
 remotes::install_github("maarranz/UnitRoot-Tools-R")
@@ -36,7 +37,10 @@ install.packages("pak")
 pak::pak("maarranz/UnitRoot-Tools-R")
 ```
 
-To update to the latest version, run the same command again. The package needs
+To update to the latest version, run the same command again. To install a
+fixed release instead, add its tag, e.g.
+`remotes::install_github("maarranz/UnitRoot-Tools-R@v0.1.1", build_vignettes = TRUE)`
+(releases are listed in [NEWS.md](NEWS.md)). The package needs
 R 4.1 or later; its non-base dependencies,
 [urca](https://CRAN.R-project.org/package=urca) and
 [generics](https://CRAN.R-project.org/package=generics), are installed automatically.

@@ -74,7 +74,7 @@ Three conventions hold throughout:
 remotes::install_github("maarranz/UnitRoot-Tools-R", build_vignettes = TRUE)
 ```
 
-Dependencies (`urca`, `generics`) are installed automatically. Building the vignette needs [pandoc](https://pandoc.org), which comes with RStudio; without it, leave out `build_vignettes = TRUE` and read the vignette [here](vignette.html). To install a specific version, add the tag: `"maarranz/UnitRoot-Tools-R@v0.1.0"`.
+Dependencies (`urca`, `generics`) are installed automatically. Building the vignette needs [pandoc](https://pandoc.org), which comes with RStudio; without it, leave out `build_vignettes = TRUE` and read the vignette [here](vignette.html). To install a specific version, add the tag: `"maarranz/UnitRoot-Tools-R@v0.1.1"`.
 
 ```r
 library(unitroottools)
