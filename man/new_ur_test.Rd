@@ -74,7 +74,8 @@ tests), \code{"upper"} if it rejects for large values (KPSS, \eqn{\phi}).}
 one. Never interpolated from tabulated critical values.}
 
 \item{calibration}{List with \code{method} (one of \code{"table"},
-\code{"response_surface"}, \code{"conventional_t"}, \code{"bootstrap"}), \code{source}
+\code{"response_surface"}, \code{"limit_distribution"}, \code{"conventional_t"},
+\code{"bootstrap"}), \code{source}
 and, optionally, \code{note} (e.g. an approximation used) and
 \code{p_value_source} (when the p-value comes from a different source than
 the critical values).}

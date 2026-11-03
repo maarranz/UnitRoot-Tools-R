@@ -80,7 +80,7 @@ values and where they come from, and the decision.
 | `select_lags()` | Lag order by AIC, BIC, MAIC or MBIC, all candidates on the same sample, with the full table |
 | `ur_strategy()` | Choosing the deterministic terms: `"original"` (Dolado-Jenkinson-Sosvilla-Rivero / Enders), `"conservative"`, `"hamilton"`; full history of every step |
 | `pp()` | Phillips-Perron Z_τ test, with its p-value |
-| `kpss()` | KPSS test, with stationarity as the null hypothesis |
+| `kpss()` | KPSS test, with stationarity as the null hypothesis; critical values and p-value from the exact limiting distribution |
 | `dfgls()` | DF-GLS test (Elliott-Rothenberg-Stock), lags chosen by MAIC as recommended by Perron and Qu (2007), with finite-sample critical values and p-value from the package's own simulation |
 | `tidy()`, `glance()` | Results as one-row-per-statistic or one-row-per-test data frames, easy to combine across series |
 | `simulate_df()` | Monte Carlo of the Dickey-Fuller distribution, with a plot against N(0,1) |
@@ -107,10 +107,13 @@ Details that matter in practice:
   computations and urca, against 120-digit reference calculations shared with
   the Python package, critical values against statsmodels, and the
   strategies against Enders' published GDP example.
-- **Current limits.** The `kpss()` and `dfgls()` statistics are computed by
-  urca (checked against independent implementations); `pp()` is internal.
-  Bartlett kernel with "short", "long" or fixed bandwidth; no Z_α for
-  Phillips-Perron; KPSS critical values are asymptotic.
+- **Long-run variance** (for `pp()` and `kpss()`): Bartlett, Parzen or
+  Quadratic Spectral kernel; Schwert's rules, a fixed number of
+  autocovariances, or automatic bandwidths (Andrews, Newey-West).
+- **Current limits.** The `dfgls()` statistic is computed by urca (checked
+  against an independent implementation); everything else is internal. No
+  critical values for Phillips-Perron's Z_α yet; KPSS critical values are
+  asymptotic (exact).
 
 ## Forthcoming
 

@@ -3,7 +3,8 @@
 # Every test in the package returns an object of class `ur_test`, whatever
 # engine computed it. Tests build it with new_ur_test(); users do not.
 
-calibration_methods <- c("table", "response_surface", "conventional_t", "bootstrap")
+calibration_methods <- c("table", "response_surface", "limit_distribution",
+                         "conventional_t", "bootstrap")
 required_levels <- c(0.01, 0.05, 0.10)
 
 #' Unit-root test results
@@ -40,7 +41,8 @@ required_levels <- c(0.01, 0.05, 0.10)
 #' @param p_value P-value, or `NA` when the calibration does not provide
 #'   one. Never interpolated from tabulated critical values.
 #' @param calibration List with `method` (one of `"table"`,
-#'   `"response_surface"`, `"conventional_t"`, `"bootstrap"`), `source`
+#'   `"response_surface"`, `"limit_distribution"`, `"conventional_t"`,
+#'   `"bootstrap"`), `source`
 #'   and, optionally, `note` (e.g. an approximation used) and
 #'   `p_value_source` (when the p-value comes from a different source than
 #'   the critical values).
@@ -304,7 +306,7 @@ fmt_cvs <- function(cv) {
 lags_line <- function(x) {
   if (is.na(x$lags)) return(NULL)
   if (!is.null(x$bandwidth_rule)) {
-    return(sprintf("Bandwidth: %d (%s)", x$lags, x$bandwidth_rule))
+    return(sprintf("Long-run variance: %s", x$bandwidth_rule))
   }
   if (!is.null(x$lag_selection)) {
     return(sprintf("Lags: %d (%s, kmax = %d)", x$lags,

@@ -3,39 +3,6 @@
 # eq. 17.6.8), replacing urca::ur.pp (whose correction term uses y_t where the
 # published formula uses y_{t-1}).
 
-# Bartlett-kernel long-run variance of u with bandwidth l:
-# gamma_0 + 2 sum_{j=1}^{l} (1 - j/(l+1)) gamma_j, gamma_j = n^{-1} sum u_t u_{t-j}.
-bartlett_lrv <- function(u, l) {
-  n <- length(u)
-  g0 <- sum(u^2) / n
-  lrv <- g0
-  for (j in seq_len(min(l, n - 1L))) {
-    lrv <- lrv + 2 * (1 - j / (l + 1)) * sum(u[(j + 1):n] * u[1:(n - j)]) / n
-  }
-  c(gamma0 = g0, lrv = lrv)
-}
-
-# Bandwidth for Phillips-Perron: Schwert's rules applied to n = T - 1, or a
-# fixed non-negative integer.
-pp_bandwidth <- function(bandwidth, n) {
-  if (is.character(bandwidth) && length(bandwidth) == 1L &&
-      bandwidth %in% c("short", "long")) {
-    m <- if (bandwidth == "short") 4 else 12
-    return(list(l = as.integer(trunc(m * (n / 100)^(1 / 4))),
-                rule = sprintf("%s: trunc(%d ((T-1)/100)^(1/4))", bandwidth, m)))
-  }
-  if (is.numeric(bandwidth) && !is.logical(bandwidth)) {
-    l <- check_order(bandwidth, "bandwidth")
-    if (l >= n) {
-      stop("`bandwidth` = ", l, " is too large for T = ", n + 1L, ".", call. = FALSE)
-    }
-    return(list(l = l, rule = "fixed by the user"))
-  }
-  stop("`bandwidth` must be \"short\", \"long\" or a non-negative integer. ",
-       "Automatic (Newey-West, Andrews) bandwidths and kernels other than ",
-       "Bartlett are not available in this version.", call. = FALSE)
-}
-
 #' Phillips-Perron test
 #'
 #' Phillips-Perron \eqn{Z_\tau} test of a unit root. The Dickey-Fuller
@@ -57,16 +24,21 @@ pp_bandwidth <- function(bandwidth, n) {
 #' distribution. Its finite-sample distribution differs, especially with
 #' strong negative moving-average components.
 #'
-#' Limitations of this version: only \eqn{Z_\tau}; Bartlett kernel with
-#' bandwidth `"short"` or `"long"` (Schwert's rules, applied to
-#' \eqn{n = T - 1}) or fixed. Automatic bandwidths and other kernels are
-#' planned.
+#' **Long-run variance.** As in [kpss()]: kernel `"bartlett"` (default),
+#' `"parzen"` or `"qs"`; bandwidth `"short"` (default) or `"long"`
+#' (Schwert's rules applied to \eqn{n = T - 1}), a fixed number of
+#' autocovariances, `"andrews"` or `"newey-west"` (automatic).
+#'
+#' The normalized-bias statistic \eqn{Z_\alpha} is reported in
+#' `other_statistics`, without critical values.
 #'
 #' @inheritParams adf
 #' @param trend `"c"` or `"ct"` (or an alias accepted by [match_trend()]).
 #' @param level Significance level of the reported decision: 0.01, 0.05 or
 #'   0.10.
-#' @param bandwidth `"short"` (default), `"long"`, or a non-negative integer.
+#' @param kernel `"bartlett"` (default), `"parzen"` or `"qs"`.
+#' @param bandwidth `"short"` (default), `"long"`, `"andrews"`,
+#'   `"newey-west"`, or a non-negative integer number of autocovariances.
 #' @return An object of class `ur_test`.
 #' @references
 #' Hamilton, J. D. (1994). *Time Series Analysis*. Princeton University
@@ -78,22 +50,32 @@ pp_bandwidth <- function(bandwidth, n) {
 #' set.seed(1)
 #' pp(cumsum(rnorm(150)), trend = "c")
 #' @export
-pp <- function(y, trend = "c", bandwidth = "short", level = 0.05, var = NULL) {
+pp <- function(y, trend = "c", kernel = "bartlett", bandwidth = "short",
+               level = 0.05, var = NULL) {
   call <- match.call()
   check_level(level)
   y <- check_series(y, var = var)
   trend <- match_trend(trend, allowed = c("c", "ct"))
+  kernel <- check_kernel(kernel)
   n <- length(y) - 1L
-  bw <- pp_bandwidth(bandwidth, n)
 
   r <- adf_regression(y, trend, 0L, 2L)
   f <- r$fit
   u <- f$residuals
-  v <- bartlett_lrv(u, bw$l)
+  bw <- resolve_bandwidth(bandwidth, u, kernel, n_rule = n, n_label = "(T-1)")
+  if (bw$b - 1 >= n) {
+    stop("`bandwidth` is too large for T = ", n + 1L, ".", call. = FALSE)
+  }
+  v <- long_run_variance(u, kernel, bw$b)
+  g0 <- v$gamma0
+  lrv <- v$lrv
   s <- sqrt(f$sigma2)
   se_b <- f$se[["y_lag1"]]
-  stat <- sqrt(v[["gamma0"]] / v[["lrv"]]) * f$t_values[["y_lag1"]] -
-    0.5 * (v[["lrv"]] - v[["gamma0"]]) / sqrt(v[["lrv"]]) * n * se_b / s
+  stat <- sqrt(g0 / lrv) * f$t_values[["y_lag1"]] -
+    0.5 * (lrv - g0) / sqrt(lrv) * n * se_b / s
+  # normalized bias (Phillips and Perron 1988; Hamilton 1994, eq. 17.6.7)
+  z_alpha <- n * f$coefficients[["y_lag1"]] -
+    0.5 * (n^2 * se_b^2 / s^2) * (lrv - g0)
 
   coef_table <- cbind(Estimate = f$coefficients, `Std. Error` = f$se,
                       `t value` = f$t_values)
@@ -101,7 +83,7 @@ pp <- function(y, trend = "c", bandwidth = "short", level = 0.05, var = NULL) {
     method = "Phillips-Perron test", test = "PP", statistic_name = "Z_tau",
     statistic = unname(stat), null = "unit root",
     alternative = adf_alternatives[[trend]], trend = trend,
-    lags = bw$l, bandwidth_rule = bw$rule,
+    lags = v$lags_used, bandwidth_rule = bandwidth_text(kernel, bw),
     nobs = r$nobs, sample = unname(r$sample),
     critical_values = tau_critical_values(trend, r$nobs), tail = "lower",
     p_value = tau_p_value(stat, trend, r$nobs),
@@ -110,9 +92,10 @@ pp <- function(y, trend = "c", bandwidth = "short", level = 0.05, var = NULL) {
       note = sprintf("evaluated at N = %d; Z_tau has the Dickey-Fuller tau limit distribution", r$nobs),
       p_value_source = "MacKinnon (1996) finite-sample p-value for tau (urca::punitroot)"),
     level = level,
-    other_statistics = c(t_b = unname(f$t_values[["y_lag1"]]),
-                         gamma0 = unname(v[["gamma0"]]),
-                         long_run_variance = unname(v[["lrv"]])),
+    other_statistics = c(Z_alpha = unname(z_alpha),
+                         t_b = unname(f$t_values[["y_lag1"]]),
+                         gamma0 = unname(g0), long_run_variance = unname(lrv),
+                         bandwidth = unname(v$b)),
     engine = engine_internal(),
     warnings = if (r$nobs < 25L) "N is below 25." else character(),
     regression = list(coefficients = coef_table, rss = f$rss, df = f$df,

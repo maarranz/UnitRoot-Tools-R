@@ -22,15 +22,16 @@ test_that("pp(): internal Z_tau, bandwidth as urca, MacKinnon calibration (D12)"
     expect_equal(r$p_value, tau_p_value(r$statistic, trend, r$nobs))
     expect_match(r$engine, "^internal ")
   }
-  expect_match(pp(y)$bandwidth_rule, "short: trunc\\(4 \\(\\(T-1\\)/100\\)")
-  expect_identical(pp(y, bandwidth = 2)$bandwidth_rule, "fixed by the user")
+  expect_match(pp(y)$bandwidth_rule, "short rule, trunc\\(4 \\(\\(T-1\\)/100\\)", fixed = FALSE)
+  expect_identical(pp(y, bandwidth = 2)$bandwidth_rule,
+                   "Bartlett kernel, 2 autocovariances (fixed by the user)")
   expect_error(pp(y[1:10], bandwidth = 9), "too large")
   # with bandwidth 0 there is no correction: Z_tau is the Dickey-Fuller t ratio
   expect_equal(pp(y, bandwidth = 0)$statistic,
                adf(y, trend = "c", lags = 0)$statistic, tolerance = 1e-12)
 })
 
-test_that("kpss() returns urca's statistic with upper-tail decisions", {
+test_that("kpss(): internal statistic equals urca's; exact asymptotic critical values (D14)", {
   y <- sim_rw()
   for (trend in c("c", "ct")) {
     r <- kpss(y, trend = trend)
@@ -38,8 +39,11 @@ test_that("kpss() returns urca's statistic with upper-tail decisions", {
     expect_equal(r$statistic, unname(u@teststat), tolerance = 1e-12)
     expect_identical(r$tail, "upper")
     expect_identical(r$alternative, "unit root")
+    # Kwiatkowski et al.'s simulated table (used by urca) is close but not exact
     expect_equal(unname(r$critical_values[c("0.1", "0.05", "0.025", "0.01")]),
-                 unname(u@cval[1, ]))
+                 unname(u@cval[1, ]), tolerance = 0.015)
+    expect_match(r$engine, "^internal ")
+    expect_true(r$p_value > 0 && r$p_value < 1)
     expect_identical(r$reject, r$statistic > r$critical_values[["0.05"]])
   }
   expect_identical(kpss(y)$statistic_name, "eta_mu")
@@ -76,12 +80,13 @@ test_that("dfgls() selects lags by Perron-Qu: MAIC on the OLS-detrended series (
   expect_match(capture.output(print(dfgls(y))), "Lags: \\d+ \\(MAIC, kmax = 14\\)", all = FALSE)
 })
 
-test_that("adapters check inputs before calling urca", {
+test_that("inputs are checked before any computation", {
   y <- sim_rw()
   expect_error(pp(c(y, NA)), "missing or non-finite")
   expect_error(dfgls(c(NA, y), lags = 1), "missing or non-finite")    # urca would drop it
   expect_error(pp(y, trend = "n"), "not available here")
-  expect_error(kpss(y, bandwidth = "andrews"), "not available in this version")
+  expect_error(kpss(y, bandwidth = "automatic"), "must be \"short\"")
+  expect_error(kpss(y, kernel = "tukey"), "`kernel` must be one of")
   expect_error(kpss(y, bandwidth = 1.5), "non-negative whole number")
 })
 
@@ -89,5 +94,5 @@ test_that("adapter results print like every other test", {
   out <- capture.output(print(kpss(sim_rw(), trend = "ct")))
   expect_match(out, "KPSS test of stationarity \\(eta_tau\\)", all = FALSE)
   expect_match(out, "H0: stationary around a linear trend", all = FALSE)
-  expect_match(out, "Bandwidth: \\d+ \\(short", all = FALSE)
+  expect_match(out, "Long-run variance: Bartlett kernel, \\d+ autocovariances \\(short rule", all = FALSE)
 })

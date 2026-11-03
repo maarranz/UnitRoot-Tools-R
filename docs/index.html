@@ -346,8 +346,9 @@ finite-sample critical values and p-value (urca’s are too liberal: about
 <td style="text-align: left;"><code>kpss()</code></td>
 <td style="text-align: left;"><code>urca::ur.kpss()</code>,
 <code>tseries::kpss.test()</code></td>
-<td style="text-align: left;">Same statistic (checked), common result
-format</td>
+<td style="text-align: left;">Same statistic; kernels and automatic
+bandwidths; critical values and p-value from the exact limiting
+distribution (the published table is off in the third decimal)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"><code>tidy()</code>,
@@ -473,12 +474,13 @@ procedure.</p>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">kpss</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>)     <span class="co"># KPSS: H0 is stationarity</span></span></code></pre></div>
 <ul>
 <li><strong><code>pp()</code></strong> corrects the Dickey–Fuller t
-ratio for serial correlation with a Bartlett long-run variance (Phillips
-and Perron 1988; Hamilton 1994, eq. 17.6.8). Bandwidth
-<code>&quot;short&quot;</code>, <code>&quot;long&quot;</code> (Schwert’s rules on
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">T-1</annotation></semantics></math>)
-or a number. Critical values and p-value as for
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>τ</mi><annotation encoding="application/x-tex">\tau</annotation></semantics></math>.</li>
+ratio for serial correlation with a kernel estimate of the long-run
+variance (Phillips and Perron 1988; Hamilton 1994, eq. 17.6.8). Critical
+values and p-value as for
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>τ</mi><annotation encoding="application/x-tex">\tau</annotation></semantics></math>;
+the normalized-bias statistic
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Z</mi><mi>α</mi></msub><annotation encoding="application/x-tex">Z_\alpha</annotation></semantics></math>
+is reported alongside.</li>
 <li><strong><code>dfgls()</code></strong> detrends by GLS
 (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><mi>c</mi><mo accent="true">‾</mo></mover><mo>=</mo><mo>−</mo><mn>7</mn></mrow><annotation encoding="application/x-tex">\bar c = -7</annotation></semantics></math>
 or
@@ -489,8 +491,17 @@ p-value come from the package’s own finite-sample simulation over the
 sample size and the number of lags (out-of-sample size at 5%:
 4.8–5.3%).</li>
 <li><strong><code>kpss()</code></strong> reverses the hypotheses:
-rejection is evidence <em>against</em> stationarity. Asymptotic critical
-values of Kwiatkowski et al. (1992), no p-value.</li>
+rejection is evidence <em>against</em> stationarity. Critical values and
+p-value from the exact limiting distribution (eigenvalues of the
+Brownian-bridge covariance kernel and Imhof’s formula).</li>
+<li><strong>Long-run variance</strong> (<code>pp()</code> and
+<code>kpss()</code>): <code>kernel = &quot;bartlett&quot;</code> (default),
+<code>&quot;parzen&quot;</code> or <code>&quot;qs&quot;</code>;
+<code>bandwidth = &quot;short&quot;</code> (default) or <code>&quot;long&quot;</code>
+(Schwert’s rules), a number of autocovariances, <code>&quot;andrews&quot;</code>
+(Andrews 1991) or <code>&quot;newey-west&quot;</code> (Newey and West 1994). For
+KPSS, Hobijn, Franses and Ooms (2004) recommend
+<code>kernel = &quot;qs&quot;, bandwidth = &quot;newey-west&quot;</code>.</li>
 </ul>
 <h2 id="results-as-data-frames">Results as data frames</h2>
 <p><code>glance()</code> gives one row per test, <code>tidy()</code> one
@@ -551,8 +562,9 @@ surfaces</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">KPSS</td>
-<td style="text-align: left;">Kwiatkowski et al. (1992), asymptotic</td>
-<td style="text-align: left;">none</td>
+<td style="text-align: left;">Exact limiting distribution (kernel
+eigenvalues, Imhof inversion)</td>
+<td style="text-align: left;">same distribution</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Conditional and auxiliary t tests in
@@ -598,9 +610,11 @@ decision, step by step</td>
 <td style="text-align: left;"><code>ur_strategy</code></td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><code>pp(y, trend, bandwidth, level, var)</code></td>
+<td style="text-align: left;"><code>pp(y, trend, kernel, bandwidth, level, var)</code></td>
 <td style="text-align: left;">Phillips–Perron
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Z</mi><mi>τ</mi></msub><annotation encoding="application/x-tex">Z_\tau</annotation></semantics></math></td>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Z</mi><mi>τ</mi></msub><annotation encoding="application/x-tex">Z_\tau</annotation></semantics></math>
+(and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Z</mi><mi>α</mi></msub><annotation encoding="application/x-tex">Z_\alpha</annotation></semantics></math>)</td>
 <td style="text-align: left;"><code>ur_test</code></td>
 </tr>
 <tr class="odd">
@@ -609,7 +623,7 @@ decision, step by step</td>
 <td style="text-align: left;"><code>ur_test</code></td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><code>kpss(y, trend, bandwidth, level, var)</code></td>
+<td style="text-align: left;"><code>kpss(y, trend, kernel, bandwidth, level, var)</code></td>
 <td style="text-align: left;">KPSS test of stationarity</td>
 <td style="text-align: left;"><code>ur_test</code></td>
 </tr>

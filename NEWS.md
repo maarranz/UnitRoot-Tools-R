@@ -1,5 +1,19 @@
 # unitroottools (development version)
 
+* New long-run-variance module (decision D13) for `pp()` and `kpss()`:
+  Bartlett, Parzen and Quadratic Spectral kernels (`kernel =`), and
+  automatic bandwidths `bandwidth = "andrews"` (Andrews, 1991) and
+  `"newey-west"` (Newey and West, 1994), besides Schwert's rules and fixed
+  values. Defaults are unchanged.
+* `kpss()` is computed internally, no longer by urca, and now reports a
+  p-value. Its critical values and p-value come from the exact limiting
+  distribution (decision D14); Kwiatkowski et al.'s simulated table, used
+  before, differs in the third decimal (e.g. 0.146 instead of 0.148 at 5%
+  with a trend).
+* `pp()` also reports the normalized-bias statistic Z_alpha (in
+  `other_statistics`, without critical values).
+* Results of `pp()` and `kpss()` describe the long-run variance used
+  ("Bartlett kernel, 4 autocovariances (short rule, ...)").
 * The DF-GLS response surfaces are also available as a language-neutral
   file, `inst/fixtures/dfgls_response_surfaces.json`, with reference values,
   so that the Python package can share the same calibration.

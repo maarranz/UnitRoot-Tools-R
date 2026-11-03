@@ -14,7 +14,8 @@
 # paired pattern in k (orders 2j and 2j+1 have nearly equal quantiles in
 # small samples) rules out smooth polynomials in k.
 #
-# Output: R/sysdata.rda with `dfgls_rs`.
+# Output: data-raw/dfgls_rs.rds (`dfgls_rs`); R/sysdata.rda is assembled by
+# make_sysdata.R.
 
 read_q <- function(f) if (file.exists(f)) read.csv(f) else NULL
 d <- rbind(read_q("dfgls_quantiles.csv.gz"), read_q("dfgls_quantiles_ext.csv.gz"))
@@ -56,5 +57,5 @@ for (tr in names(dfgls_rs)) {
 }
 if (!interactive()) {
   out <- commandArgs(trailingOnly = TRUE)
-  if (length(out)) save(dfgls_rs, file = out[1], compress = "xz")
+  if (length(out)) saveRDS(dfgls_rs, out[1])   # then run make_sysdata.R
 }

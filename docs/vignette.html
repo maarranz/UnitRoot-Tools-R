@@ -423,7 +423,7 @@ statistics, with their own critical values, and the test regression:</p>
 <span id="cb3-33"><a href="#cb3-33" tabindex="-1"></a><span class="co">#&gt; y_lag1  -0.0156305  1.050e-02  -1.489</span></span>
 <span id="cb3-34"><a href="#cb3-34" tabindex="-1"></a><span class="co">#&gt; dy_lag1  0.3662619  5.848e-02   6.263</span></span>
 <span id="cb3-35"><a href="#cb3-35" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb3-36"><a href="#cb3-36" tabindex="-1"></a><span class="co">#&gt; Engine: internal 0.1.1</span></span></code></pre></div>
+<span id="cb3-36"><a href="#cb3-36" tabindex="-1"></a><span class="co">#&gt; Engine: internal 0.1.1.9000</span></span></code></pre></div>
 </div>
 <div id="choosing-the-number-of-lags" class="section level2">
 <h2>2. Choosing the number of lags</h2>
@@ -578,7 +578,7 @@ null hypothesis</strong>: it tests stationarity against a unit root.</p>
 <span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt;   H0: unit root</span></span>
 <span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt;   H1: stationary around a linear trend</span></span>
 <span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt;   Deterministics: constant and linear trend</span></span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">#&gt;   Bandwidth: 5 (short: trunc(4 ((T-1)/100)^(1/4)))</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">#&gt;   Long-run variance: Bartlett kernel, 5 autocovariances (short rule, trunc(4 ((T-1)/100)^(1/4)))</span></span>
 <span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&gt;   Effective sample: N = 263 (t = 2, ..., 264)</span></span>
 <span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="co">#&gt;   Statistic:        -1.111</span></span>
@@ -608,14 +608,15 @@ null hypothesis</strong>: it tests stationarity against a unit root.</p>
 <span id="cb9-34"><a href="#cb9-34" tabindex="-1"></a><span class="co">#&gt;   H0: stationary around a linear trend</span></span>
 <span id="cb9-35"><a href="#cb9-35" tabindex="-1"></a><span class="co">#&gt;   H1: unit root</span></span>
 <span id="cb9-36"><a href="#cb9-36" tabindex="-1"></a><span class="co">#&gt;   Deterministics: constant and linear trend</span></span>
-<span id="cb9-37"><a href="#cb9-37" tabindex="-1"></a><span class="co">#&gt;   Bandwidth: 5 (short: trunc(4 (T/100)^(1/4)))</span></span>
+<span id="cb9-37"><a href="#cb9-37" tabindex="-1"></a><span class="co">#&gt;   Long-run variance: Bartlett kernel, 5 autocovariances (short rule, trunc(4 (T/100)^(1/4)))</span></span>
 <span id="cb9-38"><a href="#cb9-38" tabindex="-1"></a><span class="co">#&gt;   Effective sample: N = 264 (t = 1, ..., 264)</span></span>
 <span id="cb9-39"><a href="#cb9-39" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb9-40"><a href="#cb9-40" tabindex="-1"></a><span class="co">#&gt;   Statistic:        0.701</span></span>
-<span id="cb9-41"><a href="#cb9-41" tabindex="-1"></a><span class="co">#&gt;   Critical values:  1%: 0.216   2.5%: 0.176   5%: 0.146   10%: 0.119</span></span>
-<span id="cb9-42"><a href="#cb9-42" tabindex="-1"></a><span class="co">#&gt;   Source:           Kwiatkowski et al. (1992), Table 1</span></span>
-<span id="cb9-43"><a href="#cb9-43" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb9-44"><a href="#cb9-44" tabindex="-1"></a><span class="co">#&gt;   Decision at 5%: reject H0 (stationary around a linear trend)</span></span></code></pre></div>
+<span id="cb9-41"><a href="#cb9-41" tabindex="-1"></a><span class="co">#&gt;   Critical values:  1%: 0.218   2.5%: 0.177   5%: 0.148   10%: 0.119</span></span>
+<span id="cb9-42"><a href="#cb9-42" tabindex="-1"></a><span class="co">#&gt;   Source:           exact limiting distribution (kernel eigenvalues, Imhof inversion)</span></span>
+<span id="cb9-43"><a href="#cb9-43" tabindex="-1"></a><span class="co">#&gt;   p-value:          &lt; 0.001</span></span>
+<span id="cb9-44"><a href="#cb9-44" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb9-45"><a href="#cb9-45" tabindex="-1"></a><span class="co">#&gt;   Decision at 5%: reject H0 (stationary around a linear trend)</span></span></code></pre></div>
 <p>Two details of <code>dfgls()</code>. Without <code>lags</code>, the
 number of lagged differences is chosen as recommended by Perron and Qu
 (2007): by MAIC, exactly as for <code>adf()</code>, on the series
@@ -641,11 +642,11 @@ and trend:</p>
 <span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>              <span class="fu">dfgls</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>), <span class="fu">kpss</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>))</span>
 <span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(tests, glance))</span>
 <span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>res[, <span class="fu">c</span>(<span class="st">&quot;test&quot;</span>, <span class="st">&quot;statistic_name&quot;</span>, <span class="st">&quot;statistic&quot;</span>, <span class="st">&quot;p_value&quot;</span>, <span class="st">&quot;reject&quot;</span>, <span class="st">&quot;lags&quot;</span>, <span class="st">&quot;nobs&quot;</span>)]</span>
-<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co">#&gt;     test statistic_name  statistic   p_value reject lags nobs</span></span>
-<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co">#&gt; 1    ADF           tau3 -1.4891169 0.8311624  FALSE    1  262</span></span>
-<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co">#&gt; 2     PP          Z_tau -1.1105222 0.9243191  FALSE    5  263</span></span>
-<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co">#&gt; 3 DF-GLS        tau_GLS -1.0192578 0.8624955  FALSE    1  262</span></span>
-<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="co">#&gt; 4   KPSS        eta_tau  0.7007647        NA   TRUE    5  264</span></span></code></pre></div>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co">#&gt;     test statistic_name  statistic      p_value reject lags nobs</span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co">#&gt; 1    ADF           tau3 -1.4891169 8.311624e-01  FALSE    1  262</span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co">#&gt; 2     PP          Z_tau -1.1105222 9.243191e-01  FALSE    5  263</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co">#&gt; 3 DF-GLS        tau_GLS -1.0192578 8.624955e-01  FALSE    1  262</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="co">#&gt; 4   KPSS        eta_tau  0.7007647 3.858184e-07   TRUE    5  264</span></span></code></pre></div>
 <p><code>tidy()</code> shows the accompanying statistics as well, for
 instance the
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ϕ</mi><annotation encoding="application/x-tex">\phi</annotation></semantics></math>

@@ -4,7 +4,14 @@
 \alias{pp}
 \title{Phillips-Perron test}
 \usage{
-pp(y, trend = "c", bandwidth = "short", level = 0.05, var = NULL)
+pp(
+  y,
+  trend = "c",
+  kernel = "bartlett",
+  bandwidth = "short",
+  level = 0.05,
+  var = NULL
+)
 }
 \arguments{
 \item{y}{A univariate time series: numeric vector, \code{ts}, \code{zoo}/\code{xts}, or a
@@ -12,7 +19,10 @@ data frame, tibble or tsibble (see \code{var}).}
 
 \item{trend}{\code{"c"} or \code{"ct"} (or an alias accepted by \code{\link[=match_trend]{match_trend()}}).}
 
-\item{bandwidth}{\code{"short"} (default), \code{"long"}, or a non-negative integer.}
+\item{kernel}{\code{"bartlett"} (default), \code{"parzen"} or \code{"qs"}.}
+
+\item{bandwidth}{\code{"short"} (default), \code{"long"}, \code{"andrews"},
+\code{"newey-west"}, or a non-negative integer number of autocovariances.}
 
 \item{level}{Significance level of the reported decision: 0.01, 0.05 or
 0.10.}
@@ -43,10 +53,13 @@ effective sample size, as in \code{\link[=adf]{adf()}}): \eqn{Z_\tau} has the sa
 distribution. Its finite-sample distribution differs, especially with
 strong negative moving-average components.
 
-Limitations of this version: only \eqn{Z_\tau}; Bartlett kernel with
-bandwidth \code{"short"} or \code{"long"} (Schwert's rules, applied to
-\eqn{n = T - 1}) or fixed. Automatic bandwidths and other kernels are
-planned.
+\strong{Long-run variance.} As in \code{\link[=kpss]{kpss()}}: kernel \code{"bartlett"} (default),
+\code{"parzen"} or \code{"qs"}; bandwidth \code{"short"} (default) or \code{"long"}
+(Schwert's rules applied to \eqn{n = T - 1}), a fixed number of
+autocovariances, \code{"andrews"} or \code{"newey-west"} (automatic).
+
+The normalized-bias statistic \eqn{Z_\alpha} is reported in
+\code{other_statistics}, without critical values.
 }
 \examples{
 set.seed(1)
