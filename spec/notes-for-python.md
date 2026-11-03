@@ -21,7 +21,7 @@ Simulated size of ARCH's 5% critical value (40,000 replications, random-walk nul
 
 With k = 0 ARCH is fine (4.6–4.8%). MAIC usually selects k > 0 in applied work, so this matters.
 
-R (Decision D11) uses its own surfaces q_p(T, k) = θ∞ + a_k/T + b_k/T² + c_k/T³ (one cubic per k; T = 25, …, 1000; k = 0, …, 21; 117 probabilities); out-of-sample size 4.8–5.3%. Simulation code and output are in `data-raw/` (CSV of simulated quantiles with standard errors, language-neutral). **Suggestion:** Python reads the same coefficients (they can be exported as JSON in `inst/fixtures/`), so both implementations share one calibration.
+R (Decision D11) uses its own surfaces q_p(T, k) = θ∞ + a_k/T + b_k/T² + c_k/T³ (one cubic per k; T = 25, …, 1000; k = 0, …, 21; 117 probabilities); out-of-sample size 4.8–5.3%. Simulation code and output are in `data-raw/` (CSV of simulated quantiles with standard errors, language-neutral). **Suggestion:** Python reads the same coefficients from `inst/fixtures/dfgls_response_surfaces.json` (R repo), so both implementations share one calibration. The file says how to evaluate critical values and p-values and what to do outside the design, and includes 66 reference values; a 30-line NumPy reader reproduces them to 3 × 10⁻¹⁴.
 
 Found on the way: in small samples the quantiles for k = 2j and k = 2j + 1 are nearly equal (a paired pattern, confirmed with independent code). Polynomials in k cannot fit it; per-k surfaces can.
 

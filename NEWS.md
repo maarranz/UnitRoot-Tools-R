@@ -1,3 +1,9 @@
+# unitroottools (development version)
+
+* The DF-GLS response surfaces are also available as a language-neutral
+  file, `inst/fixtures/dfgls_response_surfaces.json`, with reference values,
+  so that the Python package can share the same calibration.
+
 # unitroottools 0.1.1
 
 ## Bug fix

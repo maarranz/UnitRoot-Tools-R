@@ -45,3 +45,23 @@ test_that("dfgls() reports own critical values, p-value and design warnings", {
   expect_equal(dfgls_critical_values("c", 40, 12), dfgls_critical_values("c", 100, 12))
   expect_match(dfgls(y, trend = "c", lags = 25)$warnings, "exceeds the largest", all = FALSE)
 })
+
+test_that("the shared JSON surfaces are R's surfaces, and reproduce the reference values", {
+  skip_if_not_installed("jsonlite")
+  j <- jsonlite::read_json(system.file("fixtures", "dfgls_response_surfaces.json",
+                                       package = "unitroottools"))
+  for (tr in c("c", "ct")) {
+    r <- dfgls_rs[[tr]]
+    jt <- j$trends[[tr]]
+    expect_identical(unlist(jt$intercept), r$intercept)
+    expect_identical(unlist(jt$probs), r$probs)
+    for (a in seq_along(r$ks)) for (b in c(1L, 50L, length(r$probs))) {
+      expect_identical(unlist(jt$slopes[[a]][[b]]), unname(r$slopes[a, b, ]))
+    }
+  }
+  for (row in j$reference_values$rows) {
+    cv <- dfgls_critical_values(row$trend, row$T, row$k)
+    expect_equal(unname(cv), c(row$cv01, row$cv05, row$cv10), tolerance = 1e-12)
+    expect_equal(dfgls_p_value(row$stat, row$trend, row$T, row$k), row$p, tolerance = 1e-12)
+  }
+})
