@@ -156,3 +156,17 @@ test_that("print shows the source of the critical values", {
   out <- capture.output(print(make_result()))
   expect_match(out, "Source:\\s+MacKinnon \\(2010\\)", all = FALSE)
 })
+
+test_that("test functions return their result visibly (they print at the console)", {
+  set.seed(1)
+  y <- cumsum(stats::rnorm(80))
+  expect_true(withVisible(adf(y, lags = 1))$visible)
+  expect_true(withVisible(adf(y))$visible)
+  expect_true(withVisible(pp(y))$visible)
+  expect_true(withVisible(kpss(y))$visible)
+  expect_true(withVisible(dfgls(y))$visible)
+  expect_true(withVisible(ur_strategy(y, "original"))$visible)
+  expect_true(withVisible(select_lags(y))$visible)
+  expect_true(withVisible(simulate_df(T = 30, R = 100, seed = 1))$visible)
+  expect_output(print(adf(y, lags = 1)), "Augmented Dickey-Fuller")
+})

@@ -43,8 +43,14 @@ adf(lgdp, trend = "ct", lags = 1)
 
 Every result states the hypotheses in words, the deterministic terms, how
 many lags were used and how they were chosen, the effective sample, the
-critical values, and the decision. `summary()` adds where the critical values
-come from, the accompanying $\phi$ statistics and the test regression:
+critical values and where they come from, the p-value, and the decision. The
+critical values are MacKinnon's, computed for the actual sample size rather
+than read from a table; the p-value (MacKinnon, 1996) is computed for the
+same sample size, so the two always agree. The decision is taken from the
+critical value.
+
+`summary()` adds the accompanying $\phi$ statistics, with their own critical
+values, and the test regression:
 
 ```{r}
 summary(adf(lgdp, trend = "ct", lags = 1))
@@ -54,14 +60,19 @@ summary(adf(lgdp, trend = "ct", lags = 1))
 
 If `lags` is not given, the number of lagged differences is chosen by an
 information criterion; the default is the modified AIC (MAIC) of Ng and Perron
-(2001). All candidate lag orders are compared **on the same observations**,
-and the whole table is shown, not only the winner:
+(2001). The candidates are $k = 0, \dots, k_{\max}$, with Schwert's rule
+$k_{\max} = \lfloor 12 (T/100)^{1/4} \rfloor$ unless you give `max_lags`.
+All candidates are compared **on the same observations**, and the whole table
+is shown, not only the winner:
 
 ```{r}
 select_lags(lgdp, trend = "ct")
 ```
 
-`adf()` uses this selection automatically:
+`adf()` uses this selection automatically. Once the order is chosen, the
+test regression is re-estimated with all the observations available for that
+order (here, the first two are lost instead of $k_{\max} + 1 = 16$); use
+`final_sample = "common"` to keep the sample of the selection table instead.
 
 ```{r}
 adf(lgdp, trend = "ct")
@@ -107,6 +118,12 @@ Note that the history separates rejections of the unit root from rejections
 that only decide the *path* (the $\phi$ tests and the tests of the
 deterministic terms).
 
+Each step has its own p-value (there is none for the $\phi$ tests, whose
+critical values come from tables). These p-values describe each test on its
+own. The procedure as a whole has no known size: it is a sequence of tests,
+each conditional on the results of the previous ones, so no p-value is given
+for it.
+
 ## 4. Other tests
 
 The Phillips-Perron test corrects for serial correlation non-parametrically
@@ -116,14 +133,47 @@ stationarity against a unit root.
 
 ```{r}
 pp(lgdp, trend = "ct")
-dfgls(lgdp, trend = "ct", lags = 1)
+dfgls(lgdp, trend = "ct")
 kpss(lgdp, trend = "ct")
 ```
+
+Two details of `dfgls()`. Without `lags`, the number of lagged differences is
+chosen as recommended by Perron and Qu (2007): by MAIC, exactly as for
+`adf()`, on the series detrended by ordinary least squares; the DF-GLS
+statistic is then computed with that number of lags. And its critical values
+and p-value come from this package's own simulations: in samples of usual
+size the DF-GLS statistic has a heavier left tail than its limit
+distribution, and the asymptotic critical values used by other software
+reject a true unit root too often (about 8% of the time at the 5% level with
+$T = 100$ and a constant).
 
 A non-rejection is not evidence for the null. Using tests with both nulls is
 one way to see how strong the evidence is in each direction.
 
-## 5. Why special critical values?
+## 5. Collecting results in a table
+
+`glance()` turns a test into one row of a data frame and `tidy()` gives one
+row per statistic, so results are easy to compare or to save. For example,
+the four tests on log GDP with constant and trend:
+
+```{r}
+tests <- list(adf(lgdp, trend = "ct"), pp(lgdp, trend = "ct"),
+              dfgls(lgdp, trend = "ct"), kpss(lgdp, trend = "ct"))
+res <- do.call(rbind, lapply(tests, glance))
+res[, c("test", "statistic_name", "statistic", "p_value", "reject", "lags", "nobs")]
+```
+
+`tidy()` shows the accompanying statistics as well, for instance the $\phi$
+statistics of the ADF test:
+
+```{r}
+tidy(adf(lgdp, trend = "ct"))[, c("statistic_name", "statistic", "critical_value", "p_value", "reject")]
+```
+
+The same functions work on a strategy: `glance()` gives its outcome in one
+row and `tidy()` its history.
+
+## 6. Why special critical values?
 
 Under the unit-root null, the t ratio of $b$ does **not** have a normal or
 Student t distribution. `simulate_df()` shows this by simulation:
@@ -138,7 +188,7 @@ The simulated quantiles agree with MacKinnon's critical values, which are far
 to the left of the normal ones. Using the normal 5% value would reject a true
 unit root much more often than 5% of the time.
 
-## 6. Data formats
+## 7. Data formats
 
 The functions accept numeric vectors, `ts`, `zoo` and `xts` series, data
 frames, tibbles and tsibbles. When there are several numeric columns, name

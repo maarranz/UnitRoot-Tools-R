@@ -1,5 +1,11 @@
 # unitroottools (development version)
 
+## Bug fix
+
+* `adf()`, `pp()`, `kpss()` and `dfgls()` returned their result invisibly
+  since 0.1.0, so calling them at the console (or in the vignette) printed
+  nothing. Results are returned visibly again; a test guards against this.
+
 ## Changes from the Phase 2A reconciliation with the Python implementation
 
 These follow decisions D1, D3 and D7-D10 of the specification
@@ -34,6 +40,8 @@ These follow decisions D1, D3 and D7-D10 of the specification
   auxiliary t tests; none for the phi tables).
 * `plot()` of `simulate_df()` results is readable at small sizes, and the
   vignette draws its figures larger.
+* The vignette covers p-values, automatic lag selection in `dfgls()`, the
+  per-step p-values of strategies, and `tidy()`/`glance()`.
 
 ## Phase 2B audit
 

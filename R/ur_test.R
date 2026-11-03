@@ -104,6 +104,7 @@ new_ur_test <- function(method, test, statistic_name, statistic,
   x$reject <- ur_decision(x$statistic, x$critical_values, x$tail,
                           x$p_value, x$level)
   validate_ur_test(x)
+  x   # returned visibly, so that adf(y) etc. print at the console
 }
 
 # Whole numbers are converted to integer only if they are exactly whole;
