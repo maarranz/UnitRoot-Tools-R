@@ -58,11 +58,32 @@ test_that("kpss() and dfgls() statistics match the published formulas", {
   }
 })
 
-test_that("pp(): urca's Z_tau uses sums over y_t, not y_{t-1} (known deviation)", {
+# Phillips-Perron Z_tau written independently (Hamilton 1994, eq. 17.6.8):
+# levels regression y_t on (1, [t - n/2], y_{t-1}).
+pp_indep <- function(y, trend, l) {
+  T <- length(y); yt <- y[-1]; yl <- y[-T]; n <- T - 1
+  X <- if (trend == "c") cbind(1, yl) else cbind(1, seq_len(n) - n / 2, yl)
+  f <- stats::lm.fit(X, yt); u <- f$residuals; k <- ncol(X)
+  s2 <- sum(u^2) / (n - k)
+  se_rho <- sqrt(s2 * chol2inv(qr.R(qr(X)))[k, k])
+  t_rho <- (f$coefficients[k] - 1) / se_rho
+  v <- bartlett_lrv(u, l)
+  unname(sqrt(v[["g0"]] / v[["lrv"]]) * t_rho -
+           0.5 * (v[["lrv"]] - v[["g0"]]) / sqrt(v[["lrv"]]) * n * se_rho / sqrt(s2))
+}
+
+test_that("pp() follows the published Phillips-Perron formula (D12)", {
   set.seed(43)
+  for (T in c(30, 120, 264)) {
+    y <- as.numeric(cumsum(0.1 + stats::arima.sim(list(ma = -0.4), n = T)))
+    for (tr in c("c", "ct")) for (bw in list("short", "long", 0L, 5L)) {
+      p <- pp(y, trend = tr, bandwidth = bw)
+      expect_equal(p$statistic, pp_indep(y, tr, p$lags), tolerance = 1e-10)
+    }
+  }
+  # urca's version (sums over y_t) differs visibly at T = 30
   y <- cumsum(stats::rnorm(30))
   p <- pp(y, trend = "c")
-  expect_equal(p$statistic, pp_c(y, p$lags, lagged = FALSE), tolerance = 1e-10)
-  # the published formula gives a visibly different value at T = 30
-  expect_gt(abs(p$statistic - pp_c(y, p$lags, lagged = TRUE)), 1e-3)
+  expect_equal(p$statistic, pp_c(y, p$lags, lagged = TRUE), tolerance = 1e-10)
+  expect_gt(abs(p$statistic - pp_c(y, p$lags, lagged = FALSE)), 1e-3)
 })

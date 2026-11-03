@@ -37,6 +37,11 @@ These follow decisions D1, D3 and D7-D10 of the specification
   published formula in small samples. Fixes are proposed in the
   specification (D11, D12).
 * `pp()` now reports its bandwidth rule as applied by urca, to T - 1.
+* `pp()` is now computed internally (decision D12), following Phillips and
+  Perron (1988) and Hamilton (1994, eq. 17.6.8); urca's `ur.pp()` is no
+  longer used. Values differ from earlier versions by O(1/T) (about 0.1 at
+  T = 30, 0.02 at T = 264). `pp()` now reports a p-value (MacKinnon, 1996)
+  and the long-run variance it used.
 
 # unitroottools 0.1.0
 

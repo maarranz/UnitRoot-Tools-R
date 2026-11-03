@@ -30,63 +30,6 @@ bandwidth_args <- function(bandwidth) {
        "Bartlett are not available in this version.", call. = FALSE)
 }
 
-#' Phillips-Perron test
-#'
-#' Phillips-Perron \eqn{Z_\tau} test of a unit root, with the long-run
-#' variance estimated by a Bartlett kernel. Computed by [urca::ur.pp()].
-#'
-#' Critical values are MacKinnon's response surfaces for \eqn{\tau} evaluated
-#' at the effective sample size (as in [adf()]): \eqn{Z_\tau} has the same
-#' limiting distribution as the Dickey-Fuller \eqn{\tau}.
-#'
-#' Limitations of this version (backend: urca): only \eqn{Z_\tau} (urca does
-#' not provide critical values for \eqn{Z_\alpha}); constant or constant and
-#' trend; Bartlett kernel with bandwidth `"short"`, `"long"` (Schwert's rules,
-#' applied to \eqn{n = T - 1}) or fixed. urca's correction term uses sums
-#' over \eqn{y_t} where Phillips and Perron (1988) use \eqn{y_{t-1}}; the
-#' difference vanishes as \eqn{T} grows but reaches about 0.1 at
-#' \eqn{T = 30}. An internal implementation is planned.
-#'
-#' @inheritParams adf
-#' @param trend `"c"` or `"ct"` (or an alias accepted by [match_trend()]).
-#' @param level Significance level of the reported decision: 0.01, 0.05 or
-#'   0.10.
-#' @param bandwidth `"short"` (default), `"long"`, or a non-negative integer.
-#' @return An object of class `ur_test`.
-#' @references
-#' Phillips, P. C. B. and Perron, P. (1988). Testing for a unit root in time
-#' series regression. *Biometrika*, 75, 335-346.
-#' @examples
-#' set.seed(1)
-#' pp(cumsum(rnorm(150)), trend = "c")
-#' @export
-pp <- function(y, trend = "c", bandwidth = "short", level = 0.05, var = NULL) {
-  call <- match.call()
-  check_level(level)
-  y <- check_series(y, var = var)
-  trend <- match_trend(trend, allowed = c("c", "ct"))
-  bw <- bandwidth_args(bandwidth)
-  bw$rule <- sub("n/100", "(T-1)/100", bw$rule, fixed = TRUE)
-  u <- urca::ur.pp(y, type = "Z-tau",
-                   model = if (trend == "c") "constant" else "trend",
-                   lags = bw$lags, use.lag = bw$use.lag)
-  n <- length(y)
-  nobs <- n - 1L
-  new_ur_test(
-    method = "Phillips-Perron test", test = "PP", statistic_name = "Z_tau",
-    statistic = unname(u@teststat), null = "unit root",
-    alternative = adf_alternatives[[trend]], trend = trend,
-    lags = u@lag, bandwidth_rule = bw$rule,
-    nobs = nobs, sample = c(2L, n),
-    critical_values = tau_critical_values(trend, nobs), tail = "lower",
-    calibration = list(
-      method = "response_surface", source = mackinnon_source[[trend]],
-      note = sprintf("evaluated at N = %d; Z_tau has the Dickey-Fuller tau limit distribution", nobs)),
-    level = level, engine = engine_urca(),
-    warnings = if (nobs < 25L) "N is below 25." else character(),
-    call = call)
-}
-
 #' KPSS test of stationarity
 #'
 #' Kwiatkowski-Phillips-Schmidt-Shin test of the null hypothesis that the

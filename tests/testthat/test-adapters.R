@@ -5,7 +5,7 @@ sim_rw <- function(n = 150, seed = 8) {
   cumsum(stats::rnorm(n))
 }
 
-test_that("pp() returns urca's Z_tau with MacKinnon critical values", {
+test_that("pp(): internal Z_tau, bandwidth as urca, MacKinnon calibration (D12)", {
   y <- sim_rw()
   for (trend in c("c", "ct")) for (bw in list("short", "long", 3L)) {
     r <- pp(y, trend = trend, bandwidth = bw)
@@ -14,14 +14,20 @@ test_that("pp() returns urca's Z_tau with MacKinnon critical values", {
                      lags = if (is.character(bw)) bw else "short",
                      use.lag = if (is.numeric(bw)) bw else NULL)
     expect_s3_class(r, "ur_test")
-    expect_equal(r$statistic, unname(u@teststat), tolerance = 1e-12)
-    expect_identical(r$lags, u@lag)
+    expect_identical(r$lags, u@lag)                      # same bandwidth rule
+    expect_equal(r$statistic, unname(u@teststat), tolerance = 0.05)  # O(1/T) apart
     expect_identical(r$nobs, length(y) - 1L)
+    expect_identical(r$sample, c(2L, length(y)))
     expect_equal(r$critical_values, tau_critical_values(trend, r$nobs))
-    expect_match(r$engine, "^urca ")
+    expect_equal(r$p_value, tau_p_value(r$statistic, trend, r$nobs))
+    expect_match(r$engine, "^internal ")
   }
-  expect_match(pp(y)$bandwidth_rule, "short")
+  expect_match(pp(y)$bandwidth_rule, "short: trunc\\(4 \\(\\(T-1\\)/100\\)")
   expect_identical(pp(y, bandwidth = 2)$bandwidth_rule, "fixed by the user")
+  expect_error(pp(y[1:10], bandwidth = 9), "too large")
+  # with bandwidth 0 there is no correction: Z_tau is the Dickey-Fuller t ratio
+  expect_equal(pp(y, bandwidth = 0)$statistic,
+               adf(y, trend = "c", lags = 0)$statistic, tolerance = 1e-12)
 })
 
 test_that("kpss() returns urca's statistic with upper-tail decisions", {
