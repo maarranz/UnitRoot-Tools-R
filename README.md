@@ -37,23 +37,18 @@ pak::pak("maarranz/UnitRoot-Tools-R")
 ```
 
 To update to the latest version, run the same command again. The package needs
-R 4.1 or later; its only non-base dependency is
-[urca](https://CRAN.R-project.org/package=urca), installed automatically.
+R 4.1 or later; its non-base dependencies,
+[urca](https://CRAN.R-project.org/package=urca) and
+[generics](https://CRAN.R-project.org/package=generics), are installed automatically.
 
-## Reading the vignette
+## Documentation
 
-The vignette is a tutorial that goes through all the functions with Enders'
-U.S. real GDP example. If you installed with `build_vignettes = TRUE`:
-
-```r
-vignette("unitroottools")
-```
-
-or browse all of the package's documentation with
-`browseVignettes("unitroottools")`. Without the built vignette, you can read its
-source, [`vignettes/unitroottools.Rmd`](vignettes/unitroottools.Rmd), here on
-GitHub, and run its code chunks yourself. Help on each function is available as
-usual, e.g. `?adf` or `?ur_strategy`.
+- **On the web** (nothing to build): the [API reference](https://maarranz.github.io/UnitRoot-Tools-R/)
+  ([source](docs/unitroottools_Documentation.qmd)) and the
+  [vignette](https://maarranz.github.io/UnitRoot-Tools-R/vignette.html), a
+  tutorial that goes through all the functions with Enders' U.S. real GDP example.
+- **In R**: help on each function, e.g. `?adf` or `?ur_strategy`, and, if you
+  installed with `build_vignettes = TRUE`, `vignette("unitroottools")`.
 
 ## Quick start
 

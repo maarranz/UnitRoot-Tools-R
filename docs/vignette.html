@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Unit-root testing with unitroottools</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Unit-root testing with unitroottools</h1>
+
+
+
+<p>This vignette shows the main functions of <code>unitroottools</code>
+with one data set: the logarithm of U.S. real GDP, 1947Q1–2012Q4, used
+by Enders to illustrate the testing of unit roots when the deterministic
+terms are unknown. The data are included in the package.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(unitroottools)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>gdp <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="fu">system.file</span>(<span class="st">&quot;fixtures&quot;</span>, <span class="st">&quot;enders_rgdp.csv&quot;</span>, <span class="at">package =</span> <span class="st">&quot;unitroottools&quot;</span>))</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>lgdp <span class="ot">&lt;-</span> <span class="fu">ts</span>(<span class="fu">log</span>(gdp<span class="sc">$</span>rgdp), <span class="at">start =</span> <span class="fu">c</span>(<span class="dv">1947</span>, <span class="dv">1</span>), <span class="at">frequency =</span> <span class="dv">4</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="fu">plot</span>(lgdp, <span class="at">ylab =</span> <span class="st">&quot;log real GDP&quot;</span>)</span></code></pre></div>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAqAAAAGwCAMAAABB3CfxAAADAFBMVEUAAAABAQECAgIDAwMEBAQFBQUGBgYHBwcICAgJCQkKCgoLCwsMDAwNDQ0ODg4PDw8QEBARERESEhITExMUFBQVFRUWFhYXFxcYGBgZGRkaGhobGxscHBwdHR0eHh4fHx8gICAhISEiIiIjIyMkJCQlJSUmJiYnJycoKCgpKSkqKiorKyssLCwtLS0uLi4vLy8wMDAxMTEyMjIzMzM0NDQ1NTU2NjY3Nzc4ODg5OTk6Ojo7Ozs8PDw9PT0+Pj4/Pz9AQEBBQUFCQkJDQ0NERERFRUVGRkZHR0dISEhJSUlKSkpLS0tMTExNTU1OTk5PT09QUFBRUVFSUlJTU1NUVFRVVVVWVlZXV1dYWFhZWVlaWlpbW1tcXFxdXV1eXl5fX19gYGBhYWFiYmJjY2NkZGRlZWVmZmZnZ2doaGhpaWlqampra2tsbGxtbW1ubm5vb29wcHBxcXFycnJzc3N0dHR1dXV2dnZ3d3d4eHh5eXl6enp7e3t8fHx9fX1+fn5/f3+AgICBgYGCgoKDg4OEhISFhYWGhoaHh4eIiIiJiYmKioqLi4uMjIyNjY2Ojo6Pj4+QkJCRkZGSkpKTk5OUlJSVlZWWlpaXl5eYmJiZmZmampqbm5ucnJydnZ2enp6fn5+goKChoaGioqKjo6OkpKSlpaWmpqanp6eoqKipqamqqqqrq6usrKytra2urq6vr6+wsLCxsbGysrKzs7O0tLS1tbW2tra3t7e4uLi5ubm6urq7u7u8vLy9vb2+vr6/v7/AwMDBwcHCwsLDw8PExMTFxcXGxsbHx8fIyMjJycnKysrLy8vMzMzNzc3Ozs7Pz8/Q0NDR0dHS0tLT09PU1NTV1dXW1tbX19fY2NjZ2dna2trb29vc3Nzd3d3e3t7f39/g4ODh4eHi4uLj4+Pk5OTl5eXm5ubn5+fo6Ojp6enq6urr6+vs7Ozt7e3u7u7v7+/w8PDx8fHy8vLz8/P09PT19fX29vb39/f4+Pj5+fn6+vr7+/v8/Pz9/f3+/v7////isF19AAAACXBIWXMAAA7DAAAOwwHHb6hkAAAgAElEQVR4nO3deUAU5ePH8QHEC1SUGxHPvI9M8T7wKMuz/OJXU8wTNTX75Ulf78yDNLU0bxPPSkwNy7y1rCyP8sgy74s8QLxAQGCf38xyrbIDO9c+z8x+Xn8ss8vwzPPt+5ZlZ2dnOALAMI72BADyg0CBaQgUmIZAgWkIFJiGQIFpCBSYhkCBaQgUmIZAgWkIFJiGQIFpCBSYhkCBaQgUmIZAgWkIFJiGQIFpCBSYhkCBaQgUmIZAgWkIFJiGQIFpCBSYhkCBaQgUmIZAgWkIFJiGQIFpCBSYhkCBaQgUmIZAgWkIFJiGQIFpCBSYhkCBaQgUmIZAgWkIFJiGQIFpCBSYhkCBaQgUmIZAgWkIFJiGQIFpCBSYhkCBaQgUmIZAgWkIFJiGQIFpCBSYhkCBaQgUmIZAgWkIFJiGQIFpCBSYhkCBaQgUmIZAgWkIFJiGQIFpCBSYhkCBaQgUmIZAgWkIFJiGQIFpCBSYhkCBaQgUmIZAgWkIFJimcqCjGwDYoMVtOoE2WXMcoGAvnNIu0H/Wrf9bNNAj0scDB1RXk0C3V0klJMKZ45zC062vgUDBJtoEuoFLId9yk24nbfOYZ30NBAo20S7QoW2EpdkvWl8DgYJNtAs0dKSwFF3C+hoIFGyiVaC3yIJgE7/0dnXrayBQsIlWgXJeL3HzSNJQ57nW10CgYBNtAjXdOLB8bLdIcs5jusn6GggUnvVwb/Q5Kw9rE2i21FSx7yBQsBC/b6xnq9BlVr6jbaCEfP+T9ccRKGS7O7FeqdYTrlr/ptaB+oVY3juS8xZr4dXyxgP9ubd90alHh49Z/2bG+QU+7/ws8nYO0T7QLXst7yXnvMVafIW88UBvDnQr9ergKsUale9++flv/fVTzECPir3O5vfjWgcqxn2luuMBkx4falVjxRPzYvKMyg8tv3Vp6gsVm3f4+N8CRtAs0CsHNm799a7otxGo0Z0/fmCQu1utqNxn72F9chb/Xdzae5TIk/6zNAr0RAgncOl6VGQFBGpod/t6V2zQdM6zx3I+qfWZ+atpU5syfb8R3cHzLG0CvenTYf9vg+v8Ht3B/TfrayBQAzPtCpxw08rj/7zwbhpJ+LZp423JNo+lTaDLKqTwt8ELiKlnZ+trIFDDujjSv/Yu69+634UrUTIkSuTNG6u0CXRsN+F2WG9CvvSyvgYCNabri7t4T76UzwqPxPcoWaVNoCsCHvO/6F8aS8ggkYNFEKgRpUz3GrjxsapDahPow8D6K9d1dD1F2nMi+zsRqPEkLw7qfl3tQTV6FX8uxIWrEENIuy9FVkCgRvPvFN9uYvtsFNBsP2hyfL7fRqCG8nRr59JvWzsYSTG8kwSKJc70a702UZuxESgotTugl+jHyxVDoKDQDp8fNBwdgYIiCZP9bHpPXS4ECnLd3bZ58X+9wkWONFYJAgVZLkQ29ejUI3xdrMbbQaAgkfBe5Yk3/IfvsfF4JGUQKNgsfe/QcZ+HFfNqXKbigid22iYCBdukv1naJXjuzN6f3Lv9s63n7FQBAgXbjOgQn0ZhswgUbHBxXs96DwteTQMIFAp2LmDEMvHPl2kKgUKBLgdFUds2AoWCfOu3nN7GESjk78+3gn6muHkECvn56z/+sx7QnAAChXws9Jlrrz3yIhAoiFtR4QrtKSBQEJMxrYK2RyrZAoGCiNiOrW7RngMCBRH3J3hOovHW5vMQKFiR/IlvuLWzK9kfAoU8Uj7063KG9iSyIFB43vn6b+R70mO7QqDwnF0+S2lPwQIChWeYlvv/QnsOlhAoWDBF1Wx4nvYknoFAIde5lk330Z7DcxAoZLsx1OvTDNqTeB4ChSwn/SLyPyMhFQgUMp3y30J7CtYgUOCZ9oWW/or2JKxCoECSF1Wrt/QR7VlYh0Adm+ny7iXjynaj+aGO/CFQh3amUWC7IbN/pz2NfCBQB/bbMJ+VUi6qRYNWgabvmj9hxIw1d8S+j0CpS+xZ6UMGjkgugEaBfuPPuZd/wcvZdZjInl8EStvZev1tv2ImPdoEerpI39PC1wcbPN+3vgYCpevRKJ9ltOdgE20C/ahO9tKmatbXQKBUna0+MI72HGyjTaBTm2cvfR9ofQ0ESs/T74Z40zvZkkTaBHrI+ZPM80P/Vfct62sgUDpMB1eP8m0x/xrtedhMoxdJs5xKhIT27liNayhy3hQESsXZlnUHzLpAexZSaLWb6coHvUIadxu+V2w3GwKlICnCewlzx9MVADvqHce3FcLY3+/5PK0DnbzY+uMI1N5u9ai6n/YcZNA6UL8Qy3sHnLhskfLGAwn+3rv3XtbipcU+E/WwXz4PrQP9V2R3G36Dau3xWO/y7dt4TbtDktb2DgjoeZL2hOTB36CGdGPl/4L6CaemuzLQ46UyXT6/RHtCsmkV6KOoKeGj5mwVvVoeAtXQnwM835qRfYjn059uUJ2MQhoFuqaEqxvn6e3k/ZnICghUM0c6+H+YQHsSqtEm0D8KTUs1rQ+MvTOr0FrrayBQjdzuUW51Cu1JqEibQOc2EG47TyFkYkvrayBQbRwpN4nySeVVpk2gEZ2E2/BehKz3sL4GAtXA0xUdfb+jPQmVaRNotNs5Qu6Xm07uhzSzvgYCVd+NZi9HM/rZTPm0CTSjpXufgf7eccTX7bD1NRCo2nYP9o5k/QNGMmj0Kj55WrNa/a8TMv2iyAoIVGVzqiy8QnsOWsCOekPImFU1lvYctIFAjWBb7WZsXPJAfZIDvb1z5718V7QNAlXPlU51jPbaPZfUQKOKcZzHDuXbRaAqubS4jcfsp7RnoR2Jgd4u3mLPjjplHiveLgJVxcGGfgO26/IwOltJDDTG6TYhJziRfUcSIFDlTk1rXTHagHuWniEx0GV+/E0at13xdhGoUjcH+o/fYaR33a2TGqj5Y+4IlLqL/cpEPKQ9CXtAoLp0zP8D4xxRly+pgZZayOMGCbeK9rwhUAUyNvrE0J6DvUgNlMt1SMl2Eah8X9ds9ivtOdiNxEDTEnMpOgUAApXrxxYv7qY9BzvCW536crhVlSi9nRxEETmBPr6kfO8GApUjvmfQ+nTak7AvyYFeH+LDcU5BU0ROCmYrBCpDQv1RSbTnYG9SAz1RrNQ7i79c0K9wgLLT/CBQ6R42HEt7CvYnMdCnFYMzdw9fDXhF0XYRqGRP24+gPQUKJAb6B3cm6/4mF0XPNghUKlO/1x3sz08ziYFGuWcfnHCZU7QvDoFKNbORsT5PbCNZb3UKHmBHvV3tDDTqMfP5Q6D6cNLnKO0p0CE1UI9lWeYjUDuKDdpIewqU4L14PUiqP4f2FGiRGGhyfK40JdtFoPmIjyNPpm2yeGBAX2pzoQ3vxbPnYU2P4bV71BiY86p9Tc1EmvOhSnKgNyPvkhbVBYr+akegeT344azwJaPL8FtTNpLEXm2ysvzM5yzNadElNdD9Hi43iV/XAT4lYhQdMYJAn/VkdccK7k3MJY5pk/kp4oxBLfr7v/j2iHYNdHXlLZVJDPRBmRY3CPFbRuKahCvaLgLNce/9Pu0aeHb6+lIGWfdCAplTO/vDHBlzPr185NNF60XPo+4IJAa60O0uMQdKzjpdUbJdBJrtRMW3N+w5/m/mnfGlalUy6EmWZJIYaPhrwq0QKCn7lZLtItBMj9/3jra8H3cyntZU2CQx0L7/EW7ThTfkq8xUsl0EapZc6S38wsyXxEDnl8++/9Bpq5LtIlCzVZ1pz4B1EgM94bQo6/47ror+6SNQs7p6vHymXUndzRThOkk4DXrcKO4jRdtFoIK9tY1+aiXFpAaaPqZwkdqv1Chc5H1l/2kRaGrCvSOtV9GeBfOkv9V5eUafln1mKL34o8MHeiGwdOmG7xr6zImqwHvxdNyouJz2FPRBm0Avb8gg5FpYpcq9xN6lc/BAE6ovpD0FndAm0A1cCon38Ro2rn6xv62v4diBPm3ngB8glke7QKd53yYk47XXra/h0IHe7/6GQ52+RgntAg0dJCx94W99DQcONGN70AiH/ICmLNoFOjRMWPrE1/oaDhvoqVlVGu6hPQkdkfq5eK9cP4uvvIEbsXhOyT8JuVKnq/U1HDPQlBU1K7/zC+1Z6IrEQM8uy/Wv+MonB7Xy57iR5FpRvz+tr+GQgZq6tD9Aew56I/8p/nEBJ2J5/McZEht5R+S7Dhno3EYOfeyxLHICzRDOrxxXUdH15hwx0H2+12hPQX9kBDrb3fyxeLfLtvxYu8GW956eOJ6luMEDTV11OHFm0OT7V3P+xDHN81N0JgEHJT3Qq879NnrM39x8sk0/1qSP5b3DDbI5KzsYinWn67WrVyj0x0GFygZ0zzxsIWNwo+uUJ6VL0gPdVjiZ9FhEHvpdVbJdYz/F3/RZw/8Rzi9kkJSZpauPSSQZA0Ic97PtSkgPNLpkBpk6nJBX1ivZrrED7Tjd4k7GqX7V51Xr4HAn71aH9ED/5NaQr6qbSNVF+aydtmHqfnI1LLDl9yIrGDrQz+s/d33sTb0PUpmIAch4kfQmF33fv14LZ5E9nIKMNpwnN69B8IR2Tvusr2HkQL/3sfU/KhRIRqCmvRfIsR4hm/NZebPTbySaa5pBSK821tcwcKDRvkdoT8FAtHkvfnwTvmP/SH5pi6f1NQwb6PlOVU/QnoORyAn0XESvmAv5vBNPyAflCUksPolfWlPe+hpGDTQucN7TgtcCm8kIdEfJIN+Fe7j89oMec5p4OLxUwFUSXy/M+hpGDbTbeNozMBjpgcYVG5cRtpCscv4rn7UjXTiPXwcXqe3mL7K31KCBLmqAd9vVJT3Qb9zSCB8oyf9TX/HHUknqpmFz4kS+b8xAvyp7kfYUjEZ6oLtKmsyB1lb0sUQDBvpo32y/07QnYTjSA40v+rEQaIyTop19hgv0xvuerd8+SXsWxiPjRdIqpyZVWr7i9J6i7Ros0GMtPEdeoT0JQ5Kzm+mPgc1e+q+io0GNFmhq9WV4caQN6YH+EvZYhe0aIFBT5rUJ01ZPejijG+W5GJf0QP/mflJhu3oPNPa7yZXKlAv734cjqrYdFOiFQ+W1IuMpfkbwKeWnHdB5oOvLvDLhBDkfNXPiIv6f6+EY2vMxLumBXqvuxhVy5x1Wsl1dB/rgo6D83qUAFUkP9FFUlttKtqvfQBNXNivxmqJPE4AEOP2iROfKvb4Tr9jtB4FKc75cFO0pOBYEKsmtoDW0p+BgEKgUyU2n0Z6Co0GgEvzxag9clcPOpAeauCXTvj+VnORSh4Huf7lsJC56YG/SA73iaz7zDeflVGa2/O3qLNCjr5UrVX0NXr3bn4yn+Km1t8fGHQyZmLqp2HbZ29VVoL92DVx2PQFn7aZBeqCXnM0nBk3yOk7GDJG9Xf0EGremeYUleGqnRXqgW70yvzZYTBZ2kb1dvQT6XVCp12PSaM/CgUkP9Dy3S/hyuvBuU7fhsrerk0Bv+e3F63aqZPwNOrzwW4uWDi/xSkYPl+Oyt6uTQDtPoT0DRycj0PSo4JJFas15Qv6n4FrS+gh0aUOchYEymTvqFT/v6SLQCz4i18kDu5ET6N1PRg356Iqy7eoh0KcNl9CeAsgIdLu7W/1GHoVXKNquHgId1g0vkKiTHuh9j/4PCUmeUOSKku3qINCFNR/QngLICHR/kRTz1/IGPwX4kgAcNs8AGedm8sh84qur6A801gNNG1QHp1ligfRArzuvEr7sdj6qZLusBzq9rRqf/gfFZLxImsiFTPhfZ+d+irbLeKAnfG7QngKYydnNFNO5WuWX1yo7uIfpQI8srfoV7TlAJhxRn0fq0Erh+GQcKxDo8y43feMR7TlADomBRnnlyvcyCgVhNtBV3h9j9zxD8Bv0WVsr4qQ2TEGgz7jo/QvtKcAzEKiF9M3VFtOeAzxLq0DPRnRtXKtdv+1in5ZgMdD4us230Z4DPEejQN/nvDv1Cw9t4FQ73voKDAaa1HQC7SlAHtoEuqfQ6sz9+NeDe1tfg71A41/uh5fv7NEm0Emtspd2BVhfg7lAfwwahw9vMkibQOfXyP5ltK6W9TUYC9Q0z38n7TmANdoEeq549yPCc/ytpSVFTgfHUqDpa/u92Pg67VmAVRq9SNpbiXPxCijOFR8t8ncdQ4HuqR2y+kd8epNRWu1mMv24bNqEBZsfin2fmUDv96+o8JpkoCVH31F//8VhibTnAPnQOtB2gy3vxa1cnqXoUnnjqSyp5SjaU4B8aR1okz6W984Myea6QN546krvNBj7Ptnm2E/xY1rhnLSMc+hAF1ZNoD0FKIBGgaZtmLqfXA0LbPm9yAosBDqzCj75zjxtAs1ow3ly8xoET2jntM/6GgwE+mGtf2lPAQqkTaCbnX4j0VzTDEJ6tbG+BrVAjwZ1+vC9yUmErKx8i9IUQAJtAh3fhBCTfyS/tMXT+hq0Ak2ouC76/Y/frPN1eMAFOjMASbQJ9IPyhCQWn8QvrSlvfQ0agd678+iXV0ebF5e3iIy1/wRAOm0CPeY08XB4qYCrJL5emPU1KAR6rrR3sYZj8Ka7vmj0Kj7ShfP4dXCR2m7+Ii+U7R9oRovP7L1JUE6r/aDxx1JJ6qZhc+JEvm//QCPb4U0jHXKYHfUH/bDTU48cJdDL/iI7ZIFtDhJoYg1lp9QHWowdaOzdrIWB/e2xOVCfYQNN+3bJ7vFe3ovNH3/eVA3nS9Ypowa60bd5eNuht/5uOp6/c8n7D223BpoxZKAmsrxc1v+uOz6nydNGn2i4MdCUwQK9s3TI+pg2XMmKOZfoWN7iTO/O2AOqW8YK9OPSb37cvdmGtAdPch7KaFouAocl65eRAk3u2fBa3kdTlV3tAegyUKBJr/RMVn1QoMw4gaa1fStd7TGBOuME+ml7PJcbkGECveN1RuURgQWGCXTgGJUHBCboOdBr/5udc9LEdZVEz1MGeqbjQCM8Rw/zyjr96GGfs4rHAxbpN9CZ9RL4vzxffE94aRTlvVuFOQGDdBvopkrm0y7cb+fds3/zF3EwiFHpNdAngUezlq6v/XwHPqppWHoN9OM31JkHME6ngT72O6nSRIBtegz06Z0tLfuqNxVgmf4CvdjV1bvtJpx41kHoLNC/ejT3ikScDkRfgd6pGPnTPXUnAmzTVaBPmohctw4MS0+BJrYZgA8XORodBXqv5SAc8elw9BPoL+XH4fen49FNoFt9Y9SdAeiCXgLd5Xtc3QmAPugk0BteRwteCQxIJ4FGvKfu5kEv9BFoks/FglcCI9JHoEu7q7t10A1NA71+Q/RbkgLNqHFIxtbBCLQJ9MjgNEJiAjnOb4PIGpIC/by5lI2DkWgT6AYuhZxxbfPld++6fGd9DSmBJpX7WcrGwUi0C3R0TeGTQiNbWF9DSqBT+kjZNhiKdoF2Hy4sfV3a+hoSAr1fBlc4clzaBRrRRViaXN76GhICnSdyuU9wBFoFWid0gNM2Qr7wHm59jYICjfv5m6wjkzMq/ypl02As2gR6a/2UNxuWGknOcW1FTr+df6DftfZo1r7yWUIezfptR7CULYPBaLkfNIXc/03se/kGutt3WzIh632Gf1LhP2W910rfMhiG1u8kPUy0/nh+gf7sk7lb6e8F/XeRxBUp8rYMhqB1oH4hlvf+mZCt8ELRH9nvgzOBQTatAx091/Je7EdzsvjuFPuJrb6H5W0KjIjWwSJNjuR9zHTtCSFLyuJMdZBLm0BvxBR0vjlrgZ6pUMzNu9plKRsCo9NqP2jDAg7gtBYo7/FtXOoILGkV6DTPhfmeoUYkUIBnafZW54k6ldbm89sQgYJNtHsvPn1VQOmRB56IrIFAwSbaBUpIyromnGu49TUQKNhEy0B55xdOtL4GAgWbaByoKAQKNtHoaKZ9BZ3mC4GCTai9kxSx3GYd+4Spp08bFQcLe7O9mqP1eFXN0V7vouZonbqrOVqHWbb+n1+WUqArh9jOpWoN9VR1UXGwGhWLqjlaYEk1R/PxVHO00n5qjube1tb/80fZeg1WlQOVwuO+ioMliHxISp7jDdQcLTpUzdE+GqfmaMM/U3O010SPFZINgVqDQOVBoKIQqDwIVBwClQWB2gsClQWB2gsClQWB2gsClQWB2gsClQWB2ov3YxUHe+Sj4mDkZGM1R9veS83RFryv5mijVqg5Wpe9ao5mRjHQeEcZLe2BmqMli5ySQJ7Hqp6eIEH9S7JRDBSgYAgUmIZAgWkIFJiGQIFpCBSYhkCBaQgUmIZAgWkIFJiGQIFpCBSYZtdAM94xH5qQ8XXEvJPCwu4NgiR+6cdpc88oHY1cXDJ+m3lBzmgXZ5m/PFo5dkUsIaYNmY4TkrYlYsUtZaMR8mTVmHnmU/jKGm3nFvOXSwsmfPHkmYW41RO+lHi0x42Foz+NfeZn8y7Y7ujssWvMJzs8t2By9pFMC0+T5x5Rwq6BbuGEI3GSW7l1fKlQFL9UmRPcJGSWc7PaRWIUjrbHrWYwN4DIHG1kQ+H2XDn/ruV9fyfpXKbRJLVL8fYBQRcUjUbuVHRtXabod0TeaGn1xwpfthSr1dmjcYLFwvUqvi+7t0uSMtZB90qvB5XYb/GzeRdsF+kU3KVUZf4f3D63ai1dMo8DvF7sW+GLxSOK2DHQ9YOLm5Oa7n6OkKklHpGnhb5K4RFyxWkhIWH+6YpGe1L6XUKWckfljJY4vytnTqpN/UckpUMIIcLEUvaVvkzWuh4lj2r8V8rU8o72rte/5GnXKkTOaBdnvMQJgd4vPcREYv2n5S6QAZXukdPFlkgZrVarVJLycpDFz+ZdsNnNwhMIifV7i5gqv2Eiq7i/CDk0PoATAs19RCE7Bvp2aLA5qWbCVY5TXKPIP9yfmd/5oEQqIae5XYpGiyr6gP9ls+EfOaPdDQ2tICSV7CJc52k/l3mZ20cVvyKkbQd+6dMiUg7pzDtap3b8wqJCaXJGOxga6iYEuocTfvFOrpC78MRtNr/QvYmEwRK4L/jbzdyNnJ/Nu2C7bZzw18rwyuRH7gj/t5ZXBCGLQzuaA819RCG7PsVvMCdVayB/Y3KbQr512tS379I0QnqZr7rkPl/RaINbmP45KFwIVN5og4Wk4rl1/O1v3AHzQ8O78Td+/G8qcoz7XdFoc0qeIHGtW8gdrYoQaDR3nb+NdE7LWTjHHeIX5paUMNKDL+P422kuD3N+Nu+C7c5/JdyGBJNlLsKRyp26CndvmgO1fEQRCoH2978vLIaTBVyFIT1cW6STEPOHdspPUDRapzYtnVwKf0xkjmZOilToZCIknNsoLJ8r+jf/S8BlMb94hfte0WhpfbgKhWpekzuaOdBLzpH8i626XGzOwiHzM9AaTux012J2lxhIcn4274LE0WY5rSPTvISlfuYPymQGavmIIhQCveZdbkiXQM9RZOs4/qluL7eKNO4tfPeFEYpGa8SNT0yezB2UOVpmUt8UavB2ozrcVmG5u/CCK5kTPrQTy0UrGu0n/9fnvVNqgdzRzIGS8VynIRXqcAk5C99z5/mHN3JxkgaLG+ocmkxyfjbvgqTRzrQtNIuQCQHCcngt4TYzUMtHFKEQKLk7rdfkWO85WQ9WH0i6dRQWvGYoGu2VKvyvK1PQKJmjZSZFTo7uPf93TrhS+BVn8yVzS33E3/zJSbxM3nOjVR3K34nhLsocLTNQ8s3QgZs/K5q78Af/ipD/q6+QScpY0d61hB0cOT+bd0HCYOlTXTsKO5UWFBfuhQp/aWcFavmIIjQCFdxx2koumP+xBg8iw6vxXx84f65otP6thKXGfWSOlpWUINrlLn8bUdt8p6bQ1g5O4nXInh3tNifsyEzmnyvkjZYVqGBE3dyFu+ZXPGOCpAy11mW2efdGzs/mXZBgYBnzLiX+VZfwaqnBW8JyZqCWjyhCIdDpvvxfjbO8Uslrtfj/VrHFlvFP8/xfextc7yga7Uv323ypbh/JHC0zqXbt+ZsO5j/ty04xPz6x3FP+m/WkDfbcaBluwqvZw9x+maOZA00q9QEhD73n5y6Q5j35X2LV3pUwUlLp7F2TOT+bd8Fmv3BZ1wd+UHwpITeczG+TZAZq+YgiFAK94BayYVIh/tXCAZeO61ZVr5VKTA3rfv+F5zBloz2tWmvt+rqBD2WOlpnUF9ygL990F57bT3L7zI9fLd3jUKTzJmWjfeg67ptP/Junyxwt8zfoUPdp64OrJVgsbHee/kPfkv9IGGknl3m25we5P5t3wWbjC5lPkj2OkNEl1+8Orp0mPJgZqOUjitg10L0h5rfFfmzq0Vx464fsaFyq8tvC+UUe9C1bNULqZ6qfHy2ud7myvW/KHW3uUPOX5dW8Ogp/gZLokKw/IE538AxeL3Gw50czrW5QsuroB3JH67NUuH3yf2XLhd2xXCCbm5Rpd1zKSDEhmRIsfjbvgq0+yByMfx43Ta3p3yvzZAJxIebrFFg8oggOFgGmIVBgGgIFpiFQYBoCBaYhUGAaAgWmIVBgGgIFpiFQYBoCBaYhUGAaAgWmIVBgGgIFpiFQYBoCBaYhUGAaAgWmIVBgGgIFpiFQYBoCBaYhUGAaAgWmIVBgGgJV295eWT4kh/bQnoz+IVC17Q8LC6talL+ZTRpWoD0Z/UOgWhjpZ/6yU/nZBx0eAtVCVqA/7Cbk8OErkeN+IL9OHHOMfyQ16t1Jp+nOTWcQqBayAu3fmZDBLWsNqFJoRJX+fkWukPiXvELrF9pPeXa6gkC1YBlokfMkqbj/ffI3t468Wz6OkPfKSLtOgWNDoFqwDLQ5v9B0EH9Tehnxnsd/vcdtoTk3nUGgWrAM9FV+ocX/8Tdeyx5yZQJ53GdUJ6cvCFQLIoGmOM85KbhLdXL6gkC1IBIoqSx8vThW8vW4HRgC1YJYoEuKbEw62bia1As8ODIEqgWxQNOnunJc8Hmqc9MZBGpfKaeu0Z6CviBQYBoCBaYhUGAaAgWmIVBgGgIFpiFQYBoCBaYhUGAaAgWmIVBgGqvHKvsAAAAzSURBVAIFpiFQYBoCBaYhUGAaAgWmIVBgGgIFpiFQYBoCBaYhUGAaAgWmIVBgGgIFpv0/cczUY78EhEIAAAAASUVORK5CYII=" width="100%" /></p>
+<div id="the-augmented-dickey-fuller-test" class="section level2">
+<h2>1. The augmented Dickey-Fuller test</h2>
+<p>The ADF test regression is</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><msub><mi>y</mi><mi>t</mi></msub><mo>=</mo><mi>a</mi><mo>+</mo><mi>γ</mi><mi>t</mi><mo>+</mo><mi>b</mi><mspace width="0.167em"></mspace><msub><mi>y</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>+</mo><munderover><mo>∑</mo><mrow><mi>j</mi><mo>=</mo><mn>1</mn></mrow><mi>k</mi></munderover><msub><mi>β</mi><mi>j</mi></msub><mi>Δ</mi><msub><mi>y</mi><mrow><mi>t</mi><mo>−</mo><mi>j</mi></mrow></msub><mo>+</mo><msub><mi>ε</mi><mi>t</mi></msub><mo>,</mo></mrow><annotation encoding="application/x-tex">
+\Delta y_t = a + \gamma t + b\, y_{t-1} + \sum_{j=1}^{k} \beta_j \Delta y_{t-j} + \varepsilon_t ,
+</annotation></semantics></math></p>
+<p>and the null hypothesis of a unit root is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>H</mi><mn>0</mn></msub><mo>:</mo><mi>b</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">H_0: b = 0</annotation></semantics></math>
+against
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>H</mi><mn>1</mn></msub><mo>:</mo><mi>b</mi><mo>&lt;</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">H_1: b &lt; 0</annotation></semantics></math>.
+The <code>trend</code> argument chooses the deterministic terms:
+<code>&quot;n&quot;</code> (none), <code>&quot;c&quot;</code> (constant) or
+<code>&quot;ct&quot;</code> (constant and trend).</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">adf</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>, <span class="at">lags =</span> <span class="dv">1</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="co">#&gt; Augmented Dickey-Fuller test (tau3)</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co">#&gt;   H0: unit root</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co">#&gt;   H1: stationary around a linear trend</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co">#&gt;   Deterministics: constant and linear trend</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="co">#&gt;   Lags: 1 (fixed)</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co">#&gt;   Effective sample: N = 262 (t = 3, ..., 264)</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co">#&gt;   Statistic:        -1.489</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="co">#&gt;   Critical values:  1%: -3.994   5%: -3.427   10%: -3.137</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="co">#&gt;   Source:           MacKinnon (2010) response surface</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co">#&gt;   p-value:          0.831</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co">#&gt;   Decision at 5%: do not reject H0 (unit root)</span></span></code></pre></div>
+<p>Every result states the hypotheses in words, the deterministic terms,
+how many lags were used and how they were chosen, the effective sample,
+the critical values and where they come from, the p-value, and the
+decision. The critical values are MacKinnon’s, computed for the actual
+sample size rather than read from a table; the p-value (MacKinnon, 1996)
+is computed for the same sample size, so the two always agree. The
+decision is taken from the critical value.</p>
+<p><code>summary()</code> adds the accompanying
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ϕ</mi><annotation encoding="application/x-tex">\phi</annotation></semantics></math>
+statistics, with their own critical values, and the test regression:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">summary</span>(<span class="fu">adf</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>, <span class="at">lags =</span> <span class="dv">1</span>))</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co">#&gt; Augmented Dickey-Fuller test (tau3)</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co">#&gt;   H0: unit root</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt;   H1: stationary around a linear trend</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt;   Deterministics: constant and linear trend</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt;   Lags: 1 (fixed)</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt;   Effective sample: N = 262 (t = 3, ..., 264)</span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt;   Statistic:        -1.489</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt;   Critical values:  1%: -3.994   5%: -3.427   10%: -3.137</span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt;   Source:           MacKinnon (2010) response surface</span></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="co">#&gt;   p-value:          0.831</span></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="co">#&gt;   Decision at 5%: do not reject H0 (unit root)</span></span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a><span class="co">#&gt; Calibration</span></span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="co">#&gt;   Method: response_surface</span></span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a><span class="co">#&gt;   Source: MacKinnon (2010) response surface</span></span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a><span class="co">#&gt;   Note:   evaluated at N = 262</span></span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a><span class="co">#&gt;   p-value: 0.831 [MacKinnon (1996) finite-sample p-value (urca::punitroot)]</span></span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a><span class="co">#&gt; Accompanying statistics</span></span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a><span class="co">#&gt;   phi2      17.612   1%: 6.220   5%: 4.750   10%: 4.070  reject</span></span>
+<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a><span class="co">#&gt;                      [Dickey and Fuller (1981), table row T = 250]</span></span>
+<span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a><span class="co">#&gt;   phi3       2.966   1%: 8.430   5%: 6.340   10%: 5.390  do not reject</span></span>
+<span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a><span class="co">#&gt;                      [Dickey and Fuller (1981), table row T = 250]</span></span>
+<span id="cb3-28"><a href="#cb3-28" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-29"><a href="#cb3-29" tabindex="-1"></a><span class="co">#&gt; Test regression</span></span>
+<span id="cb3-30"><a href="#cb3-30" tabindex="-1"></a><span class="co">#&gt;           Estimate Std. Error t value</span></span>
+<span id="cb3-31"><a href="#cb3-31" tabindex="-1"></a><span class="co">#&gt; const    0.1247701  7.911e-02   1.577</span></span>
+<span id="cb3-32"><a href="#cb3-32" tabindex="-1"></a><span class="co">#&gt; trend    0.0001117  8.506e-05   1.313</span></span>
+<span id="cb3-33"><a href="#cb3-33" tabindex="-1"></a><span class="co">#&gt; y_lag1  -0.0156305  1.050e-02  -1.489</span></span>
+<span id="cb3-34"><a href="#cb3-34" tabindex="-1"></a><span class="co">#&gt; dy_lag1  0.3662619  5.848e-02   6.263</span></span>
+<span id="cb3-35"><a href="#cb3-35" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-36"><a href="#cb3-36" tabindex="-1"></a><span class="co">#&gt; Engine: internal 0.1.0.9000</span></span></code></pre></div>
+</div>
+<div id="choosing-the-number-of-lags" class="section level2">
+<h2>2. Choosing the number of lags</h2>
+<p>If <code>lags</code> is not given, the number of lagged differences
+is chosen by an information criterion; the default is the modified AIC
+(MAIC) of Ng and Perron (2001). The candidates are
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mo>=</mo><mn>0</mn><mo>,</mo><mi>…</mi><mo>,</mo><msub><mi>k</mi><mo>max</mo></msub></mrow><annotation encoding="application/x-tex">k = 0, \dots, k_{\max}</annotation></semantics></math>,
+with Schwert’s rule
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>k</mi><mo>max</mo></msub><mo>=</mo><mo stretchy="false" form="prefix">⌊</mo><mn>12</mn><msup><mrow><mo stretchy="true" form="prefix">(</mo><mi>T</mi><mi>/</mi><mn>100</mn><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mn>1</mn><mi>/</mi><mn>4</mn></mrow></msup><mo stretchy="false" form="postfix">⌋</mo></mrow><annotation encoding="application/x-tex">k_{\max} = \lfloor 12 (T/100)^{1/4} \rfloor</annotation></semantics></math>
+unless you give <code>max_lags</code>. All candidates are compared
+<strong>on the same observations</strong>, and the whole table is shown,
+not only the winner:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">select_lags</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&gt; Lag selection for the ADF regression (MAIC)</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt;   Deterministics: constant and linear trend</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt;   Common sample:  N = 248 (t = 17, ..., 264), kmax = 15</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt;   MAIC/MBIC detrending: OLS</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt;   k     AIC     BIC    MAIC    MBIC     </span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt;   0 -9.3745 -9.3745 -9.3475 -9.3474     </span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt;   1 -9.5008 -9.4866 -9.4774 -9.4480   &lt;-</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt;   2 -9.4990 -9.4707 -9.4727 -9.4202     </span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt;   3 -9.4959 -9.4534 -9.4712 -9.4102     </span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt;   4 -9.4906 -9.4339 -9.4660 -9.3936     </span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt;   5 -9.4882 -9.4174 -9.4641 -9.3822     </span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt;   6 -9.4828 -9.3978 -9.4577 -9.3564     </span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="co">#&gt;   7 -9.4766 -9.3774 -9.4516 -9.3382     </span></span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a><span class="co">#&gt;   8 -9.4687 -9.3553 -9.4433 -9.3155     </span></span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="co">#&gt;   9 -9.4668 -9.3393 -9.4388 -9.2869     </span></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a><span class="co">#&gt;  10 -9.4598 -9.3181 -9.4294 -9.2572     </span></span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a><span class="co">#&gt;  11 -9.4520 -9.2962 -9.4215 -9.2355     </span></span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a><span class="co">#&gt;  12 -9.4785 -9.3085 -9.4512 -9.2689     </span></span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a><span class="co">#&gt;  13 -9.4714 -9.2872 -9.4434 -9.2474     </span></span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a><span class="co">#&gt;  14 -9.4644 -9.2660 -9.4355 -9.2199     </span></span>
+<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a><span class="co">#&gt;  15 -9.4603 -9.2478 -9.4310 -9.2050     </span></span>
+<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a><span class="co">#&gt;   Selected by MAIC: k = 1</span></span></code></pre></div>
+<p><code>adf()</code> uses this selection automatically. Once the order
+is chosen, the test regression is re-estimated with all the observations
+available for that order (here, the first two are lost instead of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>k</mi><mo>max</mo></msub><mo>+</mo><mn>1</mn><mo>=</mo><mn>16</mn></mrow><annotation encoding="application/x-tex">k_{\max} + 1 = 16</annotation></semantics></math>);
+use <code>final_sample = &quot;common&quot;</code> to keep the sample of the
+selection table instead.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">adf</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co">#&gt; Augmented Dickey-Fuller test (tau3)</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt;   H0: unit root</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt;   H1: stationary around a linear trend</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt;   Deterministics: constant and linear trend</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt;   Lags: 1 (MAIC, kmax = 15)</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt;   Effective sample: N = 262 (t = 3, ..., 264)</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt;   Statistic:        -1.489</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt;   Critical values:  1%: -3.994   5%: -3.427   10%: -3.137</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt;   Source:           MacKinnon (2010) response surface</span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt;   p-value:          0.831</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt;   Decision at 5%: do not reject H0 (unit root)</span></span></code></pre></div>
+</div>
+<div id="which-deterministic-terms-specification-strategies" class="section level2">
+<h2>3. Which deterministic terms? Specification strategies</h2>
+<p>The ADF test depends on the deterministic terms, but we rarely know
+which ones belong in the regression. <code>ur_strategy()</code>
+implements three answers, and records every step.</p>
+<p><strong>The original procedure</strong> (Dolado, Jenkinson and
+Sosvilla-Rivero, as set out by Enders) starts with constant and trend
+and tests its way down:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">ur_strategy</span>(lgdp, <span class="st">&quot;original&quot;</span>, <span class="at">lags =</span> <span class="dv">1</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="co">#&gt; Specification strategy: Original (Dolado-Jenkinson-Sosvilla-Rivero / Enders)</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co">#&gt;   Lags: 1 (fixed)</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co">#&gt;   Sample (all regressions): N = 262 (t = 3, ..., 264)   Level: 5%</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co">#&gt;   Step Regr.  Test       Statistic Crit.val.  p-value  Decision    Next</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#&gt;   1    ct     tau3          -1.489    -3.427    0.831  not reject  test phi3</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt;   2    ct     phi3           2.966     6.340        -  not reject  go to stage C</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co">#&gt;   3    c      tau2          -2.049    -2.873    0.266  not reject  test phi1</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt;   4    c      phi1          25.485     4.630        -  reject      test constant, b = 0 imposed</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt;   5    aux_c  t(const)       6.797     1.969  &lt; 0.001  reject      conditional t test of b</span></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt;   6    c      t(b) cond.    -2.049    -1.651    0.021  reject      stop</span></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a><span class="co">#&gt;   Specification: constant</span></span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a><span class="co">#&gt;   Conclusion:    no unit root: stationary around a non-zero mean</span></span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a><span class="co">#&gt;   Note: p-values are for each step on its own (none for the phi tables);</span></span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a><span class="co">#&gt;   no p-value or size is reported for the sequence as a whole.</span></span></code></pre></div>
+<p>It ends by rejecting the unit root with a conventional t test, so it
+concludes that log GDP is stationary around a <em>constant</em> mean.
+Enders himself calls this result nonsense: the procedure has removed the
+trend and then justified a t test by the presence of the constant.</p>
+<p><strong>The conservative variant</strong> stops when
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>τ</mi><mn>2</mn></msub><annotation encoding="application/x-tex">\tau_2</annotation></semantics></math>
+does not reject, keeping the constant:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">ur_strategy</span>(lgdp, <span class="st">&quot;conservative&quot;</span>, <span class="at">lags =</span> <span class="dv">1</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="co">#&gt; Specification strategy: Conservative</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co">#&gt;   Lags: 1 (fixed)</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="co">#&gt;   Sample (all regressions): N = 262 (t = 3, ..., 264)   Level: 5%</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="co">#&gt;   Step Regr.  Test       Statistic Crit.val.  p-value  Decision    Next</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co">#&gt;   1    ct     tau3          -1.489    -3.427    0.831  not reject  test phi3</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="co">#&gt;   2    ct     phi3           2.966     6.340        -  not reject  go to stage C</span></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co">#&gt;   3    c      tau2          -2.049    -2.873    0.266  not reject  stop</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a><span class="co">#&gt;   Specification: constant</span></span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a><span class="co">#&gt;   Conclusion:    unit root (constant retained)</span></span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a><span class="co">#&gt;   Note: p-values are for each step on its own (none for the phi tables);</span></span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a><span class="co">#&gt;   no p-value or size is reported for the sequence as a whole.</span></span></code></pre></div>
+<p><strong>Hamilton’s rule</strong> does not test for the deterministic
+terms at all: you decide, by looking at the data and thinking about the
+economics, whether the series is trending. Log GDP clearly is:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">ur_strategy</span>(lgdp, <span class="st">&quot;hamilton&quot;</span>, <span class="at">trending =</span> <span class="cn">TRUE</span>, <span class="at">lags =</span> <span class="dv">1</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="co">#&gt; Specification strategy: Hamilton (rule-based)</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co">#&gt;   Lags: 1 (fixed)</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co">#&gt;   Sample (all regressions): N = 262 (t = 3, ..., 264)   Level: 5%</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co">#&gt;   Step Regr.  Test       Statistic Crit.val.  p-value  Decision    Next</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="co">#&gt;   1    ct     tau3          -1.489    -3.427    0.831  not reject  stop</span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt;   Specification: constant and linear trend</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co">#&gt;   Conclusion:    unit root (with drift)</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="co">#&gt;   Note: p-values are for each step on its own (none for the phi tables);</span></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="co">#&gt;   no p-value or size is reported for the sequence as a whole.</span></span></code></pre></div>
+<p>There is no default for <code>trending</code>: the choice is yours,
+and the result says so. <code>summary()</code> on any strategy shows
+each step with its null hypothesis, the critical value and its source,
+and the reason for the next step. Note that the history separates
+rejections of the unit root from rejections that only decide the
+<em>path</em> (the
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ϕ</mi><annotation encoding="application/x-tex">\phi</annotation></semantics></math>
+tests and the tests of the deterministic terms).</p>
+<p>Each step has its own p-value (there is none for the
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ϕ</mi><annotation encoding="application/x-tex">\phi</annotation></semantics></math>
+tests, whose critical values come from tables). These p-values describe
+each test on its own. The procedure as a whole has no known size: it is
+a sequence of tests, each conditional on the results of the previous
+ones, so no p-value is given for it.</p>
+</div>
+<div id="other-tests" class="section level2">
+<h2>4. Other tests</h2>
+<p>The Phillips-Perron test corrects for serial correlation
+non-parametrically instead of adding lagged differences; DF-GLS detrends
+by GLS, which improves power; and the KPSS test <strong>reverses the
+null hypothesis</strong>: it tests stationarity against a unit root.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">pp</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="co">#&gt; Phillips-Perron test (Z_tau)</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt;   H0: unit root</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt;   H1: stationary around a linear trend</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt;   Deterministics: constant and linear trend</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">#&gt;   Bandwidth: 5 (short: trunc(4 ((T-1)/100)^(1/4)))</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&gt;   Effective sample: N = 263 (t = 2, ..., 264)</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="co">#&gt;   Statistic:        -1.111</span></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="co">#&gt;   Critical values:  1%: -3.994   5%: -3.427   10%: -3.137</span></span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a><span class="co">#&gt;   Source:           MacKinnon (2010) response surface</span></span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a><span class="co">#&gt;   p-value:          0.924</span></span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a><span class="co">#&gt;   Decision at 5%: do not reject H0 (unit root)</span></span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a><span class="fu">dfgls</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>)</span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a><span class="co">#&gt; DF-GLS test (tau_GLS)</span></span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a><span class="co">#&gt;   H0: unit root</span></span>
+<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a><span class="co">#&gt;   H1: stationary around a linear trend</span></span>
+<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a><span class="co">#&gt;   Deterministics: constant and linear trend</span></span>
+<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a><span class="co">#&gt;   Lags: 1 (MAIC, kmax = 15)</span></span>
+<span id="cb9-23"><a href="#cb9-23" tabindex="-1"></a><span class="co">#&gt;   Effective sample: N = 262 (t = 3, ..., 264)</span></span>
+<span id="cb9-24"><a href="#cb9-24" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb9-25"><a href="#cb9-25" tabindex="-1"></a><span class="co">#&gt;   Statistic:        -1.019</span></span>
+<span id="cb9-26"><a href="#cb9-26" tabindex="-1"></a><span class="co">#&gt;   Critical values:  1%: -3.480   5%: -2.915   10%: -2.627</span></span>
+<span id="cb9-27"><a href="#cb9-27" tabindex="-1"></a><span class="co">#&gt;   Source:           unitroottools DF-GLS response surfaces (own simulation)</span></span>
+<span id="cb9-28"><a href="#cb9-28" tabindex="-1"></a><span class="co">#&gt;   p-value:          0.862</span></span>
+<span id="cb9-29"><a href="#cb9-29" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb9-30"><a href="#cb9-30" tabindex="-1"></a><span class="co">#&gt;   Decision at 5%: do not reject H0 (unit root)</span></span>
+<span id="cb9-31"><a href="#cb9-31" tabindex="-1"></a><span class="fu">kpss</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>)</span>
+<span id="cb9-32"><a href="#cb9-32" tabindex="-1"></a><span class="co">#&gt; KPSS test of stationarity (eta_tau)</span></span>
+<span id="cb9-33"><a href="#cb9-33" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb9-34"><a href="#cb9-34" tabindex="-1"></a><span class="co">#&gt;   H0: stationary around a linear trend</span></span>
+<span id="cb9-35"><a href="#cb9-35" tabindex="-1"></a><span class="co">#&gt;   H1: unit root</span></span>
+<span id="cb9-36"><a href="#cb9-36" tabindex="-1"></a><span class="co">#&gt;   Deterministics: constant and linear trend</span></span>
+<span id="cb9-37"><a href="#cb9-37" tabindex="-1"></a><span class="co">#&gt;   Bandwidth: 5 (short: trunc(4 (T/100)^(1/4)))</span></span>
+<span id="cb9-38"><a href="#cb9-38" tabindex="-1"></a><span class="co">#&gt;   Effective sample: N = 264 (t = 1, ..., 264)</span></span>
+<span id="cb9-39"><a href="#cb9-39" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb9-40"><a href="#cb9-40" tabindex="-1"></a><span class="co">#&gt;   Statistic:        0.701</span></span>
+<span id="cb9-41"><a href="#cb9-41" tabindex="-1"></a><span class="co">#&gt;   Critical values:  1%: 0.216   2.5%: 0.176   5%: 0.146   10%: 0.119</span></span>
+<span id="cb9-42"><a href="#cb9-42" tabindex="-1"></a><span class="co">#&gt;   Source:           Kwiatkowski et al. (1992), Table 1</span></span>
+<span id="cb9-43"><a href="#cb9-43" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb9-44"><a href="#cb9-44" tabindex="-1"></a><span class="co">#&gt;   Decision at 5%: reject H0 (stationary around a linear trend)</span></span></code></pre></div>
+<p>Two details of <code>dfgls()</code>. Without <code>lags</code>, the
+number of lagged differences is chosen as recommended by Perron and Qu
+(2007): by MAIC, exactly as for <code>adf()</code>, on the series
+detrended by ordinary least squares; the DF-GLS statistic is then
+computed with that number of lags. And its critical values and p-value
+come from this package’s own simulations: in samples of usual size the
+DF-GLS statistic has a heavier left tail than its limit distribution,
+and the asymptotic critical values used by other software reject a true
+unit root too often (about 8% of the time at the 5% level with
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mo>=</mo><mn>100</mn></mrow><annotation encoding="application/x-tex">T = 100</annotation></semantics></math>
+and a constant).</p>
+<p>A non-rejection is not evidence for the null. Using tests with both
+nulls is one way to see how strong the evidence is in each
+direction.</p>
+</div>
+<div id="collecting-results-in-a-table" class="section level2">
+<h2>5. Collecting results in a table</h2>
+<p><code>glance()</code> turns a test into one row of a data frame and
+<code>tidy()</code> gives one row per statistic, so results are easy to
+compare or to save. For example, the four tests on log GDP with constant
+and trend:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>tests <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="fu">adf</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>), <span class="fu">pp</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>),</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>              <span class="fu">dfgls</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>), <span class="fu">kpss</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>))</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(tests, glance))</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>res[, <span class="fu">c</span>(<span class="st">&quot;test&quot;</span>, <span class="st">&quot;statistic_name&quot;</span>, <span class="st">&quot;statistic&quot;</span>, <span class="st">&quot;p_value&quot;</span>, <span class="st">&quot;reject&quot;</span>, <span class="st">&quot;lags&quot;</span>, <span class="st">&quot;nobs&quot;</span>)]</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co">#&gt;     test statistic_name  statistic   p_value reject lags nobs</span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co">#&gt; 1    ADF           tau3 -1.4891169 0.8311624  FALSE    1  262</span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co">#&gt; 2     PP          Z_tau -1.1105222 0.9243191  FALSE    5  263</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co">#&gt; 3 DF-GLS        tau_GLS -1.0192578 0.8624955  FALSE    1  262</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="co">#&gt; 4   KPSS        eta_tau  0.7007647        NA   TRUE    5  264</span></span></code></pre></div>
+<p><code>tidy()</code> shows the accompanying statistics as well, for
+instance the
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ϕ</mi><annotation encoding="application/x-tex">\phi</annotation></semantics></math>
+statistics of the ADF test:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">tidy</span>(<span class="fu">adf</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>))[, <span class="fu">c</span>(<span class="st">&quot;statistic_name&quot;</span>, <span class="st">&quot;statistic&quot;</span>, <span class="st">&quot;critical_value&quot;</span>, <span class="st">&quot;p_value&quot;</span>, <span class="st">&quot;reject&quot;</span>)]</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="co">#&gt;   statistic_name statistic critical_value   p_value reject</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="co">#&gt; 1           tau3 -1.489117      -3.427381 0.8311624  FALSE</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="co">#&gt; 2           phi2 17.611863       4.750000        NA   TRUE</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">#&gt; 3           phi3  2.965690       6.340000        NA  FALSE</span></span></code></pre></div>
+<p>The same functions work on a strategy: <code>glance()</code> gives
+its outcome in one row and <code>tidy()</code> its history.</p>
+</div>
+<div id="why-special-critical-values" class="section level2">
+<h2>6. Why special critical values?</h2>
+<p>Under the unit-root null, the t ratio of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>b</mi><annotation encoding="application/x-tex">b</annotation></semantics></math>
+does <strong>not</strong> have a normal or Student t distribution.
+<code>simulate_df()</code> shows this by simulation:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>s <span class="ot">&lt;-</span> <span class="fu">simulate_df</span>(<span class="at">T =</span> <span class="dv">100</span>, <span class="at">R =</span> <span class="dv">2000</span>, <span class="at">trend =</span> <span class="st">&quot;c&quot;</span>, <span class="at">seed =</span> <span class="dv">1</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>s</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="co">#&gt; Simulated Dickey-Fuller distribution of tau2</span></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co">#&gt;   Data: driftless random walk, T = 100 (N = 99); R = 2000 replications</span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="co">#&gt;   Test regression: constant</span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt;   Level   Simulated  MacKinnon (resp.)     N(0,1)</span></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co">#&gt;   1%         -3.459             -3.498     -2.326</span></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="co">#&gt;   5%         -2.889             -2.891     -1.645</span></span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="co">#&gt;   10%        -2.556             -2.583     -1.282</span></span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a><span class="co">#&gt;   Share of simulated tau below the normal 5% quantile: 0.460</span></span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a><span class="co">#&gt;   (a correctly sized test would reject 0.050 +/- 0.010)</span></span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a><span class="fu">plot</span>(s)</span></code></pre></div>
+<p><img src="data:image/png;base64,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" width="100%" /></p>
+<p>The simulated quantiles agree with MacKinnon’s critical values, which
+are far to the left of the normal ones. Using the normal 5% value would
+reject a true unit root much more often than 5% of the time.</p>
+</div>
+<div id="data-formats" class="section level2">
+<h2>7. Data formats</h2>
+<p>The functions accept numeric vectors, <code>ts</code>,
+<code>zoo</code> and <code>xts</code> series, data frames, tibbles and
+tsibbles. When there are several numeric columns, name the one to test
+with <code>var</code>:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">date =</span> <span class="fu">as.Date</span>(gdp<span class="sc">$</span>date), <span class="at">lgdp =</span> <span class="fu">log</span>(gdp<span class="sc">$</span>rgdp),</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>                 <span class="at">growth =</span> <span class="fu">c</span>(<span class="cn">NA</span>, <span class="fu">diff</span>(<span class="fu">log</span>(gdp<span class="sc">$</span>rgdp))))</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="fu">adf</span>(df, <span class="at">var =</span> <span class="st">&quot;lgdp&quot;</span>, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>, <span class="at">lags =</span> <span class="dv">1</span>)<span class="sc">$</span>statistic</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co">#&gt; [1] -1.489117</span></span></code></pre></div>
+<p>Missing values are never dropped silently: the <code>growth</code>
+column above starts with <code>NA</code>, and testing it gives an error
+that says where the problem is.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+
+</body>
+</html>

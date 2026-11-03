@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="author" content="Miguel A. Arranz, PhD" />
+  <title>unitroottools (R): Public API</title>
+  <style>
+html {
+color: #1a1a1a;
+background-color: #fdfdfd;
+}
+body {
+margin: 0 auto;
+max-width: 36em;
+padding-left: 50px;
+padding-right: 50px;
+padding-top: 50px;
+padding-bottom: 50px;
+hyphens: auto;
+overflow-wrap: break-word;
+text-rendering: optimizeLegibility;
+font-kerning: normal;
+}
+@media (max-width: 600px) {
+body {
+font-size: 0.9em;
+padding: 12px;
+}
+h1 {
+font-size: 1.8em;
+}
+}
+@media print {
+html {
+background-color: white;
+}
+body {
+background-color: transparent;
+color: black;
+font-size: 12pt;
+}
+p, h2, h3 {
+orphans: 3;
+widows: 3;
+}
+h2, h3, h4 {
+page-break-after: avoid;
+}
+}
+p {
+margin: 1em 0;
+}
+a {
+color: #1a1a1a;
+}
+a:visited {
+color: #1a1a1a;
+}
+img {
+max-width: 100%;
+}
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.4em;
+}
+h5, h6 {
+font-size: 1em;
+font-style: italic;
+}
+h6 {
+font-weight: normal;
+}
+ol, ul {
+padding-left: 1.7em;
+margin-top: 1em;
+}
+li > ol, li > ul {
+margin-top: 0;
+}
+blockquote {
+margin: 1em 0 1em 1.7em;
+padding-left: 1em;
+border-left: 2px solid #e6e6e6;
+color: #606060;
+}
+code {
+font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+font-size: 85%;
+margin: 0;
+hyphens: manual;
+}
+pre {
+margin: 1em 0;
+overflow: auto;
+}
+pre code {
+padding: 0;
+overflow: visible;
+overflow-wrap: normal;
+}
+.sourceCode {
+background-color: transparent;
+overflow: visible;
+}
+hr {
+background-color: #1a1a1a;
+border: none;
+height: 1px;
+margin: 1em 0;
+}
+table {
+margin: 1em 0;
+border-collapse: collapse;
+width: 100%;
+overflow-x: auto;
+display: block;
+font-variant-numeric: lining-nums tabular-nums;
+}
+table caption {
+margin-bottom: 0.75em;
+}
+tbody {
+margin-top: 0.5em;
+border-top: 1px solid #1a1a1a;
+border-bottom: 1px solid #1a1a1a;
+}
+th {
+border-top: 1px solid #1a1a1a;
+padding: 0.25em 0.5em 0.25em 0.5em;
+}
+td {
+padding: 0.125em 0.5em 0.25em 0.5em;
+}
+header {
+margin-bottom: 4em;
+text-align: center;
+}
+#TOC li {
+list-style: none;
+}
+#TOC ul {
+padding-left: 1.3em;
+}
+#TOC > ul {
+padding-left: 0;
+}
+#TOC a:not(:hover) {
+text-decoration: none;
+}
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+  <style>
+html { scroll-behavior: smooth; }
+body { max-width: 980px; margin: 48px auto; padding: 0 24px; color: #263442;
+font: 16px/1.6 system-ui, sans-serif; }
+h1,h2,h3 { line-height: 1.25; color: #173e63; }
+h2 { margin-top: 2.4rem; border-bottom: 1px solid #dbe3ea; padding-bottom: .4rem; }
+a { color: #145b91; text-underline-offset: 3px; }
+pre { background: #f3f6f8; border: 1px solid #dbe3ea; border-radius: 6px;
+padding: 16px; white-space: pre-wrap; overflow-wrap: anywhere; }
+code { font-family: ui-monospace, monospace; font-size: .88em; }
+table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+th,td { padding: 10px 12px; text-align: left; vertical-align: top;
+border-bottom: 1px solid #dbe3ea; }
+th { background: #edf3f8; }
+td:first-child { width: 65%; }
+table:has(th:nth-child(3)) td:first-child { width: auto; }
+table:has(th:nth-child(3)) td:nth-child(3) { width: 45%; }
+table code { white-space: normal; overflow-wrap: anywhere; }
+#TOC { background: #f3f6f8; padding: 16px 24px; border-radius: 6px; }
+@media (max-width: 600px) { body { margin: 24px auto; padding: 0 16px; }
+table { font-size: .76rem; } th,td { padding: 8px; } }
+table { font-size: 0.88rem; }
+</style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">unitroottools (R): Public API</h1>
+<p class="subtitle">Software reference for Applied Time Series
+Econometrics (ATSE)</p>
+<p class="author">Miguel A. Arranz, PhD</p>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#overview-and-purpose" id="toc-overview-and-purpose">Overview and purpose</a></li>
+<li><a href="#installation-and-loading" id="toc-installation-and-loading">Installation and loading</a></li>
+<li><a href="#the-augmented-dickeyfuller-test" id="toc-the-augmented-dickeyfuller-test">The augmented Dickey–Fuller
+test</a></li>
+<li><a href="#which-deterministic-terms-specification-strategies" id="toc-which-deterministic-terms-specification-strategies">Which
+deterministic terms? Specification strategies</a></li>
+<li><a href="#other-tests" id="toc-other-tests">Other tests</a></li>
+<li><a href="#results-as-data-frames" id="toc-results-as-data-frames">Results as data frames</a></li>
+<li><a href="#critical-values-and-p-values" id="toc-critical-values-and-p-values">Critical values and
+p-values</a></li>
+<li><a href="#compact-api-summary" id="toc-compact-api-summary">Compact
+API summary</a></li>
+<li><a href="#course-resources-and-author" id="toc-course-resources-and-author">Course, resources, and
+author</a></li>
+</ul>
+</nav>
+<h2 id="overview-and-purpose">Overview and purpose</h2>
+<p><code>unitroottools</code> provides unit-root and stationarity tests
+for the <strong>Applied Time Series Econometrics (ATSE)</strong> course
+at <strong>Universidad Carlos III de Madrid</strong>, with one
+consistent interface and full transparency about how each decision was
+reached. It is the R companion of the Python package <a href="https://github.com/maarranz/UnitRoot-Tools">UnitRoot-Tools</a>;
+both follow a common, language-neutral <a href="https://github.com/maarranz/UnitRoot-Tools-R/blob/main/spec/specification.qmd">specification</a>.</p>
+<p>This document describes the software/API. The ATSE course material
+provides the econometric theory; the Labs provide worked examples and
+exercises. A longer tutorial is the package vignette, <a href="vignette.html">rendered here</a>.</p>
+<p>Three conventions hold throughout:</p>
+<ul>
+<li><strong>Every result says how it was obtained</strong>: hypotheses
+in words, deterministic terms, number of lags and how they were chosen,
+effective sample, critical values <em>and their source</em>, p-value,
+decision.</li>
+<li><strong>Decisions are taken from critical values</strong> computed
+for the actual sample size; the p-value is computed for the same sample
+size and agrees with them.</li>
+<li><strong>Nothing is dropped silently.</strong> Missing values,
+irregular dates or several candidate columns are errors that say what to
+fix.</li>
+</ul>
+<h3 id="what-r-already-provides">What R already provides</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">unitroottools</th>
+<th style="text-align: left;">Closest existing R tool</th>
+<th style="text-align: left;">Why the function is kept</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>adf()</code></td>
+<td style="text-align: left;"><code>urca::ur.df()</code>,
+<code>tseries::adf.test()</code></td>
+<td style="text-align: left;">MAIC/MBIC lag selection on a common
+sample, MacKinnon critical values <em>and</em> p-values at the effective
+sample size, the φ statistics with their tables, full selection
+table</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>ur_strategy()</code></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">Dolado–Jenkinson–Sosvilla-Rivero / Enders
+procedure, a conservative variant and Hamilton’s rule, each step
+recorded</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>pp()</code></td>
+<td style="text-align: left;"><code>urca::ur.pp()</code></td>
+<td style="text-align: left;">Follows the published formula (urca’s
+version differs by up to 0.1 in small samples); p-value</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>dfgls()</code></td>
+<td style="text-align: left;"><code>urca::ur.ers()</code></td>
+<td style="text-align: left;">Lag selection by Perron and Qu (2007);
+finite-sample critical values and p-value (urca’s are too liberal: about
+8% size at a nominal 5% with T = 100)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>kpss()</code></td>
+<td style="text-align: left;"><code>urca::ur.kpss()</code>,
+<code>tseries::kpss.test()</code></td>
+<td style="text-align: left;">Same statistic (checked), common result
+format</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>tidy()</code>,
+<code>glance()</code></td>
+<td style="text-align: left;">—</td>
+<td style="text-align: left;">Results of any test as data frames</td>
+</tr>
+</tbody>
+</table>
+<h2 id="installation-and-loading">Installation and loading</h2>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># install.packages(&quot;remotes&quot;)</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>remotes<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;maarranz/UnitRoot-Tools-R&quot;</span>, <span class="at">build_vignettes =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<p>Dependencies (<code>urca</code>, <code>generics</code>) are installed
+automatically. Building the vignette needs <a href="https://pandoc.org">pandoc</a>, which comes with RStudio; without
+it, leave out <code>build_vignettes = TRUE</code> and read the vignette
+<a href="vignette.html">here</a>. To install a specific version, add the
+tag: <code>&quot;maarranz/UnitRoot-Tools-R@v0.1.0&quot;</code>.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(unitroottools)</span></code></pre></div>
+<h3 id="example-used-below">Example used below</h3>
+<p>The logarithm of U.S. real GDP, 1947Q1–2012Q4 (264 observations), the
+example Enders uses for the testing of unit roots when the deterministic
+terms are unknown. The data come with the package.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>gdp  <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="fu">system.file</span>(<span class="st">&quot;fixtures&quot;</span>, <span class="st">&quot;enders_rgdp.csv&quot;</span>, <span class="at">package =</span> <span class="st">&quot;unitroottools&quot;</span>))</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>lgdp <span class="ot">&lt;-</span> <span class="fu">ts</span>(<span class="fu">log</span>(gdp<span class="sc">$</span>rgdp), <span class="at">start =</span> <span class="fu">c</span>(<span class="dv">1947</span>, <span class="dv">1</span>), <span class="at">frequency =</span> <span class="dv">4</span>)</span></code></pre></div>
+<h2 id="the-augmented-dickeyfuller-test">The augmented Dickey–Fuller
+test</h2>
+<p>The test regression is</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Δ</mi><msub><mi>y</mi><mi>t</mi></msub><mo>=</mo><mi>a</mi><mo>+</mo><mi>γ</mi><mi>t</mi><mo>+</mo><mi>b</mi><mspace width="0.167em"></mspace><msub><mi>y</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>+</mo><munderover><mo>∑</mo><mrow><mi>j</mi><mo>=</mo><mn>1</mn></mrow><mi>k</mi></munderover><msub><mi>β</mi><mi>j</mi></msub><mi>Δ</mi><msub><mi>y</mi><mrow><mi>t</mi><mo>−</mo><mi>j</mi></mrow></msub><mo>+</mo><msub><mi>ε</mi><mi>t</mi></msub><mo>,</mo><mspace width="2.0em"></mspace><msub><mi>H</mi><mn>0</mn></msub><mo>:</mo><mi>b</mi><mo>=</mo><mn>0</mn><mspace width="0.222em"></mspace><mtext mathvariant="normal">(unit root)</mtext><mspace width="1.0em"></mspace><msub><mi>H</mi><mn>1</mn></msub><mo>:</mo><mi>b</mi><mo>&lt;</mo><mn>0</mn><mo>,</mo></mrow><annotation encoding="application/x-tex">
+\Delta y_t = a + \gamma t + b\, y_{t-1} + \sum_{j=1}^{k} \beta_j \Delta y_{t-j} + \varepsilon_t ,
+\qquad H_0: b = 0 \ \text{(unit root)} \quad H_1: b &lt; 0,
+</annotation></semantics></math></p>
+<p>with <code>trend = &quot;n&quot;</code> (no deterministic terms),
+<code>&quot;c&quot;</code> (constant,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>γ</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\gamma = 0</annotation></semantics></math>)
+or <code>&quot;ct&quot;</code> (constant and trend).</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">adf</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>)</span></code></pre></div>
+<pre><code>Augmented Dickey-Fuller test (tau3)
+
+  H0: unit root
+  H1: stationary around a linear trend
+  Deterministics: constant and linear trend
+  Lags: 1 (MAIC, kmax = 15)
+  Effective sample: N = 262 (t = 3, ..., 264)
+
+  Statistic:        -1.489
+  Critical values:  1%: -3.994   5%: -3.427   10%: -3.137
+  Source:           MacKinnon (2010) response surface
+  p-value:          0.831
+
+  Decision at 5%: do not reject H0 (unit root)</code></pre>
+<p><code>summary()</code> adds the φ statistics (joint tests of the unit
+root and the deterministic terms) with their critical values, the
+lag-selection table and the test regression. Arguments:
+<code>lags</code> (fixed number of lagged differences),
+<code>max_lags</code>, <code>criterion</code> (<code>&quot;MAIC&quot;</code>,
+<code>&quot;MBIC&quot;</code>, <code>&quot;AIC&quot;</code>, <code>&quot;BIC&quot;</code>),
+<code>final_sample</code>, <code>level</code> (0.01, 0.05 or 0.10) and
+<code>var</code> (column of a data frame).</p>
+<h3 id="choosing-the-number-of-lags">Choosing the number of lags</h3>
+<p><code>select_lags()</code> compares
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mo>=</mo><mn>0</mn><mo>,</mo><mi>…</mi><mo>,</mo><msub><mi>k</mi><mo>max</mo></msub></mrow><annotation encoding="application/x-tex">k = 0, \dots, k_{\max}</annotation></semantics></math>,
+with
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>k</mi><mo>max</mo></msub><mo>=</mo><mo stretchy="false" form="prefix">⌊</mo><mn>12</mn><msup><mrow><mo stretchy="true" form="prefix">(</mo><mi>T</mi><mi>/</mi><mn>100</mn><mo stretchy="true" form="postfix">)</mo></mrow><mrow><mn>1</mn><mi>/</mi><mn>4</mn></mrow></msup><mo stretchy="false" form="postfix">⌋</mo></mrow><annotation encoding="application/x-tex">k_{\max} = \lfloor 12 (T/100)^{1/4} \rfloor</annotation></semantics></math>
+(Schwert 1989), <strong>on the same observations</strong>, and returns
+the whole table. The default criterion is the modified AIC of Ng and
+Perron (2001), computed on the series detrended by OLS. After selection,
+<code>adf()</code> re-estimates the test regression with all
+observations available for the chosen order;
+<code>final_sample = &quot;common&quot;</code> keeps the selection sample.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">select_lags</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>)    <span class="co"># MAIC selects k = 1 out of 0, ..., 15</span></span></code></pre></div>
+<h2 id="which-deterministic-terms-specification-strategies">Which
+deterministic terms? Specification strategies</h2>
+<p><code>ur_strategy()</code> decides the deterministic terms and tests
+for a unit root in one call, recording every step:</p>
+<ul>
+<li><code>&quot;original&quot;</code>: the Dolado–Jenkinson–Sosvilla-Rivero
+sequence as set out by Enders:
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>τ</mi><mn>3</mn></msub><annotation encoding="application/x-tex">\tau_3</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>ϕ</mi><mn>3</mn></msub><annotation encoding="application/x-tex">\phi_3</annotation></semantics></math>,
+a test of the trend given the unit root, a conditional test; then the
+same with a constant only; finally
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>τ</mi><mn>1</mn></msub><annotation encoding="application/x-tex">\tau_1</annotation></semantics></math>.</li>
+<li><code>&quot;conservative&quot;</code>: as the original, but a non-rejection by
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>τ</mi><mn>2</mn></msub><annotation encoding="application/x-tex">\tau_2</annotation></semantics></math>
+keeps the constant and stops.</li>
+<li><code>&quot;hamilton&quot;</code>: you declare whether the series is trending
+(<code>trending = TRUE</code> or <code>FALSE</code>, no default); one
+test follows.</li>
+</ul>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ur_strategy</span>(lgdp, <span class="st">&quot;original&quot;</span>, <span class="at">lags =</span> <span class="dv">1</span>)</span></code></pre></div>
+<pre><code>Specification strategy: Original (Dolado-Jenkinson-Sosvilla-Rivero / Enders)
+
+  Lags: 1 (fixed)
+  Sample (all regressions): N = 262 (t = 3, ..., 264)   Level: 5%
+
+  Step Regr.  Test       Statistic Crit.val.  p-value  Decision    Next
+  1    ct     tau3          -1.489    -3.427    0.831  not reject  test phi3
+  2    ct     phi3           2.966     6.340        -  not reject  go to stage C
+  3    c      tau2          -2.049    -2.873    0.266  not reject  test phi1
+  4    c      phi1          25.485     4.630        -  reject      test constant, b = 0 imposed
+  5    aux_c  t(const)       6.797     1.969  &lt; 0.001  reject      conditional t test of b
+  6    c      t(b) cond.    -2.049    -1.651    0.021  reject      stop
+
+  Specification: constant
+  Conclusion:    no unit root: stationary around a non-zero mean
+
+  Note: p-values are for each step on its own (none for the phi tables);
+  no p-value or size is reported for the sequence as a whole.</code></pre>
+<p>The original procedure removes the trend and then rejects the unit
+root through a conventional t test justified by the constant, a
+conclusion Enders himself rejects for GDP. The conservative variant
+keeps the constant and does not reject
+(<code>unit root (constant retained)</code>); Hamilton’s rule with
+<code>trending = TRUE</code> uses
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>τ</mi><mn>3</mn></msub><annotation encoding="application/x-tex">\tau_3</annotation></semantics></math>
+only (<code>unit root (with drift)</code>). The history
+(<code>$history</code>, or <code>tidy()</code>) separates rejections of
+the unit root from rejections that only decide the path of the
+procedure.</p>
+<h2 id="other-tests">Other tests</h2>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">pp</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>)       <span class="co"># Phillips-Perron Z_tau</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dfgls</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>)    <span class="co"># Elliott-Rothenberg-Stock DF-GLS</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">kpss</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>)     <span class="co"># KPSS: H0 is stationarity</span></span></code></pre></div>
+<ul>
+<li><strong><code>pp()</code></strong> corrects the Dickey–Fuller t
+ratio for serial correlation with a Bartlett long-run variance (Phillips
+and Perron 1988; Hamilton 1994, eq. 17.6.8). Bandwidth
+<code>&quot;short&quot;</code>, <code>&quot;long&quot;</code> (Schwert’s rules on
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">T-1</annotation></semantics></math>)
+or a number. Critical values and p-value as for
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>τ</mi><annotation encoding="application/x-tex">\tau</annotation></semantics></math>.</li>
+<li><strong><code>dfgls()</code></strong> detrends by GLS
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><mi>c</mi><mo accent="true">‾</mo></mover><mo>=</mo><mo>−</mo><mn>7</mn></mrow><annotation encoding="application/x-tex">\bar c = -7</annotation></semantics></math>
+or
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><mn>13.5</mn></mrow><annotation encoding="application/x-tex">-13.5</annotation></semantics></math>).
+Without <code>lags</code>, the number of lags is chosen as Perron and Qu
+(2007) recommend: MAIC on the OLS-detrended series. Critical values and
+p-value come from the package’s own finite-sample simulation over the
+sample size and the number of lags (out-of-sample size at 5%:
+4.8–5.3%).</li>
+<li><strong><code>kpss()</code></strong> reverses the hypotheses:
+rejection is evidence <em>against</em> stationarity. Asymptotic critical
+values of Kwiatkowski et al. (1992), no p-value.</li>
+</ul>
+<h2 id="results-as-data-frames">Results as data frames</h2>
+<p><code>glance()</code> gives one row per test, <code>tidy()</code> one
+row per statistic (on a strategy: one row per outcome, and the
+history):</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>tests <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="fu">adf</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>), <span class="fu">pp</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>),</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>              <span class="fu">dfgls</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>), <span class="fu">kpss</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>))</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(tests, glance))</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>res[, <span class="fu">c</span>(<span class="st">&quot;test&quot;</span>, <span class="st">&quot;statistic_name&quot;</span>, <span class="st">&quot;statistic&quot;</span>, <span class="st">&quot;p_value&quot;</span>, <span class="st">&quot;reject&quot;</span>, <span class="st">&quot;lags&quot;</span>, <span class="st">&quot;nobs&quot;</span>)]</span></code></pre></div>
+<pre><code>    test statistic_name statistic p_value reject lags nobs
+1    ADF           tau3   -1.4891  0.8312  FALSE    1  262
+2     PP          Z_tau   -1.1105  0.9243  FALSE    5  263
+3 DF-GLS        tau_GLS   -1.0193  0.8625  FALSE    1  262
+4   KPSS        eta_tau    0.7008      NA   TRUE    5  264</code></pre>
+<p>All four point the same way for log GDP: the unit root is not
+rejected, and stationarity around a trend is rejected.</p>
+<h2 id="critical-values-and-p-values">Critical values and p-values</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Statistic</th>
+<th style="text-align: left;">Critical values</th>
+<th style="text-align: left;">p-value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>τ</mi><annotation encoding="application/x-tex">\tau</annotation></semantics></math>
+(ADF),
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Z</mi><mi>τ</mi></msub><annotation encoding="application/x-tex">Z_\tau</annotation></semantics></math>
+(PP)</td>
+<td style="text-align: left;">MacKinnon (2010) response surfaces at the
+effective
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math>;
+MacKinnon (1996) without deterministic terms</td>
+<td style="text-align: left;">MacKinnon (1996), finite-sample, same
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ϕ</mi><mn>1</mn></msub><mo>,</mo><msub><mi>ϕ</mi><mn>2</mn></msub><mo>,</mo><msub><mi>ϕ</mi><mn>3</mn></msub></mrow><annotation encoding="application/x-tex">\phi_1, \phi_2, \phi_3</annotation></semantics></math></td>
+<td style="text-align: left;">Dickey and Fuller (1981), Enders’ Table B:
+largest tabulated
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mo>≤</mo><mi>N</mi></mrow><annotation encoding="application/x-tex">T \le N</annotation></semantics></math></td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">DF-GLS</td>
+<td style="text-align: left;">Own response surfaces in
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mi>T</mi><mo>,</mo><mi>k</mi><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(T, k)</annotation></semantics></math>
+from a Monte Carlo simulation (code in <code>data-raw/</code>)</td>
+<td style="text-align: left;">MacKinnon’s (1996) method on the same
+surfaces</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">KPSS</td>
+<td style="text-align: left;">Kwiatkowski et al. (1992), asymptotic</td>
+<td style="text-align: left;">none</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Conditional and auxiliary t tests in
+strategies</td>
+<td style="text-align: left;">Student t</td>
+<td style="text-align: left;">Student t</td>
+</tr>
+</tbody>
+</table>
+<p>Every result records its source in <code>$calibration</code>, and
+warns when the sample is below 25 observations or outside the simulated
+range.</p>
+<h2 id="compact-api-summary">Compact API summary</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Function</th>
+<th style="text-align: left;">Purpose</th>
+<th style="text-align: left;">Returns</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>adf(y, trend, lags, max_lags, criterion, final_sample, level, var)</code></td>
+<td style="text-align: left;">Augmented Dickey–Fuller test</td>
+<td style="text-align: left;"><code>ur_test</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>select_lags(y, trend, max_lags, criterion, var)</code></td>
+<td style="text-align: left;">Lag order by MAIC, MBIC, AIC or BIC, with
+the full table</td>
+<td style="text-align: left;"><code>ur_lags</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>ur_strategy(y, strategy, trending, allow_no_constant, lags, max_lags, criterion, final_sample, level, var)</code></td>
+<td style="text-align: left;">Deterministic terms and unit-root
+decision, step by step</td>
+<td style="text-align: left;"><code>ur_strategy</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>pp(y, trend, bandwidth, level, var)</code></td>
+<td style="text-align: left;">Phillips–Perron
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Z</mi><mi>τ</mi></msub><annotation encoding="application/x-tex">Z_\tau</annotation></semantics></math></td>
+<td style="text-align: left;"><code>ur_test</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>dfgls(y, trend, lags, max_lags, criterion, level, var)</code></td>
+<td style="text-align: left;">DF-GLS test</td>
+<td style="text-align: left;"><code>ur_test</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>kpss(y, trend, bandwidth, level, var)</code></td>
+<td style="text-align: left;">KPSS test of stationarity</td>
+<td style="text-align: left;"><code>ur_test</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>simulate_df(T, R, trend, seed)</code></td>
+<td style="text-align: left;">Simulated Dickey–Fuller distribution, with
+<code>plot()</code></td>
+<td style="text-align: left;"><code>df_simulation</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>tidy(x)</code>,
+<code>glance(x)</code></td>
+<td style="text-align: left;">Results as data frames</td>
+<td style="text-align: left;">data frame</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>match_trend(trend)</code></td>
+<td style="text-align: left;">Canonical deterministic code from an
+alias</td>
+<td style="text-align: left;">string</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>new_ur_test()</code>,
+<code>validate_ur_test()</code></td>
+<td style="text-align: left;">Build and check a result object (for
+developers)</td>
+<td style="text-align: left;"><code>ur_test</code></td>
+</tr>
+</tbody>
+</table>
+<p>A <code>ur_test</code> is a list: <code>statistic</code>,
+<code>statistic_name</code>, <code>critical_values</code>,
+<code>p_value</code>, <code>reject</code>, <code>level</code>,
+<code>tail</code>, <code>trend</code>, <code>lags</code>,
+<code>lag_selection</code>, <code>nobs</code>, <code>sample</code>,
+<code>calibration</code>, <code>other_statistics</code> (e.g. the φ
+statistics), <code>engine</code>, <code>warnings</code>,
+<code>regression</code>, <code>call</code>. Accepted inputs: numeric
+vectors, <code>ts</code>, <code>zoo</code>, <code>xts</code>, data
+frames, tibbles and tsibbles (choose a column with
+<code>var</code>).</p>
+<h3 id="agreement-with-the-python-version">Agreement with the Python
+version</h3>
+<p>Both implementations follow the same <a href="https://github.com/maarranz/UnitRoot-Tools-R/blob/main/spec/specification.qmd">specification</a>,
+which records every convention as a numbered decision. The ADF
+regressions, φ statistics and auxiliary tests are checked against
+120-digit reference calculations shared with the Python package
+(agreement better than
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3</mn><mo>×</mo><msup><mn>10</mn><mrow><mo>−</mo><mn>15</mn></mrow></msup></mrow><annotation encoding="application/x-tex">3 \times 10^{-15}</annotation></semantics></math>),
+and the
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>τ</mi><annotation encoding="application/x-tex">\tau</annotation></semantics></math>
+critical values agree to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>10</mn><mrow><mo>−</mo><mn>15</mn></mrow></msup><annotation encoding="application/x-tex">10^{-15}</annotation></semantics></math>.
+Known differences of the Python version are listed in <a href="https://github.com/maarranz/UnitRoot-Tools-R/blob/main/spec/notes-for-python.md">notes-for-python.md</a>.</p>
+<h2 id="course-resources-and-author">Course, resources, and author</h2>
+<p><strong>ATSE course material and Labs — Universidad Carlos III de
+Madrid:</strong> public link to be added when available. The course
+material supplies theory; the Labs supply fuller examples and exercises.
+This API reference is not a substitute for either.</p>
+<ul>
+<li><a href="https://github.com/maarranz/UnitRoot-Tools-R">Repository
+and README</a></li>
+<li><a href="vignette.html">Vignette (tutorial)</a></li>
+<li><a href="https://github.com/maarranz/UnitRoot-Tools">Python version:
+UnitRoot-Tools</a></li>
+<li><a href="https://github.com/maarranz/UnitRoot-Tools-R/blob/main/LICENSE.md">MIT
+License</a></li>
+<li><a href="unitroottools_Documentation.qmd">Quarto source</a></li>
+</ul>
+<p><strong>Miguel A. Arranz, PhD</strong><br />
+Department of Economics<br />
+Universidad Carlos III de Madrid (UC3M)<br />
+Email: <a href="mailto:maarranz@eco.uc3m.es">maarranz@eco.uc3m.es</a><br />
+ORCID: <a href="https://orcid.org/0000-0002-5951-2284">0000-0002-5951-2284</a></p>
+<h3 id="rebuilding-the-html">Rebuilding the HTML</h3>
+<p>The examples are ordinary R code blocks, validated in a fresh session
+rather than executed during rendering. Equations are rendered as MathML,
+which needs no external script or fonts. With Quarto (or pandoc)
+installed, from the repository root:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ex">quarto</span> pandoc docs/unitroottools_Documentation.qmd <span class="dt">\</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--from</span> markdown <span class="at">--to</span> html5 <span class="at">--standalone</span> <span class="at">--toc</span> <span class="at">--toc-depth</span><span class="op">=</span>2 <span class="dt">\</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--mathml</span> <span class="at">--embed-resources</span> <span class="at">-o</span> docs/index.html</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">&#39;rmarkdown::render(&quot;vignettes/unitroottools.Rmd&quot;,</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="st">  output_format = rmarkdown::html_vignette(math_method = &quot;mathml&quot;),</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="st">  output_dir = &quot;docs&quot;, output_file = &quot;vignette.html&quot;)&#39;</span></span></code></pre></div>
+</body>
+</html>

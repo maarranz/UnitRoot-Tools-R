@@ -1,0 +1,262 @@
+---
+title: 'unitroottools (R): Public API'
+subtitle: Software reference for Applied Time Series Econometrics (ATSE)
+author: Miguel A. Arranz, PhD
+affiliation: Department of Economics, Universidad Carlos III de Madrid (UC3M)
+email: maarranz@eco.uc3m.es
+orcid: https://orcid.org/0000-0002-5951-2284
+lang: en
+minimal: true
+header-includes:
+- |
+  <style>
+  html { scroll-behavior: smooth; }
+  body { max-width: 980px; margin: 48px auto; padding: 0 24px; color: #263442;
+         font: 16px/1.6 system-ui, sans-serif; }
+  h1,h2,h3 { line-height: 1.25; color: #173e63; }
+  h2 { margin-top: 2.4rem; border-bottom: 1px solid #dbe3ea; padding-bottom: .4rem; }
+  a { color: #145b91; text-underline-offset: 3px; }
+  pre { background: #f3f6f8; border: 1px solid #dbe3ea; border-radius: 6px;
+        padding: 16px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  code { font-family: ui-monospace, monospace; font-size: .88em; }
+  table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+  th,td { padding: 10px 12px; text-align: left; vertical-align: top;
+          border-bottom: 1px solid #dbe3ea; }
+  th { background: #edf3f8; }
+  td:first-child { width: 65%; }
+  table:has(th:nth-child(3)) td:first-child { width: auto; }
+  table:has(th:nth-child(3)) td:nth-child(3) { width: 45%; }
+  table code { white-space: normal; overflow-wrap: anywhere; }
+  #TOC { background: #f3f6f8; padding: 16px 24px; border-radius: 6px; }
+  @media (max-width: 600px) { body { margin: 24px auto; padding: 0 16px; }
+    table { font-size: .76rem; } th,td { padding: 8px; } }
+  table { font-size: 0.88rem; }
+  </style>
+format:
+  html:
+    output-file: index.html
+    embed-resources: true
+    toc: true
+    toc-depth: 2
+    theme: none
+    code-overflow: wrap
+---
+
+
+
+## Overview and purpose
+
+`unitroottools` provides unit-root and stationarity tests for the **Applied Time Series Econometrics (ATSE)** course at **Universidad Carlos III de Madrid**, with one consistent interface and full transparency about how each decision was reached. It is the R companion of the Python package [UnitRoot-Tools](https://github.com/maarranz/UnitRoot-Tools); both follow a common, language-neutral [specification](https://github.com/maarranz/UnitRoot-Tools-R/blob/main/spec/specification.qmd).
+
+This document describes the software/API. The ATSE course material provides the econometric theory; the Labs provide worked examples and exercises. A longer tutorial is the package vignette, [rendered here](vignette.html).
+
+Three conventions hold throughout:
+
+- **Every result says how it was obtained**: hypotheses in words, deterministic terms, number of lags and how they were chosen, effective sample, critical values *and their source*, p-value, decision.
+- **Decisions are taken from critical values** computed for the actual sample size; the p-value is computed for the same sample size and agrees with them.
+- **Nothing is dropped silently.** Missing values, irregular dates or several candidate columns are errors that say what to fix.
+
+### What R already provides
+
+| unitroottools | Closest existing R tool | Why the function is kept |
+|:--|:--|:--|
+| `adf()` | `urca::ur.df()`, `tseries::adf.test()` | MAIC/MBIC lag selection on a common sample, MacKinnon critical values *and* p-values at the effective sample size, the φ statistics with their tables, full selection table |
+| `ur_strategy()` | — | Dolado–Jenkinson–Sosvilla-Rivero / Enders procedure, a conservative variant and Hamilton's rule, each step recorded |
+| `pp()` | `urca::ur.pp()` | Follows the published formula (urca's version differs by up to 0.1 in small samples); p-value |
+| `dfgls()` | `urca::ur.ers()` | Lag selection by Perron and Qu (2007); finite-sample critical values and p-value (urca's are too liberal: about 8% size at a nominal 5% with T = 100) |
+| `kpss()` | `urca::ur.kpss()`, `tseries::kpss.test()` | Same statistic (checked), common result format |
+| `tidy()`, `glance()` | — | Results of any test as data frames |
+
+## Installation and loading
+
+```r
+# install.packages("remotes")
+remotes::install_github("maarranz/UnitRoot-Tools-R", build_vignettes = TRUE)
+```
+
+Dependencies (`urca`, `generics`) are installed automatically. Building the vignette needs [pandoc](https://pandoc.org), which comes with RStudio; without it, leave out `build_vignettes = TRUE` and read the vignette [here](vignette.html). To install a specific version, add the tag: `"maarranz/UnitRoot-Tools-R@v0.1.0"`.
+
+```r
+library(unitroottools)
+```
+
+### Example used below
+
+The logarithm of U.S. real GDP, 1947Q1–2012Q4 (264 observations), the example Enders uses for the testing of unit roots when the deterministic terms are unknown. The data come with the package.
+
+```r
+gdp  <- read.csv(system.file("fixtures", "enders_rgdp.csv", package = "unitroottools"))
+lgdp <- ts(log(gdp$rgdp), start = c(1947, 1), frequency = 4)
+```
+
+## The augmented Dickey–Fuller test
+
+The test regression is
+
+$$
+\Delta y_t = a + \gamma t + b\, y_{t-1} + \sum_{j=1}^{k} \beta_j \Delta y_{t-j} + \varepsilon_t ,
+\qquad H_0: b = 0 \ \text{(unit root)} \quad H_1: b < 0,
+$$
+
+with `trend = "n"` (no deterministic terms), `"c"` (constant, $\gamma = 0$) or `"ct"` (constant and trend).
+
+```r
+adf(lgdp, trend = "ct")
+```
+
+```
+Augmented Dickey-Fuller test (tau3)
+
+  H0: unit root
+  H1: stationary around a linear trend
+  Deterministics: constant and linear trend
+  Lags: 1 (MAIC, kmax = 15)
+  Effective sample: N = 262 (t = 3, ..., 264)
+
+  Statistic:        -1.489
+  Critical values:  1%: -3.994   5%: -3.427   10%: -3.137
+  Source:           MacKinnon (2010) response surface
+  p-value:          0.831
+
+  Decision at 5%: do not reject H0 (unit root)
+```
+
+`summary()` adds the φ statistics (joint tests of the unit root and the deterministic terms) with their critical values, the lag-selection table and the test regression. Arguments: `lags` (fixed number of lagged differences), `max_lags`, `criterion` (`"MAIC"`, `"MBIC"`, `"AIC"`, `"BIC"`), `final_sample`, `level` (0.01, 0.05 or 0.10) and `var` (column of a data frame).
+
+### Choosing the number of lags
+
+`select_lags()` compares $k = 0, \dots, k_{\max}$, with $k_{\max} = \lfloor 12 (T/100)^{1/4} \rfloor$ (Schwert 1989), **on the same observations**, and returns the whole table. The default criterion is the modified AIC of Ng and Perron (2001), computed on the series detrended by OLS. After selection, `adf()` re-estimates the test regression with all observations available for the chosen order; `final_sample = "common"` keeps the selection sample.
+
+```r
+select_lags(lgdp, trend = "ct")    # MAIC selects k = 1 out of 0, ..., 15
+```
+
+## Which deterministic terms? Specification strategies
+
+`ur_strategy()` decides the deterministic terms and tests for a unit root in one call, recording every step:
+
+- `"original"`: the Dolado–Jenkinson–Sosvilla-Rivero sequence as set out by Enders: $\tau_3$, $\phi_3$, a test of the trend given the unit root, a conditional test; then the same with a constant only; finally $\tau_1$.
+- `"conservative"`: as the original, but a non-rejection by $\tau_2$ keeps the constant and stops.
+- `"hamilton"`: you declare whether the series is trending (`trending = TRUE` or `FALSE`, no default); one test follows.
+
+```r
+ur_strategy(lgdp, "original", lags = 1)
+```
+
+```
+Specification strategy: Original (Dolado-Jenkinson-Sosvilla-Rivero / Enders)
+
+  Lags: 1 (fixed)
+  Sample (all regressions): N = 262 (t = 3, ..., 264)   Level: 5%
+
+  Step Regr.  Test       Statistic Crit.val.  p-value  Decision    Next
+  1    ct     tau3          -1.489    -3.427    0.831  not reject  test phi3
+  2    ct     phi3           2.966     6.340        -  not reject  go to stage C
+  3    c      tau2          -2.049    -2.873    0.266  not reject  test phi1
+  4    c      phi1          25.485     4.630        -  reject      test constant, b = 0 imposed
+  5    aux_c  t(const)       6.797     1.969  < 0.001  reject      conditional t test of b
+  6    c      t(b) cond.    -2.049    -1.651    0.021  reject      stop
+
+  Specification: constant
+  Conclusion:    no unit root: stationary around a non-zero mean
+
+  Note: p-values are for each step on its own (none for the phi tables);
+  no p-value or size is reported for the sequence as a whole.
+```
+
+The original procedure removes the trend and then rejects the unit root through a conventional t test justified by the constant, a conclusion Enders himself rejects for GDP. The conservative variant keeps the constant and does not reject (`unit root (constant retained)`); Hamilton's rule with `trending = TRUE` uses $\tau_3$ only (`unit root (with drift)`). The history (`$history`, or `tidy()`) separates rejections of the unit root from rejections that only decide the path of the procedure.
+
+## Other tests
+
+```r
+pp(lgdp, trend = "ct")       # Phillips-Perron Z_tau
+dfgls(lgdp, trend = "ct")    # Elliott-Rothenberg-Stock DF-GLS
+kpss(lgdp, trend = "ct")     # KPSS: H0 is stationarity
+```
+
+- **`pp()`** corrects the Dickey–Fuller t ratio for serial correlation with a Bartlett long-run variance (Phillips and Perron 1988; Hamilton 1994, eq. 17.6.8). Bandwidth `"short"`, `"long"` (Schwert's rules on $T-1$) or a number. Critical values and p-value as for $\tau$.
+- **`dfgls()`** detrends by GLS ($\bar c = -7$ or $-13.5$). Without `lags`, the number of lags is chosen as Perron and Qu (2007) recommend: MAIC on the OLS-detrended series. Critical values and p-value come from the package's own finite-sample simulation over the sample size and the number of lags (out-of-sample size at 5%: 4.8–5.3%).
+- **`kpss()`** reverses the hypotheses: rejection is evidence *against* stationarity. Asymptotic critical values of Kwiatkowski et al. (1992), no p-value.
+
+## Results as data frames
+
+`glance()` gives one row per test, `tidy()` one row per statistic (on a strategy: one row per outcome, and the history):
+
+```r
+tests <- list(adf(lgdp, trend = "ct"), pp(lgdp, trend = "ct"),
+              dfgls(lgdp, trend = "ct"), kpss(lgdp, trend = "ct"))
+res <- do.call(rbind, lapply(tests, glance))
+res[, c("test", "statistic_name", "statistic", "p_value", "reject", "lags", "nobs")]
+```
+
+```
+    test statistic_name statistic p_value reject lags nobs
+1    ADF           tau3   -1.4891  0.8312  FALSE    1  262
+2     PP          Z_tau   -1.1105  0.9243  FALSE    5  263
+3 DF-GLS        tau_GLS   -1.0193  0.8625  FALSE    1  262
+4   KPSS        eta_tau    0.7008      NA   TRUE    5  264
+```
+
+All four point the same way for log GDP: the unit root is not rejected, and stationarity around a trend is rejected.
+
+## Critical values and p-values
+
+| Statistic | Critical values | p-value |
+|:--|:--|:--|
+| $\tau$ (ADF), $Z_\tau$ (PP) | MacKinnon (2010) response surfaces at the effective $N$; MacKinnon (1996) without deterministic terms | MacKinnon (1996), finite-sample, same $N$ |
+| $\phi_1, \phi_2, \phi_3$ | Dickey and Fuller (1981), Enders' Table B: largest tabulated $T \le N$ | none |
+| DF-GLS | Own response surfaces in $(T, k)$ from a Monte Carlo simulation (code in `data-raw/`) | MacKinnon's (1996) method on the same surfaces |
+| KPSS | Kwiatkowski et al. (1992), asymptotic | none |
+| Conditional and auxiliary t tests in strategies | Student t | Student t |
+
+Every result records its source in `$calibration`, and warns when the sample is below 25 observations or outside the simulated range.
+
+## Compact API summary
+
+| Function | Purpose | Returns |
+|:--|:--|:--|
+| `adf(y, trend, lags, max_lags, criterion, final_sample, level, var)` | Augmented Dickey–Fuller test | `ur_test` |
+| `select_lags(y, trend, max_lags, criterion, var)` | Lag order by MAIC, MBIC, AIC or BIC, with the full table | `ur_lags` |
+| `ur_strategy(y, strategy, trending, allow_no_constant, lags, max_lags, criterion, final_sample, level, var)` | Deterministic terms and unit-root decision, step by step | `ur_strategy` |
+| `pp(y, trend, bandwidth, level, var)` | Phillips–Perron $Z_\tau$ | `ur_test` |
+| `dfgls(y, trend, lags, max_lags, criterion, level, var)` | DF-GLS test | `ur_test` |
+| `kpss(y, trend, bandwidth, level, var)` | KPSS test of stationarity | `ur_test` |
+| `simulate_df(T, R, trend, seed)` | Simulated Dickey–Fuller distribution, with `plot()` | `df_simulation` |
+| `tidy(x)`, `glance(x)` | Results as data frames | data frame |
+| `match_trend(trend)` | Canonical deterministic code from an alias | string |
+| `new_ur_test()`, `validate_ur_test()` | Build and check a result object (for developers) | `ur_test` |
+
+A `ur_test` is a list: `statistic`, `statistic_name`, `critical_values`, `p_value`, `reject`, `level`, `tail`, `trend`, `lags`, `lag_selection`, `nobs`, `sample`, `calibration`, `other_statistics` (e.g. the φ statistics), `engine`, `warnings`, `regression`, `call`. Accepted inputs: numeric vectors, `ts`, `zoo`, `xts`, data frames, tibbles and tsibbles (choose a column with `var`).
+
+### Agreement with the Python version
+
+Both implementations follow the same [specification](https://github.com/maarranz/UnitRoot-Tools-R/blob/main/spec/specification.qmd), which records every convention as a numbered decision. The ADF regressions, φ statistics and auxiliary tests are checked against 120-digit reference calculations shared with the Python package (agreement better than $3 \times 10^{-15}$), and the $\tau$ critical values agree to $10^{-15}$. Known differences of the Python version are listed in [notes-for-python.md](https://github.com/maarranz/UnitRoot-Tools-R/blob/main/spec/notes-for-python.md).
+
+## Course, resources, and author
+
+**ATSE course material and Labs — Universidad Carlos III de Madrid:** public link to be added when available. The course material supplies theory; the Labs supply fuller examples and exercises. This API reference is not a substitute for either.
+
+- [Repository and README](https://github.com/maarranz/UnitRoot-Tools-R)
+- [Vignette (tutorial)](vignette.html)
+- [Python version: UnitRoot-Tools](https://github.com/maarranz/UnitRoot-Tools)
+- [MIT License](https://github.com/maarranz/UnitRoot-Tools-R/blob/main/LICENSE.md)
+- [Quarto source](unitroottools_Documentation.qmd)
+
+**Miguel A. Arranz, PhD**\
+Department of Economics\
+Universidad Carlos III de Madrid (UC3M)\
+Email: [maarranz@eco.uc3m.es](mailto:maarranz@eco.uc3m.es)\
+ORCID: [0000-0002-5951-2284](https://orcid.org/0000-0002-5951-2284)
+
+### Rebuilding the HTML
+
+The examples are ordinary R code blocks, validated in a fresh session rather than executed during rendering. Equations are rendered as MathML, which needs no external script or fonts. With Quarto (or pandoc) installed, from the repository root:
+
+```bash
+quarto pandoc docs/unitroottools_Documentation.qmd \
+  --from markdown --to html5 --standalone --toc --toc-depth=2 \
+  --mathml --embed-resources -o docs/index.html
+Rscript -e 'rmarkdown::render("vignettes/unitroottools.Rmd",
+  output_format = rmarkdown::html_vignette(math_method = "mathml"),
+  output_dir = "docs", output_file = "vignette.html")'
+```
