@@ -10,8 +10,8 @@ engine_urca <- function() {
 }
 
 bandwidth_rules <- c(
-  short = "short: trunc(4 (T/100)^(1/4))",
-  long  = "long: trunc(12 (T/100)^(1/4))"
+  short = "short: trunc(4 (n/100)^(1/4))",
+  long  = "long: trunc(12 (n/100)^(1/4))"
 )
 
 # "short", "long" or a non-negative integer -> arguments for urca
@@ -41,8 +41,11 @@ bandwidth_args <- function(bandwidth) {
 #'
 #' Limitations of this version (backend: urca): only \eqn{Z_\tau} (urca does
 #' not provide critical values for \eqn{Z_\alpha}); constant or constant and
-#' trend; Bartlett kernel with bandwidth `"short"`, `"long"` (Schwert's rules)
-#' or fixed.
+#' trend; Bartlett kernel with bandwidth `"short"`, `"long"` (Schwert's rules,
+#' applied to \eqn{n = T - 1}) or fixed. urca's correction term uses sums
+#' over \eqn{y_t} where Phillips and Perron (1988) use \eqn{y_{t-1}}; the
+#' difference vanishes as \eqn{T} grows but reaches about 0.1 at
+#' \eqn{T = 30}. An internal implementation is planned.
 #'
 #' @inheritParams adf
 #' @param trend `"c"` or `"ct"` (or an alias accepted by [match_trend()]).
@@ -63,6 +66,7 @@ pp <- function(y, trend = "c", bandwidth = "short", level = 0.05, var = NULL) {
   y <- check_series(y, var = var)
   trend <- match_trend(trend, allowed = c("c", "ct"))
   bw <- bandwidth_args(bandwidth)
+  bw$rule <- sub("n/100", "(T-1)/100", bw$rule, fixed = TRUE)
   u <- urca::ur.pp(y, type = "Z-tau",
                    model = if (trend == "c") "constant" else "trend",
                    lags = bw$lags, use.lag = bw$use.lag)
@@ -112,6 +116,7 @@ kpss <- function(y, trend = "c", bandwidth = "short", level = 0.05, var = NULL) 
   y <- check_series(y, var = var)
   trend <- match_trend(trend, allowed = c("c", "ct"))
   bw <- bandwidth_args(bandwidth)
+  bw$rule <- sub("n/100", "T/100", bw$rule, fixed = TRUE)
   u <- urca::ur.kpss(y, type = if (trend == "c") "mu" else "tau",
                      lags = bw$lags, use.lag = bw$use.lag)
   cv <- u@cval[1, ]
@@ -148,7 +153,10 @@ kpss <- function(y, trend = "c", bandwidth = "short", level = 0.05, var = NULL) 
 #' GLS-detrended series with that number of lags, on the maximal sample.
 #'
 #' Limitations of this version (backend: urca): critical values as provided
-#' by urca, rounded to two decimals; no p-value.
+#' by urca, rounded to two decimals; no p-value. **These critical values are
+#' too liberal in finite samples**: at the 5% level the test rejects a true
+#' unit root about 8% of the time with \eqn{T = 100} and a constant (10%
+#' with \eqn{T = 50}). Finite-sample critical values are planned.
 #'
 #' @inheritParams pp
 #' @inheritParams select_lags

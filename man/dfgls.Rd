@@ -54,7 +54,10 @@ exactly as for \code{\link[=adf]{adf()}}; the DF-GLS statistic is then computed 
 GLS-detrended series with that number of lags, on the maximal sample.
 
 Limitations of this version (backend: urca): critical values as provided
-by urca, rounded to two decimals; no p-value.
+by urca, rounded to two decimals; no p-value. \strong{These critical values are
+too liberal in finite samples}: at the 5\% level the test rejects a true
+unit root about 8\% of the time with \eqn{T = 100} and a constant (10\%
+with \eqn{T = 50}). Finite-sample critical values are planned.
 }
 \examples{
 set.seed(1)

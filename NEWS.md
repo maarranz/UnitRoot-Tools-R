@@ -27,6 +27,17 @@ These follow decisions D1, D3 and D7-D10 of the specification
 * New tests against 120-digit reference calculations shared with the Python
   package (`inst/fixtures/python/`).
 
+## Phase 2B audit (first findings)
+
+* The statistics of `kpss()` and `dfgls()` (computed by urca) are now tested
+  against independent implementations of the published formulas.
+* Documented two problems in the urca backend: `dfgls()` critical values are
+  too liberal in finite samples (true size about 8% at a nominal 5% with
+  T = 100 and a constant), and urca's Phillips-Perron Z_tau departs from the
+  published formula in small samples. Fixes are proposed in the
+  specification (D11, D12).
+* `pp()` now reports its bandwidth rule as applied by urca, to T - 1.
+
 # unitroottools 0.1.0
 
 ## Robustness fixes after the Phase 1 audit

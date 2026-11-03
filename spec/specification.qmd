@@ -328,9 +328,9 @@ Checked against the urca 1.3-4 reference documentation. Each limitation is the d
 | `ur.df` | Lag selection only `"Fixed"`, `"AIC"`, `"BIC"`; no MAIC/MBIC; sample convention for comparing lags not documented | ADF is internal from v0.1 |
 | `ur.df` | Object reports tabulated critical values, no p-value (urca does export MacKinnon p-value functions separately) | Calibration handled in our own layer |
 | `ur.df` | No auxiliary regressions, conditional tests or decision sequence | Strategies are internal |
-| `ur.pp` | Bartlett kernel only; bandwidth `"short"`/`"long"` or user-specified; `model` only `"constant"`/`"trend"` | Adapter exposes exactly these options; internal version in Phase 2 |
+| `ur.pp` | Bartlett kernel only; bandwidth `"short"`/`"long"` or user-specified, with the rule applied to $T-1$; `model` only `"constant"`/`"trend"`. The $Z_\tau$ correction uses sums over $y_t$ where Phillips and Perron (1988) and Hamilton (1994, eq. 17.6.8) use $y_{t-1}$: the statistic differs from theirs by up to 0.12 at $T = 30$, 0.02 at $T = 264$ (Phase 2B audit; ARCH and an independent implementation agree with the published formula to $10^{-13}$) | Adapter exposes exactly these options; internal version (Decision D12) |
 | `ur.kpss` | Bandwidth `"short"`/`"long"`/`"nil"` or user-specified; no automatic (Newey–West, Andrews) bandwidth | As above |
-| `ur.ers` | DF-GLS: `lag.max` is the fixed number of lagged differences, no lag selection; P-test selects lags by BIC; applies `na.omit` internally | Adapter validates input first; MAIC version in Phase 2 |
+| `ur.ers` | DF-GLS: `lag.max` is the fixed number of lagged differences, no lag selection; P-test selects lags by BIC; applies `na.omit` internally. Critical values are too liberal: with a constant, urca uses the Dickey–Fuller no-constant surface, whereas the finite-sample DF-GLS distribution has a heavier left tail; with a trend, it uses the *next larger* row of Elliott, Rothenberg and Stock's Table 1. Simulated size at nominal 5% (20,000 replications, no lags): constant 10.0% ($T = 50$), 8.0% ($T = 100$), 6.6% ($T = 250$); trend 7.2%, 6.5%, 5.3%. The statistic itself agrees with an independent implementation to $10^{-14}$ | Statistic from urca; lag selection internal (D9); critical values internal (Decision D11) |
 | — | No Ng–Perron M-tests | Internal implementation in Phase 2 |
 | all | S4 objects, no common result, no decision or provenance | `ur_test` contract over every backend |
 
@@ -348,6 +348,8 @@ Checked against the urca 1.3-4 reference documentation. Each limitation is the d
 | D8 | $\tau$ p-values | MacKinnon (1996) at the effective $N$; decision from critical values | Settled 3 Nov |
 | D9 | Lag selection for GLS-based tests | Perron–Qu (2007): MAIC on OLS-detrended series, final statistic GLS | Settled 3 Nov |
 | D10 | `tidy`/`glance`; shared high-precision fixtures | Via `generics`; Python's `scaled_references.json` used by both | Settled 3 Nov |
+| D11 | DF-GLS critical values and p-values | Proposed: finite-sample response surfaces of ARCH 8.0.0 (as the Python implementation), checked by our own simulation | Open |
+| D12 | Phillips–Perron $Z_\tau$ | Proposed: internal implementation of Phillips and Perron (1988) / Hamilton (1994, eq. 17.6.8), replacing urca | Open |
 
 **Known divergences of the Python implementation (to be resolved there):** default $k_{\max}$ uses the ceiling (D3); the cap allows one residual degree of freedom instead of two (D3); asymptotic MacKinnon (1994) p-values (D8); plain AIC/BIC from the detrended regression (D7, admissible as an alternative). The Python implementation has no Hamilton strategy yet.
 

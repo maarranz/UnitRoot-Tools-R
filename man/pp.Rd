@@ -33,8 +33,11 @@ limiting distribution as the Dickey-Fuller \eqn{\tau}.
 
 Limitations of this version (backend: urca): only \eqn{Z_\tau} (urca does
 not provide critical values for \eqn{Z_\alpha}); constant or constant and
-trend; Bartlett kernel with bandwidth \code{"short"}, \code{"long"} (Schwert's rules)
-or fixed.
+trend; Bartlett kernel with bandwidth \code{"short"}, \code{"long"} (Schwert's rules,
+applied to \eqn{n = T - 1}) or fixed. urca's correction term uses sums
+over \eqn{y_t} where Phillips and Perron (1988) use \eqn{y_{t-1}}; the
+difference vanishes as \eqn{T} grows but reaches about 0.1 at
+\eqn{T = 30}. An internal implementation is planned.
 }
 \examples{
 set.seed(1)
