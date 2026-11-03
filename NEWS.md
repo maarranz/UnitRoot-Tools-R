@@ -31,12 +31,15 @@ These follow decisions D1, D3 and D7-D10 of the specification
 
 * The statistics of `kpss()` and `dfgls()` (computed by urca) are now tested
   against independent implementations of the published formulas.
-* Documented two problems in the urca backend: `dfgls()` critical values are
-  too liberal in finite samples (true size about 8% at a nominal 5% with
-  T = 100 and a constant), and urca's Phillips-Perron Z_tau departs from the
-  published formula in small samples. Fixes are proposed in the
-  specification (D11, D12).
-* `pp()` now reports its bandwidth rule as applied by urca, to T - 1.
+* Found two problems in the urca backend, both fixed below: `dfgls()`
+  critical values were too liberal in finite samples, and urca's
+  Phillips-Perron Z_tau departs from the published formula in small samples.
+* `dfgls()` critical values and p-values now come from the package's own
+  finite-sample response surfaces (decision D11), estimated from a Monte
+  Carlo simulation over sample size and lag order (code in `data-raw/`).
+  urca's critical values, used before, rejected a true unit root 8% of the
+  time at the 5% level with T = 100 and a constant; the new ones give
+  4.8-5.3% in out-of-sample checks.
 * `pp()` is now computed internally (decision D12), following Phillips and
   Perron (1988) and Hamilton (1994, eq. 17.6.8); urca's `ur.pp()` is no
   longer used. Values differ from earlier versions by O(1/T) (about 0.1 at

@@ -95,11 +95,17 @@ kpss <- function(y, trend = "c", bandwidth = "short", level = 0.05, var = NULL) 
 #' exactly as for [adf()]; the DF-GLS statistic is then computed on the
 #' GLS-detrended series with that number of lags, on the maximal sample.
 #'
-#' Limitations of this version (backend: urca): critical values as provided
-#' by urca, rounded to two decimals; no p-value. **These critical values are
-#' too liberal in finite samples**: at the 5% level the test rejects a true
-#' unit root about 8% of the time with \eqn{T = 100} and a constant (10%
-#' with \eqn{T = 50}). Finite-sample critical values are planned.
+#' **Critical values and p-value.** The DF-GLS statistic has a heavier
+#' left tail in finite samples than the Dickey-Fuller distributions often
+#' used for it, and its quantiles also depend on the number of lagged
+#' differences. Critical values and the p-value therefore come from this
+#' package's own response surfaces, estimated from a Monte Carlo simulation
+#' of the statistic under the null for \eqn{T = 25, \dots, 1000} and
+#' \eqn{k = 0, \dots, 21} (see the specification, Decision D11). A warning
+#' is given when \eqn{(T, k)} lies outside the simulated range.
+#'
+#' The statistic itself is computed by [urca::ur.ers()] (checked against an
+#' independent implementation).
 #'
 #' @inheritParams pp
 #' @inheritParams select_lags
@@ -152,26 +158,22 @@ dfgls <- function(y, trend = "c", lags = NULL, max_lags = NULL,
   u <- urca::ur.ers(y, type = "DF-GLS",
                     model = if (trend == "c") "constant" else "trend",
                     lag.max = k)
-  cv <- u@cval[1, ]
-  names(cv) <- c(`1pct` = "0.01", `5pct` = "0.05", `10pct` = "0.1")[colnames(u@cval)]
   n <- length(y)
   nobs <- n - k - 1L
-  calibration <- if (trend == "c") {
-    list(method = "response_surface",
-         source = "MacKinnon (1991) Dickey-Fuller surface without deterministic terms, as computed by urca",
-         note = "rounded to two decimals by urca")
-  } else {
-    list(method = "table",
-         source = "Elliott, Rothenberg and Stock (1996), Table 1, as computed by urca",
-         note = "rounded to two decimals by urca")
-  }
+  cv <- dfgls_critical_values(trend, n, k)
+  calibration <- list(
+    method = "response_surface",
+    source = "unitroottools DF-GLS response surfaces (own simulation)",
+    note = sprintf("finite-sample quantiles for T = %d and k = %d lagged differences", n, k))
+  design_warnings <- dfgls_design_warnings(trend, n, k)
   new_ur_test(
     method = "DF-GLS test", test = "DF-GLS",
     statistic_name = "tau_GLS", statistic = unname(u@teststat),
     null = "unit root", alternative = adf_alternatives[[trend]], trend = trend,
     lags = k, lag_selection = selection, nobs = nobs, sample = c(k + 2L, n),
     critical_values = cv, tail = "lower",
+    p_value = dfgls_p_value(unname(u@teststat), trend, n, k),
     calibration = calibration, level = level, engine = engine_urca(),
-    warnings = c(notes, if (nobs < 25L) "N is below 25." else character()),
+    warnings = c(notes, design_warnings),
     call = call)
 }

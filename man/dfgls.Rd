@@ -53,11 +53,17 @@ the order is selected as recommended by Perron and Qu (2007): by
 exactly as for \code{\link[=adf]{adf()}}; the DF-GLS statistic is then computed on the
 GLS-detrended series with that number of lags, on the maximal sample.
 
-Limitations of this version (backend: urca): critical values as provided
-by urca, rounded to two decimals; no p-value. \strong{These critical values are
-too liberal in finite samples}: at the 5\% level the test rejects a true
-unit root about 8\% of the time with \eqn{T = 100} and a constant (10\%
-with \eqn{T = 50}). Finite-sample critical values are planned.
+\strong{Critical values and p-value.} The DF-GLS statistic has a heavier
+left tail in finite samples than the Dickey-Fuller distributions often
+used for it, and its quantiles also depend on the number of lagged
+differences. Critical values and the p-value therefore come from this
+package's own response surfaces, estimated from a Monte Carlo simulation
+of the statistic under the null for \eqn{T = 25, \dots, 1000} and
+\eqn{k = 0, \dots, 21} (see the specification, Decision D11). A warning
+is given when \eqn{(T, k)} lies outside the simulated range.
+
+The statistic itself is computed by \code{\link[urca:ur.ers]{urca::ur.ers()}} (checked against an
+independent implementation).
 }
 \examples{
 set.seed(1)

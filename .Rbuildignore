@@ -2,3 +2,4 @@
 ^spec$
 ^\.github$
 ^refs$
+^data-raw$
