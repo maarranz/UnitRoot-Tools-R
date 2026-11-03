@@ -27,7 +27,8 @@ test_that("tau and its critical values follow the specification", {
   expect_identical(r$tail, "lower")
   expect_equal(r$critical_values, tau_critical_values("ct", r$nobs))
   expect_identical(r$calibration$source, "MacKinnon (2010) response surface")
-  expect_true(is.na(r$p_value))
+  expect_equal(r$p_value, urca::punitroot(r$statistic, r$nobs, "ct"))
+  expect_match(r$calibration$p_value_source, "MacKinnon \\(1996\\)")
   expect_named(r$other_statistics, c("phi2", "phi3"))
   expect_named(r$other_critical_values, c("phi2", "phi3"))
   expect_identical(adf(y, trend = "n", lags = 0)$calibration$source,
@@ -35,18 +36,33 @@ test_that("tau and its critical values follow the specification", {
   expect_identical(r$reject, r$statistic < r$critical_values[["0.05"]])
 })
 
-test_that("lag selection: common sample by default, maximal on request", {
+test_that("lag selection: maximal sample by default, common on request (D1)", {
   y <- sim_series(n = 200)
   sel <- select_lags(y, trend = "c")
   r1 <- adf(y, trend = "c")
   expect_identical(r1$lags, sel$lags)
-  expect_identical(r1$nobs, sel$nobs)
-  expect_identical(r1$lag_selection$final_sample, "common")
+  expect_identical(r1$lag_selection$final_sample, "maximal")
+  expect_identical(r1$nobs, length(y) - r1$lags - 1L)
+  expect_identical(r1$sample, c(r1$lags + 2L, length(y)))
+  expect_equal(r1$statistic, adf(y, trend = "c", lags = r1$lags)$statistic)
   expect_equal(r1$lag_selection$table, sel$table)
 
-  r2 <- adf(y, trend = "c", final_sample = "maximal")
-  expect_identical(r2$nobs, length(y) - r2$lags - 1L)
-  expect_equal(r2$statistic, adf(y, trend = "c", lags = r2$lags)$statistic)
+  r2 <- adf(y, trend = "c", final_sample = "common")
+  expect_identical(r2$lags, sel$lags)
+  expect_identical(r2$nobs, sel$nobs)
+  expect_identical(r2$sample, sel$sample)
+})
+
+test_that("p-values: MacKinnon (1996), consistent with the 2010 critical values (D8)", {
+  for (tr in c("n", "c", "ct")) {
+    for (N in c(25L, 50L, 100L, 262L)) {
+      cv <- tau_critical_values(tr, N)
+      p <- vapply(cv, tau_p_value, numeric(1), trend = tr, nobs = N)
+      expect_equal(unname(p), c(0.01, 0.05, 0.10), tolerance = 1e-3)
+    }
+  }
+  expect_true(tau_p_value(-10, "c", 100) >= 0)
+  expect_true(tau_p_value(5, "c", 100) <= 1)
 })
 
 test_that("argument checks", {
@@ -83,6 +99,6 @@ test_that("print and summary show the test, phi statistics and lag table", {
   expect_match(s, "Accompanying statistics", all = FALSE)
   expect_match(s, "phi3", all = FALSE)
   expect_match(s, "Dickey and Fuller \\(1981\\), table row T = 100", all = FALSE)
-  expect_match(s, "test regression on the common sample", all = FALSE)
+  expect_match(s, "test regression on the maximal sample", all = FALSE)
   expect_match(s, "y_lag1", all = FALSE)
 })

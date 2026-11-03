@@ -32,6 +32,14 @@ tau_critical_values <- function(trend, nobs) {
   drop(b %*% powers)
 }
 
+# MacKinnon (1996) finite-sample p-value of a tau statistic at effective
+# sample size nobs (spec, Decision D8), via MacKinnon's own routine in urca.
+tau_p_value <- function(stat, trend, nobs) {
+  code <- c(n = "nc", c = "c", ct = "ct")[[trend]]
+  p <- urca::punitroot(unname(stat), N = nobs, trend = code, statistic = "t")
+  min(max(as.numeric(p), 0), 1)
+}
+
 # ---- phi: Dickey and Fuller (1981) tables -------------------------------------
 #
 # Tables IV-VI of Dickey and Fuller (1981), as reproduced in Enders' Table B.

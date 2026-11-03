@@ -41,7 +41,9 @@ required_levels <- c(0.01, 0.05, 0.10)
 #'   one. Never interpolated from tabulated critical values.
 #' @param calibration List with `method` (one of `"table"`,
 #'   `"response_surface"`, `"conventional_t"`, `"bootstrap"`), `source`
-#'   and, optionally, `note` (e.g. an approximation used).
+#'   and, optionally, `note` (e.g. an approximation used) and
+#'   `p_value_source` (when the p-value comes from a different source than
+#'   the critical values).
 #' @param level Significance level for the reported decision.
 #' @param other_statistics Named numeric vector of accompanying statistics
 #'   (e.g. the \eqn{\phi} statistics reported with \eqn{\tau_3}).
@@ -223,6 +225,9 @@ validate_fields <- function(x) {
   if (!is.null(cal$note) && !is_string(cal$note)) {
     fail("`calibration$note` must be NULL or a string.")
   }
+  if (!is.null(cal$p_value_source) && !is_string(cal$p_value_source)) {
+    fail("`calibration$p_value_source` must be NULL or a string.")
+  }
 
   if (!is_number(x$level) || x$level <= 0 || x$level >= 1) {
     fail("`level` must be a number in (0, 1).")
@@ -345,7 +350,8 @@ print.summary.ur_test <- function(x, ...) {
   if (!is.null(cal$note)) cat(sprintf("  Note:   %s\n", cal$note))
   cat(sprintf("  p-value: %s\n",
               if (is.na(r$p_value)) "not provided by this calibration"
-              else fmt_pvalue(r$p_value)))
+              else if (is.null(cal$p_value_source)) fmt_pvalue(r$p_value)
+              else sprintf("%s [%s]", fmt_pvalue(r$p_value), cal$p_value_source)))
   if (length(r$other_statistics) > 0L) {
     cat("\nAccompanying statistics\n")
     for (n in names(r$other_statistics)) {

@@ -4,7 +4,15 @@
 \alias{dfgls}
 \title{DF-GLS test}
 \usage{
-dfgls(y, trend = "c", lags, level = 0.05, var = NULL)
+dfgls(
+  y,
+  trend = "c",
+  lags = NULL,
+  max_lags = NULL,
+  criterion = c("MAIC", "AIC", "BIC", "MBIC"),
+  level = 0.05,
+  var = NULL
+)
 }
 \arguments{
 \item{y}{A univariate time series: numeric vector, \code{ts}, \code{zoo}/\code{xts}, or a
@@ -12,8 +20,17 @@ data frame, tibble or tsibble (see \code{var}).}
 
 \item{trend}{\code{"c"} or \code{"ct"} (or an alias accepted by \code{\link[=match_trend]{match_trend()}}).}
 
-\item{lags}{Number of lagged differences in the DF-GLS regression
-(required).}
+\item{lags}{Number of lagged differences in the DF-GLS regression. If
+\code{NULL} (default), selected by \code{criterion} as described above.}
+
+\item{max_lags}{Largest order considered, \eqn{k_{\max}}. Default:
+\eqn{\lfloor 12 (T/100)^{1/4} \rfloor} (Schwert, 1989), capped at
+\eqn{\lfloor (T-4-d)/2 \rfloor}, where \eqn{d} is the number of
+deterministic terms, so that every candidate regression keeps two residual
+degrees of freedom (the cap only binds for \eqn{T \le 21}; a note says so).
+A larger \code{max_lags} is an error.}
+
+\item{criterion}{One of \code{"MAIC"} (default), \code{"AIC"}, \code{"BIC"}, \code{"MBIC"}.}
 
 \item{level}{Significance level of the reported decision: 0.01, 0.05 or
 0.10.}
@@ -30,16 +47,29 @@ Dickey-Fuller regression without deterministic terms is run on the
 detrended series. Computed by \code{\link[urca:ur.ers]{urca::ur.ers()}}.
 }
 \details{
-Limitations of this version (backend: urca): the number of lagged
-differences must be given (no lag selection; a MAIC version following Ng
-and Perron, 2001, and Perron and Qu, 2007, is planned); critical values
-as provided by urca, rounded to two decimals.
+\strong{Lags.} Give \code{lags} to fix the number of lagged differences. Otherwise
+the order is selected as recommended by Perron and Qu (2007): by
+\code{\link[=select_lags]{select_lags()}} (MAIC by default) on the series detrended by \strong{OLS},
+exactly as for \code{\link[=adf]{adf()}}; the DF-GLS statistic is then computed on the
+GLS-detrended series with that number of lags, on the maximal sample.
+
+Limitations of this version (backend: urca): critical values as provided
+by urca, rounded to two decimals; no p-value.
 }
 \examples{
 set.seed(1)
-dfgls(cumsum(rnorm(150)), trend = "c", lags = 2)
+y <- cumsum(rnorm(150))
+dfgls(y, trend = "c")
+dfgls(y, trend = "c", lags = 2)
 }
 \references{
 Elliott, G., Rothenberg, T. J. and Stock, J. H. (1996). Efficient tests for
 an autoregressive unit root. \emph{Econometrica}, 64, 813-836.
+
+Ng, S. and Perron, P. (2001). Lag length selection and the construction of
+unit root tests with good size and power. \emph{Econometrica}, 69, 1519-1554.
+
+Perron, P. and Qu, Z. (2007). A simple modification to improve the finite
+sample properties of Ng and Perron's unit root tests. \emph{Economics Letters},
+94, 12-19.
 }

@@ -26,16 +26,23 @@ adf_alternatives <- c(
 #' regression then uses the maximal sample, \eqn{t = k + 2, \dots, T}.
 #' Otherwise the order is chosen by [select_lags()] over
 #' \eqn{0, \dots, k_{\max}} on the common sample \eqn{t = k_{\max} + 2, \dots,
-#' T}, and the test regression is estimated on that same sample
-#' (`final_sample = "common"`) or re-estimated on the maximal sample for the
-#' selected order (`final_sample = "maximal"`).
+#' T}, and the test regression is re-estimated on the maximal sample for the
+#' selected order, \eqn{t = k^* + 2, \dots, T} (`final_sample = "maximal"`,
+#' the default), or kept on the common sample used for selection
+#' (`final_sample = "common"`), so that it is exactly the selected row of the
+#' selection table.
+#'
+#' **p-value.** MacKinnon's (1996) finite-sample p-value at the effective
+#' sample size, computed by [urca::punitroot()]. The decision is taken from
+#' the critical value; the two sources agree to four decimals at the
+#' tabulated levels.
 #'
 #' @inheritParams select_lags
 #' @param lags Fixed number of lagged differences. If `NULL` (default), the
 #'   order is selected by `criterion`.
-#' @param final_sample After lag selection, estimate the test regression on
-#'   the `"common"` sample used for selection (default) or on the
-#'   `"maximal"` sample for the selected order.
+#' @param final_sample After lag selection, re-estimate the test regression
+#'   on the `"maximal"` sample for the selected order (default) or keep the
+#'   `"common"` sample used for selection.
 #' @param level Significance level of the reported decision: 0.01, 0.05 or
 #'   0.10 (the levels with tabulated critical values).
 #'
@@ -43,6 +50,9 @@ adf_alternatives <- c(
 #' @references
 #' Dickey, D. A. and Fuller, W. A. (1981). Likelihood ratio statistics for
 #' autoregressive time series with a unit root. *Econometrica*, 49, 1057-1072.
+#'
+#' MacKinnon, J. G. (1996). Numerical distribution functions for unit root
+#' and cointegration tests. *Journal of Applied Econometrics*, 11, 601-618.
 #'
 #' MacKinnon, J. G. (2010). Critical values for cointegration tests. Queen's
 #' Economics Department Working Paper 1227.
@@ -55,7 +65,7 @@ adf_alternatives <- c(
 #' @export
 adf <- function(y, trend = "c", lags = NULL, max_lags = NULL,
                 criterion = c("MAIC", "AIC", "BIC", "MBIC"),
-                final_sample = c("common", "maximal"),
+                final_sample = c("maximal", "common"),
                 level = 0.05, var = NULL) {
   call <- match.call()
   criterion <- match.arg(criterion)
@@ -78,7 +88,7 @@ adf <- function(y, trend = "c", lags = NULL, max_lags = NULL,
     first <- if (final_sample == "common") sel$kmax + 2L else k + 2L
     selection <- list(method = criterion, kmax = sel$kmax,
                       detrending = sel$detrending, table = sel$table,
-                      final_sample = final_sample)
+                      final_sample = final_sample, notes = sel$notes)
   }
 
   r <- adf_regression(y, trend, k, first)
@@ -88,7 +98,7 @@ adf <- function(y, trend = "c", lags = NULL, max_lags = NULL,
 # Builds the ur_test for an ADF regression (used by adf() and the strategies).
 adf_result <- function(r, selection, level, call) {
   trend <- r$trend
-  warn <- character()
+  warn <- if (is.null(selection$notes)) character() else selection$notes
   if (r$nobs < 25L) {
     warn <- c(warn, sprintf(
       "N = %d is below 25, the smallest sample size in the critical-value tables.",
@@ -119,10 +129,12 @@ adf_result <- function(r, selection, level, call) {
     sample = unname(r$sample),
     critical_values = tau_critical_values(trend, r$nobs),
     tail = "lower",
+    p_value = tau_p_value(r$tau, trend, r$nobs),
     calibration = list(
       method = "response_surface",
       source = mackinnon_source[[trend]],
-      note = sprintf("evaluated at N = %d", r$nobs)
+      note = sprintf("evaluated at N = %d", r$nobs),
+      p_value_source = "MacKinnon (1996) finite-sample p-value (urca::punitroot)"
     ),
     level = level,
     other_statistics = r$phi,

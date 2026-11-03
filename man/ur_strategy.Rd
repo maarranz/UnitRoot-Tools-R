@@ -12,6 +12,7 @@ ur_strategy(
   lags = NULL,
   max_lags = NULL,
   criterion = c("MAIC", "AIC", "BIC", "MBIC"),
+  final_sample = c("maximal", "common"),
   level = 0.05,
   var = NULL
 )
@@ -32,9 +33,17 @@ procedure to evaluate the model without a constant.}
 order is selected by \code{criterion}.}
 
 \item{max_lags}{Largest order considered, \eqn{k_{\max}}. Default:
-\eqn{\lfloor 12 (T/100)^{1/4} \rfloor} (Schwert, 1989).}
+\eqn{\lfloor 12 (T/100)^{1/4} \rfloor} (Schwert, 1989), capped at
+\eqn{\lfloor (T-4-d)/2 \rfloor}, where \eqn{d} is the number of
+deterministic terms, so that every candidate regression keeps two residual
+degrees of freedom (the cap only binds for \eqn{T \le 21}; a note says so).
+A larger \code{max_lags} is an error.}
 
 \item{criterion}{One of \code{"MAIC"} (default), \code{"AIC"}, \code{"BIC"}, \code{"MBIC"}.}
+
+\item{final_sample}{After lag selection, re-estimate the test regression
+on the \code{"maximal"} sample for the selected order (default) or keep the
+\code{"common"} sample used for selection.}
 
 \item{level}{Significance level for every test in the sequence: 0.01,
 0.05 or 0.10.}
@@ -71,7 +80,9 @@ is no default and no data-driven choice.
 
 All regressions use the same lag order and the same sample. The lag order
 is selected once, under constant and trend (under the declared
-specification for Hamilton's rule), unless fixed with \code{lags}.
+specification for Hamilton's rule), unless fixed with \code{lags}; the
+regressions then use the maximal sample for that order (or the common
+selection sample with \code{final_sample = "common"}).
 
 The history distinguishes rejections of the unit-root null from
 rejections that only decide the path of the procedure (joint \eqn{\phi}

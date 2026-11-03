@@ -141,32 +141,63 @@ kpss <- function(y, trend = "c", bandwidth = "short", level = 0.05, var = NULL) 
 #' Dickey-Fuller regression without deterministic terms is run on the
 #' detrended series. Computed by [urca::ur.ers()].
 #'
-#' Limitations of this version (backend: urca): the number of lagged
-#' differences must be given (no lag selection; a MAIC version following Ng
-#' and Perron, 2001, and Perron and Qu, 2007, is planned); critical values
-#' as provided by urca, rounded to two decimals.
+#' **Lags.** Give `lags` to fix the number of lagged differences. Otherwise
+#' the order is selected as recommended by Perron and Qu (2007): by
+#' [select_lags()] (MAIC by default) on the series detrended by **OLS**,
+#' exactly as for [adf()]; the DF-GLS statistic is then computed on the
+#' GLS-detrended series with that number of lags, on the maximal sample.
+#'
+#' Limitations of this version (backend: urca): critical values as provided
+#' by urca, rounded to two decimals; no p-value.
 #'
 #' @inheritParams pp
-#' @param lags Number of lagged differences in the DF-GLS regression
-#'   (required).
+#' @inheritParams select_lags
+#' @param lags Number of lagged differences in the DF-GLS regression. If
+#'   `NULL` (default), selected by `criterion` as described above.
 #' @return An object of class `ur_test`.
 #' @references
 #' Elliott, G., Rothenberg, T. J. and Stock, J. H. (1996). Efficient tests for
 #' an autoregressive unit root. *Econometrica*, 64, 813-836.
+#'
+#' Ng, S. and Perron, P. (2001). Lag length selection and the construction of
+#' unit root tests with good size and power. *Econometrica*, 69, 1519-1554.
+#'
+#' Perron, P. and Qu, Z. (2007). A simple modification to improve the finite
+#' sample properties of Ng and Perron's unit root tests. *Economics Letters*,
+#' 94, 12-19.
 #' @examples
 #' set.seed(1)
-#' dfgls(cumsum(rnorm(150)), trend = "c", lags = 2)
+#' y <- cumsum(rnorm(150))
+#' dfgls(y, trend = "c")
+#' dfgls(y, trend = "c", lags = 2)
 #' @export
-dfgls <- function(y, trend = "c", lags, level = 0.05, var = NULL) {
+dfgls <- function(y, trend = "c", lags = NULL, max_lags = NULL,
+                  criterion = c("MAIC", "AIC", "BIC", "MBIC"),
+                  level = 0.05, var = NULL) {
   call <- match.call()
-  if (missing(lags)) {
-    stop("Give the number of lagged differences with `lags`: automatic lag ",
-         "selection for DF-GLS is not available in this version.", call. = FALSE)
-  }
-  k <- check_order(lags, "lags")
+  criterion <- match.arg(criterion)
   check_level(level)
   y <- check_series(y, var = var)
   trend <- match_trend(trend, allowed = c("c", "ct"))
+  notes <- character()
+  if (!is.null(lags)) {
+    if (!is.null(max_lags)) {
+      stop("Give either `lags` (fixed order) or `max_lags` (selection), not both.",
+           call. = FALSE)
+    }
+    k <- check_order(lags, "lags")
+    selection <- NULL
+  } else {
+    sel <- lag_table(y, trend, max_lags, criterion)
+    k <- sel$lags
+    notes <- sel$notes
+    selection <- list(method = criterion, kmax = sel$kmax,
+                      detrending = "OLS (Perron and Qu, 2007); statistic on GLS-detrended series",
+                      table = sel$table, final_sample = "maximal", notes = sel$notes)
+  }
+  if (length(y) - k - 1L < k + 2L) {
+    stop("`lags` = ", k, " is too large for T = ", length(y), ".", call. = FALSE)
+  }
   u <- urca::ur.ers(y, type = "DF-GLS",
                     model = if (trend == "c") "constant" else "trend",
                     lag.max = k)
@@ -187,9 +218,9 @@ dfgls <- function(y, trend = "c", lags, level = 0.05, var = NULL) {
     method = "DF-GLS test", test = "DF-GLS",
     statistic_name = "tau_GLS", statistic = unname(u@teststat),
     null = "unit root", alternative = adf_alternatives[[trend]], trend = trend,
-    lags = k, nobs = nobs, sample = c(k + 2L, n),
+    lags = k, lag_selection = selection, nobs = nobs, sample = c(k + 2L, n),
     critical_values = cv, tail = "lower",
     calibration = calibration, level = level, engine = engine_urca(),
-    warnings = if (nobs < 25L) "N is below 25." else character(),
+    warnings = c(notes, if (nobs < 25L) "N is below 25." else character()),
     call = call)
 }

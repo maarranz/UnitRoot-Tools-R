@@ -12,7 +12,7 @@ format:
 ---
 
 ::: {.callout-note}
-**Status:** draft 0.1 (Phase 0). Sections marked **Decision** record a convention that both implementations must follow. All decisions D1–D6 were settled on 2 November 2026; new decisions are added as *open* and must be settled before the corresponding code is written. The R and Python packages are independent implementations of this specification, not translations of each other.
+**Status:** draft 0.2 (Phase 2A). Sections marked **Decision** record a convention that both implementations must follow. Decisions D1–D6 were settled on 2 November 2026; on 3 November 2026 (Phase 2A, reconciliation with the Python implementation) D1 and D3 were revised and D7–D10 settled. New decisions are added as *open* and must be settled before the corresponding code is written. The R and Python packages are independent implementations of this specification, not translations of each other.
 :::
 
 # Purpose and scope
@@ -88,12 +88,14 @@ With $k$ lagged differences, observations $t = k+2,\dots,T$ are usable, so $N = 
 When lags are selected from $0,\dots,k_{\max}$, all candidates are estimated on the **common sample** $t = k_{\max}+2,\dots,T$, with $N = T - k_{\max} - 1$.
 
 ::: {.callout-important}
-**Decision D1 (settled): sample of the final regression after lag selection.**
+**Decision D1 (revised 3 November 2026): sample of the final regression after lag selection.**
 
 - (a) *Common sample*: the final regression keeps $t = k_{\max}+2,\dots,T$.
-- (b) *Maximal sample*: the final regression is re-estimated on $t = k^*+2,\dots,T$ for the selected $k^*$.
+- (b) *Maximal sample*: the final regression is re-estimated on $t = k^*+2,\dots,T$ for the selected $k^*$, with $N = T-k^*-1$.
 
-Convention: (a) by default, with (b) available as `final_sample = "maximal"` (useful in small samples, where (a) discards $k_{\max}-k^*$ observations). Inside a specification strategy, all regressions use one common sample (required for the $\phi$ statistics and for comparable decisions). Each implementation conforms; any existing divergence is recorded.
+Convention: (b) by default, with (a) available as `final_sample = "common"` (in R), so that the reported test is exactly the row of the selection table. The selection itself always uses the common sample (the criterion denominators are never replaced by the final sample size). Inside a specification strategy, the lag order is selected once (under `"ct"`) and every regression of the strategy uses the same sample, $t = k^*+2,\dots,T$ by default (required for the $\phi$ statistics and for comparable decisions).
+
+*History:* settled on 2 November with (a) as default; revised in Phase 2A because the Python implementation, ARCH, bootUR and EViews all re-estimate on the maximal sample, and (b) uses all the data.
 :::
 
 ## Minimum sample
@@ -125,18 +127,23 @@ with $\tilde y_t$ the detrended series and $\hat\beta_0$ the coefficient on $\ti
 
 Deterministic parameters are common to all candidates and do not enter the penalty.
 
-AIC and BIC are computed from the ADF regression itself (with its deterministic terms). MAIC and MBIC are computed, as in Ng and Perron (2001), from the regression of $\Delta\tilde y_t$ on $\tilde y_{t-1}$ and $k$ lagged differences of the detrended series, with no deterministic terms; both $\hat\sigma^2_k$ and $\tau_N(k)$ come from that regression. The detrending is OLS on the deterministic terms over the full sample $t = 1,\dots,T$ (none for `"n"`).
+**Decision D7 (settled 3 November 2026):** AIC and BIC are computed from the ADF regression itself (with its deterministic terms), which is what users expect "AIC" to mean (urca and ARCH's autolag do the same). An implementation may offer, as a documented alternative, AIC and BIC computed from the detrended regression used by MAIC and MBIC (so that they differ from MAIC/MBIC only by the $\tau_N(k)$ term); this is the current Python convention. MAIC and MBIC are computed, as in Ng and Perron (2001), from the regression of $\Delta\tilde y_t$ on $\tilde y_{t-1}$ and $k$ lagged differences of the detrended series, with no deterministic terms; both $\hat\sigma^2_k$ and $\tau_N(k)$ come from that regression. The detrending is OLS on the deterministic terms over the full sample $t = 1,\dots,T$ (none for `"n"`).
 
 When the user fixes the lag order, no selection takes place and the regression uses the maximal sample $t = k+2,\dots,T$ (as urca does).
 
 ::: {.callout-important}
 **Decision D2 (settled): detrending used inside MAIC/MBIC.**
-Convention: OLS detrending under the test's deterministic specification for ADF. For GLS-based tests (Phase 2), Perron and Qu (2007) is to be followed. Each implementation conforms; any existing divergence is recorded.
+Convention: OLS detrending under the test's deterministic specification for ADF. For GLS-based tests, Perron and Qu (2007) is followed (Decision D9). Each implementation conforms; any existing divergence is recorded.
 :::
 
 ::: {.callout-important}
-**Decision D3 (settled): default $k_{\max}$.**
-Convention: $k_{\max} = \lfloor 12\,(T/100)^{1/4} \rfloor$ (Schwert 1989), as used with MAIC by Ng and Perron (2001); always reported in the result. Each implementation conforms; any existing divergence is recorded.
+**Decision D3 (revised 3 November 2026): default $k_{\max}$.**
+Convention: $k_{\max} = \min\{\lfloor 12\,(T/100)^{1/4} \rfloor,\ \lfloor (T-4-d)/2 \rfloor\}$, where $d$ is the number of deterministic terms (0, 1, 2). The first term is Schwert's (1989) rule, which uses the integer part (ARCH, and so far the Python implementation, use the ceiling), as used with MAIC by Ng and Perron (2001). The second is the largest order for which every candidate regression, including the ADF regression with $k_{\max}$ lags on the common sample, keeps two residual degrees of freedom. When the cap binds, a warning says so; a user-supplied `max_lags` above the cap is an error. $k_{\max}$ is always reported in the result. The cap only binds for very short series ($T \le 21$).
+:::
+
+::: {.callout-important}
+**Decision D9 (settled 3 November 2026): lag selection for GLS-based tests.**
+Convention (Perron and Qu 2007): the lag order of DF-GLS (and later the Ng–Perron M tests) is selected by MAIC/MBIC on the **OLS**-detrended series exactly as for ADF; the final statistic is then computed on the GLS-detrended series at that fixed lag. The result records both detrendings. The Python implementation already follows this convention.
 :::
 
 ## Reporting
@@ -156,7 +163,12 @@ Each result records its **calibration**: the method, the source and any approxim
 
 ::: {.callout-important}
 **Decision D4 (settled): source of $\tau$ critical values.**
-Convention: MacKinnon (2010) finite-sample response surfaces at the 1%, 5% and 10% levels, evaluated at the effective $N$. For `"n"`, which MacKinnon (2010) did not update, the MacKinnon (1996) surface is used; the result records which. P-values (MacKinnon 1994/1996) are reported only when the implementation computes them. Each implementation conforms, since decisions near the boundary depend on the source.
+Convention: MacKinnon (2010) finite-sample response surfaces at the 1%, 5% and 10% levels, evaluated at the effective $N$. For `"n"`, which MacKinnon (2010) did not update, the MacKinnon (1996) surface is used; the result records which. Each implementation conforms, since decisions near the boundary depend on the source.
+:::
+
+::: {.callout-important}
+**Decision D8 (settled 3 November 2026): p-values of $\tau$ statistics.**
+Convention: MacKinnon (1996) finite-sample p-values evaluated at the effective $N$ (in R through `urca::punitroot()`, which implements MacKinnon's own routine). The decision is always taken from the critical value (D4); the p-value is reported with its own source. The two sources are consistent: at the MacKinnon (2010) critical values the MacKinnon (1996) p-values equal 0.0100, 0.0500 and 0.1000 to four decimals for $N = 25, 50, 100, 262$ and every deterministic specification (0.0499 and 0.0999 at $N = 1000$ with a trend). The Python implementation currently reports asymptotic MacKinnon (1994) p-values, which can differ noticeably at $N = 25$; it is to move to MacKinnon (1996).
 :::
 
 **$\phi$ critical values (v0.1):** Dickey–Fuller (1981), as reproduced in Enders' Table B. Lookup rule (as in Python): use the largest tabulated sample size not exceeding $N$, capped at 500. This is a documented approximation, recorded as such in the result (with the table row used), and is scheduled for replacement by response surfaces in Phase 2. For $N < 25$ the $T = 25$ row is used and flagged as an extrapolation.
@@ -191,7 +203,7 @@ Every test returns an object of class `ur_test` (R) / `URTestResult` (Python) wi
 | `regression` | record or null | Fitted regression (coefficients, standard errors, RSS, residuals); may be omitted for speed |
 | `call` | language | The call (R only) |
 
-Methods (R): `print` and `summary`; `tidy` and `glance` (via `generics`) are planned, not yet implemented. `print` states the null hypothesis, statistic, critical values and their source, and the decision in words; `summary` adds the calibration details, accompanying statistics, lag-selection table and test regression.
+Methods (R): `print`, `summary`, `tidy` and `glance` (Decision D10). `tidy()` returns one row per statistic (the test statistic and every entry of `other_statistics`), with its critical value at `level`, p-value and decision; `glance()` returns one row describing the test (method, trend, lags, sample, calibration source, engine). The generics come from the lightweight `generics` package, so broom is not required but works when loaded. `print` states the null hypothesis, statistic, critical values and their source, and the decision in words; `summary` adds the calibration details, accompanying statistics, lag-selection table and test regression.
 
 `validate_ur_test()` checks every field of this contract, including that the stored decision agrees with the statistic, critical values, tail, p-value and level. The constructor never truncates: a non-whole `lags`, `nobs` or `sample` is an error.
 
@@ -305,6 +317,8 @@ References are independent of the implementation under test: independent QR or h
 
 **Shared fixtures** live in `inst/fixtures/` (R) and the equivalent Python directory, as JSON files with: `id`, `description`, `source` (with provenance and data hash), `data`, `settings`, `expected`, `tolerance`.
 
+**High-precision regression references (Decision D10).** The Python implementation's `validation/enders/scaled_references.json` holds 18 cases (three series from `validation/scaled_svd/adf_inputs.json`: a 120-observation series and two copies rescaled to order $10^{-12}$, one sign-reversed; trends `c` and `ct`; 0, 1 and 4 lags). For each, the unrestricted ADF regression, the regression restricted for $\phi_1$ or $\phi_3$, and the auxiliary regression with $b = 0$ imposed were computed by exact binary64-to-decimal elimination at 80 and 120 digits, independently of any production code. Both implementations test against these values with the default numerical tolerance. R keeps byte-identical copies in `inst/fixtures/python/`, checked by checksum; on 3 November 2026 R matched every $\tau$ and $\phi$ to a relative error below $3 \times 10^{-15}$. The references restart the trend at 1 in the regression sample, whereas this specification uses the original index $t$; only the constant of the `ct` regression depends on that.
+
 # Known backend limitations (urca 1.3-4)
 
 Checked against the urca 1.3-4 reference documentation. Each limitation is the documented reason for replacing an adapter with an internal implementation.
@@ -324,12 +338,18 @@ Checked against the urca 1.3-4 reference documentation. Each limitation is the d
 
 | ID | Topic | Convention | Status |
 |---|---|---|---|
-| D1 | Final-regression sample after lag selection | Common sample by default; maximal as option | Settled |
+| D1 | Final-regression sample after lag selection | Maximal sample by default; common as option | Revised 3 Nov |
 | D2 | Detrending inside MAIC/MBIC | OLS detrending | Settled |
-| D3 | Default $k_{\max}$ | Schwert $\lfloor 12(T/100)^{1/4}\rfloor$ | Settled |
+| D3 | Default $k_{\max}$ | $\min\{\lfloor 12(T/100)^{1/4}\rfloor, \lfloor (T-4-d)/2\rfloor\}$, warning when capped | Revised 3 Nov |
 | D4 | $\tau$ critical values | MacKinnon (2010) response surfaces | Settled |
 | D5 | Conditional tests in strategies | Student-$t$, lower tail for $b$ | Settled |
 | D6 | Hamilton Case 3 | Deferred to v0.4 (with the Monte Carlo harness) | Settled |
+| D7 | Regression behind plain AIC/BIC | The ADF regression with its deterministic terms; detrended version as documented alternative | Settled 3 Nov |
+| D8 | $\tau$ p-values | MacKinnon (1996) at the effective $N$; decision from critical values | Settled 3 Nov |
+| D9 | Lag selection for GLS-based tests | Perron–Qu (2007): MAIC on OLS-detrended series, final statistic GLS | Settled 3 Nov |
+| D10 | `tidy`/`glance`; shared high-precision fixtures | Via `generics`; Python's `scaled_references.json` used by both | Settled 3 Nov |
+
+**Known divergences of the Python implementation (to be resolved there):** default $k_{\max}$ uses the ceiling (D3); the cap allows one residual degree of freedom instead of two (D3); asymptotic MacKinnon (1994) p-values (D8); plain AIC/BIC from the detrended regression (D7, admissible as an alternative). The Python implementation has no Hamilton strategy yet.
 
 # References
 
@@ -338,6 +358,8 @@ Checked against the urca 1.3-4 reference documentation. Each limitation is the d
 - Elliott, G., Rothenberg, T. J. and Stock, J. H. (1996). Efficient tests for an autoregressive unit root. *Econometrica*, 64, 813–836.
 - Enders, W. *Supplementary Manual to accompany Applied Econometric Time Series*, 4th ed., Section 4.4 and Table B.
 - Hamilton, J. D. (1994). *Time Series Analysis*. Princeton University Press, ch. 17.
+- MacKinnon, J. G. (1996). Numerical distribution functions for unit root and cointegration tests. *Journal of Applied Econometrics*, 11, 601–618.
+- Perron, P. and Qu, Z. (2007). A simple modification to improve the finite sample properties of Ng and Perron's unit root tests. *Economics Letters*, 94, 12–19.
 - MacKinnon, J. G. (1996). Numerical distribution functions for unit root and cointegration tests. *Journal of Applied Econometrics*, 11, 601–618.
 - MacKinnon, J. G. (2010). Critical values for cointegration tests. Queen's Economics Department Working Paper 1227.
 - Ng, S. and Perron, P. (2001). Lag length selection and the construction of unit root tests with good size and power. *Econometrica*, 69, 1519–1554.

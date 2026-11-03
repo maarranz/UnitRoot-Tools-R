@@ -77,19 +77,25 @@ values and where they come from, and the decision.
 
 | Function | Purpose |
 |---|---|
-| `adf()` | Augmented Dickey-Fuller test: τ statistic, with the φ statistics and their critical values |
+| `adf()` | Augmented Dickey-Fuller test: τ statistic with its p-value, and the φ statistics with their critical values |
 | `select_lags()` | Lag order by AIC, BIC, MAIC or MBIC, all candidates on the same sample, with the full table |
 | `ur_strategy()` | Choosing the deterministic terms: `"original"` (Dolado-Jenkinson-Sosvilla-Rivero / Enders), `"conservative"`, `"hamilton"`; full history of every step |
 | `pp()` | Phillips-Perron Z_τ test |
 | `kpss()` | KPSS test, with stationarity as the null hypothesis |
-| `dfgls()` | DF-GLS test (Elliott-Rothenberg-Stock) |
+| `dfgls()` | DF-GLS test (Elliott-Rothenberg-Stock), lags chosen by MAIC as recommended by Perron and Qu (2007) |
+| `tidy()`, `glance()` | Results as one-row-per-statistic or one-row-per-test data frames, easy to combine across series |
 | `simulate_df()` | Monte Carlo of the Dickey-Fuller distribution, with a plot against N(0,1) |
 
 Details that matter in practice:
 
 - **Critical values.** τ uses MacKinnon's response surfaces at the effective
-  sample size; φ uses the Dickey-Fuller (1981) tables (correcting a typo in
-  urca's φ3 table for T = 250). Each result records its source.
+  sample size, with MacKinnon's (1996) p-values; φ uses the Dickey-Fuller
+  (1981) tables (correcting a typo in urca's φ3 table for T = 250). Each
+  result records its source.
+- **Lags.** Chosen over 0, ..., kmax with kmax = ⌊12(T/100)^¼⌋ (Schwert), all
+  candidates on the same sample; the test regression is then estimated on all
+  the observations available for the chosen order (`final_sample = "common"`
+  keeps the selection sample).
 - **Strategies.** The history separates rejections of the unit root from
   rejections that only decide the path (the φ tests and the tests of the
   deterministic terms). No p-value is reported for a whole sequence, because
@@ -99,17 +105,19 @@ Details that matter in practice:
   tsibbles; with several columns, choose one with `var = "name"`. Missing
   values are never dropped silently.
 - **Validation.** Statistics are checked against independent `lm()`
-  computations and urca, critical values against statsmodels, and the
+  computations and urca, against 120-digit reference calculations shared with
+  the Python package, critical values against statsmodels, and the
   strategies against Enders' published GDP example.
 - **Current limits.** `pp()`, `kpss()` and `dfgls()` are computed by urca and
   inherit its options: Bartlett kernel with "short", "long" or fixed
-  bandwidth; DF-GLS with a fixed number of lags; no Z_α for Phillips-Perron.
+  bandwidth; no Z_α for Phillips-Perron; DF-GLS critical values rounded to
+  two decimals and no p-value.
 
 ## Forthcoming
 
 | Phase | Content |
 |---|---|
-| v0.2: inference tools | Response-surface critical values for φ; long-run variance module (kernels, automatic bandwidths, AR-spectral estimator); internal PP (Z_α and Z_τ) and KPSS; DF-GLS with MAIC lag selection; Ng-Perron M tests and ERS point-optimal test; bootstrap tests through bootUR; first CRAN release |
+| v0.2: inference tools | Response-surface critical values for φ; long-run variance module (kernels, automatic bandwidths, AR-spectral estimator); internal PP (Z_α and Z_τ), KPSS and DF-GLS; Ng-Perron M tests and ERS point-optimal test; bootstrap tests through bootUR; first CRAN release |
 | v0.3: bootstrap | Own bootstrap engine (sieve, wild, block and dependent wild schemes), able to bootstrap any statistic, including a whole testing strategy |
 | v0.4: specification uncertainty | Monte Carlo tools (size, power, branch frequencies); union-of-rejections test; bootstrap-calibrated strategies; Hamilton's Case 3 (drift under the null), introduced with the Monte Carlo tools |
 | v0.5: robustness | Unit-root tests robust to additive outliers; tests allowing for structural breaks |

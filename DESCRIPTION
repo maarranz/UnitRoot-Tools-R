@@ -1,6 +1,6 @@
 Package: unitroottools
 Title: Transparent Unit-Root Testing and Deterministic-Specification Strategies
-Version: 0.1.0
+Version: 0.1.0.9000
 Authors@R:
     person("Miguel A.", "Arranz", email = "maarranz@eco.uc3m.es",
            role = c("aut", "cre"))
@@ -16,6 +16,7 @@ Encoding: UTF-8
 Depends:
     R (>= 4.1.0)
 Imports:
+    generics,
     graphics,
     stats,
     urca,
@@ -24,6 +25,7 @@ Suggests:
     knitr,
     rmarkdown,
     testthat (>= 3.0.0),
+    jsonlite,
     tibble,
     tsibble,
     xts,

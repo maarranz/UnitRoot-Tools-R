@@ -1,3 +1,32 @@
+# unitroottools (development version)
+
+## Changes from the Phase 2A reconciliation with the Python implementation
+
+These follow decisions D1, D3 and D7-D10 of the specification
+(`spec/specification.qmd`).
+
+* After lag selection, `adf()` now re-estimates the test regression on all
+  the observations available for the chosen order (`final_sample =
+  "maximal"`, the new default), as the Python package, ARCH, bootUR and
+  EViews do. `final_sample = "common"` keeps the previous behaviour. Results
+  with selected lags can therefore change slightly; results with fixed
+  `lags` do not.
+* `ur_strategy()` follows the same rule (all its regressions share one
+  sample) and gains a `final_sample` argument.
+* The default `kmax` is capped for very short series (T <= 21) so that every
+  candidate regression keeps two residual degrees of freedom; a note reports
+  the cap. A `max_lags` above the feasible maximum is an error.
+* `adf()` reports MacKinnon's (1996) finite-sample p-value
+  (via `urca::punitroot()`); the decision is still taken from the critical
+  value, and the two agree to four decimals at the tabulated levels.
+* `dfgls()` selects the number of lags automatically when `lags` is not
+  given: MAIC (or another criterion) on the OLS-detrended series, as
+  recommended by Perron and Qu (2007).
+* New `tidy()` and `glance()` methods for tests and strategies (generics
+  from the lightweight `generics` package; broom is not needed).
+* New tests against 120-digit reference calculations shared with the Python
+  package (`inst/fixtures/python/`).
+
 # unitroottools 0.1.0
 
 ## Robustness fixes after the Phase 1 audit

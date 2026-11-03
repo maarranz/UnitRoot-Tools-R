@@ -39,7 +39,7 @@ test_that("kpss() returns urca's statistic with upper-tail decisions", {
   expect_identical(kpss(y)$statistic_name, "eta_mu")
 })
 
-test_that("dfgls() returns urca's DF-GLS statistic and requires lags", {
+test_that("dfgls() returns urca's DF-GLS statistic for fixed lags", {
   y <- sim_rw()
   for (trend in c("c", "ct")) for (k in c(0, 3)) {
     r <- dfgls(y, trend = trend, lags = k)
@@ -49,8 +49,25 @@ test_that("dfgls() returns urca's DF-GLS statistic and requires lags", {
     expect_identical(r$nobs, length(y) - as.integer(k) - 1L)
     expect_identical(r$nobs, length(stats::residuals(u@testreg)))
   }
-  expect_error(dfgls(y), "Give the number of lagged differences")
   expect_error(dfgls(y, lags = -1), "non-negative whole number")
+  expect_error(dfgls(y, lags = 2, max_lags = 4), "either `lags`")
+})
+
+test_that("dfgls() selects lags by Perron-Qu: MAIC on the OLS-detrended series (D9)", {
+  set.seed(5)
+  y <- cumsum(stats::arima.sim(list(ar = 0.6), n = 200))
+  for (trend in c("c", "ct")) for (crit in c("MAIC", "MBIC")) {
+    r <- dfgls(y, trend = trend, criterion = crit)
+    sel <- select_lags(y, trend = trend, criterion = crit)
+    expect_identical(r$lags, sel$lags)
+    expect_equal(r$lag_selection$table, sel$table)
+    expect_identical(r$lag_selection$kmax, sel$kmax)
+    expect_match(r$lag_selection$detrending, "Perron and Qu")
+    expect_equal(r$statistic, dfgls(y, trend = trend, lags = r$lags)$statistic)
+    expect_identical(r$nobs, length(y) - r$lags - 1L)     # maximal sample
+  }
+  expect_identical(dfgls(y, max_lags = 3)$lag_selection$kmax, 3L)
+  expect_match(capture.output(print(dfgls(y))), "Lags: \\d+ \\(MAIC, kmax = 14\\)", all = FALSE)
 })
 
 test_that("adapters check inputs before calling urca", {

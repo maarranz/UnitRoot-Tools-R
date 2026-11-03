@@ -58,10 +58,35 @@ test_that("criteria, input checks and printing", {
   y <- sim_ar_rw()
   expect_identical(select_lags(y, criterion = "BIC")$criterion, "BIC")
   expect_error(select_lags(y, criterion = "HQ"), "should be one of")
-  expect_error(select_lags(y[1:10], max_lags = 8), "too short")
+  expect_error(select_lags(y[1:10], max_lags = 8), "too large for T = 10")
+  expect_error(select_lags(y[1:4], trend = "ct"), "too short")
   expect_error(select_lags(y, max_lags = -1), "non-negative")
   expect_identical(select_lags(y, trend = "n")$detrending, "none")
   out <- capture.output(print(select_lags(y, max_lags = 4)))
   expect_match(out, "Common sample:  N = 195", all = FALSE)
   expect_match(out, "Selected by MAIC: k = ", all = FALSE)
+})
+
+test_that("default kmax: Schwert's rule, capped for very short series (D3)", {
+  expect_identical(default_kmax(100), 12L)
+  expect_identical(default_kmax(262), 15L)
+  expect_identical(default_kmax(50), 10L)
+  y <- sim_ar_rw()
+  # T = 20, trend "c": rule floor(12 * 0.2^0.25) = 8, cap floor((20 - 5) / 2) = 7
+  s <- select_lags(y[1:20], trend = "c")
+  expect_identical(s$kmax, 7L)
+  expect_match(s$notes, "capped from 8 to 7")
+  expect_match(capture.output(print(s)), "Note: Default kmax capped", all = FALSE)
+  expect_match(adf(y[1:20], trend = "c")$warnings, "capped", all = FALSE)
+  # the capped kmax is feasible for every trend: the largest candidate keeps 2 df
+  for (tr in c("n", "c", "ct")) {
+    for (n in 6:30) {
+      if (kmax_cap(n, tr) < 0L) next
+      s <- select_lags(y[1:n], trend = tr)
+      expect_true(s$kmax <= kmax_cap(n, tr))
+    }
+  }
+  expect_length(select_lags(y, trend = "c")$notes, 0L)
+  expect_identical(select_lags(y[1:20], trend = "c", max_lags = 7)$kmax, 7L)
+  expect_error(select_lags(y[1:20], trend = "c", max_lags = 8), "largest feasible value is 7")
 })

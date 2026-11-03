@@ -75,7 +75,9 @@ one. Never interpolated from tabulated critical values.}
 
 \item{calibration}{List with \code{method} (one of \code{"table"},
 \code{"response_surface"}, \code{"conventional_t"}, \code{"bootstrap"}), \code{source}
-and, optionally, \code{note} (e.g. an approximation used).}
+and, optionally, \code{note} (e.g. an approximation used) and
+\code{p_value_source} (when the p-value comes from a different source than
+the critical values).}
 
 \item{level}{Significance level for the reported decision.}
 

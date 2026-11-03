@@ -1,0 +1,49 @@
+test_that("tidy() of an ADF test: one row per statistic, values from the result", {
+  set.seed(1)
+  y <- cumsum(0.2 + rnorm(150))
+  r <- adf(y, trend = "ct")
+  td <- tidy(r)
+  expect_s3_class(td, "data.frame")
+  expect_identical(td$statistic_name, c("tau3", "phi2", "phi3"))
+  expect_equal(td$statistic, unname(c(r$statistic, r$other_statistics)))
+  expect_equal(td$critical_value[1], r$critical_values[["0.05"]])
+  expect_equal(td$critical_value[3], r$other_critical_values$phi3[["0.05"]])
+  expect_equal(td$p_value[1], r$p_value)
+  expect_true(all(is.na(td$p_value[2:3])))
+  expect_identical(td$reject[1], r$reject)
+  expect_identical(td$reject[3], unname(r$other_statistics[["phi3"]] >
+                                          r$other_critical_values$phi3[["0.05"]]))
+  expect_identical(td$tail, c("lower", "upper", "upper"))
+  expect_identical(nrow(tidy(adf(y, trend = "n"))), 1L)
+  expect_equal(tidy(adf(y, trend = "c", level = 0.01))$critical_value[1],
+               adf(y, trend = "c")$critical_values[["0.01"]])
+})
+
+test_that("glance() of a test: one row describing it", {
+  set.seed(1)
+  y <- cumsum(0.2 + rnorm(150))
+  r <- adf(y, trend = "c")
+  g <- glance(r)
+  expect_identical(nrow(g), 1L)
+  expect_identical(g$lag_choice, "MAIC")
+  expect_identical(g$nobs, r$nobs)
+  expect_identical(c(g$sample_start, g$sample_end), r$sample)
+  expect_identical(glance(adf(y, lags = 2))$lag_choice, "fixed")
+  expect_true(is.na(glance(adf(y, lags = 2))$kmax))
+  expect_identical(glance(kpss(y))$lag_choice, kpss(y)$bandwidth_rule)
+  # rows combine across tests
+  both <- rbind(glance(r), glance(pp(y)), glance(dfgls(y)))
+  expect_identical(both$test, c("ADF", "PP", "DF-GLS"))
+})
+
+test_that("tidy() and glance() of a strategy", {
+  y <- log(utils::read.csv(system.file("fixtures", "enders_rgdp.csv",
+                                       package = "unitroottools"))$rgdp)
+  s <- ur_strategy(y, "original", lags = 1)
+  expect_identical(tidy(s), s$history)
+  g <- glance(s)
+  expect_identical(g$specification, s$specification)
+  expect_identical(g$unit_root_rejected, s$unit_root_rejected)
+  expect_identical(g$steps, nrow(s$history))
+  expect_identical(g$terminal_test, s$terminal$statistic_name)
+})

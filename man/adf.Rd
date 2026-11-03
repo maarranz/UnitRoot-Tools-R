@@ -10,7 +10,7 @@ adf(
   lags = NULL,
   max_lags = NULL,
   criterion = c("MAIC", "AIC", "BIC", "MBIC"),
-  final_sample = c("common", "maximal"),
+  final_sample = c("maximal", "common"),
   level = 0.05,
   var = NULL
 )
@@ -26,13 +26,17 @@ alias accepted by \code{\link[=match_trend]{match_trend()}}.}
 order is selected by \code{criterion}.}
 
 \item{max_lags}{Largest order considered, \eqn{k_{\max}}. Default:
-\eqn{\lfloor 12 (T/100)^{1/4} \rfloor} (Schwert, 1989).}
+\eqn{\lfloor 12 (T/100)^{1/4} \rfloor} (Schwert, 1989), capped at
+\eqn{\lfloor (T-4-d)/2 \rfloor}, where \eqn{d} is the number of
+deterministic terms, so that every candidate regression keeps two residual
+degrees of freedom (the cap only binds for \eqn{T \le 21}; a note says so).
+A larger \code{max_lags} is an error.}
 
 \item{criterion}{One of \code{"MAIC"} (default), \code{"AIC"}, \code{"BIC"}, \code{"MBIC"}.}
 
-\item{final_sample}{After lag selection, estimate the test regression on
-the \code{"common"} sample used for selection (default) or on the
-\code{"maximal"} sample for the selected order.}
+\item{final_sample}{After lag selection, re-estimate the test regression
+on the \code{"maximal"} sample for the selected order (default) or keep the
+\code{"common"} sample used for selection.}
 
 \item{level}{Significance level of the reported decision: 0.01, 0.05 or
 0.10 (the levels with tabulated critical values).}
@@ -62,9 +66,16 @@ are computed from restricted regressions on the same sample.
 regression then uses the maximal sample, \eqn{t = k + 2, \dots, T}.
 Otherwise the order is chosen by \code{\link[=select_lags]{select_lags()}} over
 \eqn{0, \dots, k_{\max}} on the common sample \eqn{t = k_{\max} + 2, \dots,
-T}, and the test regression is estimated on that same sample
-(\code{final_sample = "common"}) or re-estimated on the maximal sample for the
-selected order (\code{final_sample = "maximal"}).
+T}, and the test regression is re-estimated on the maximal sample for the
+selected order, \eqn{t = k^* + 2, \dots, T} (\code{final_sample = "maximal"},
+the default), or kept on the common sample used for selection
+(\code{final_sample = "common"}), so that it is exactly the selected row of the
+selection table.
+
+\strong{p-value.} MacKinnon's (1996) finite-sample p-value at the effective
+sample size, computed by \code{\link[urca:punitroot]{urca::punitroot()}}. The decision is taken from
+the critical value; the two sources agree to four decimals at the
+tabulated levels.
 }
 \examples{
 set.seed(1)
@@ -76,6 +87,9 @@ summary(adf(y, trend = "c"))
 \references{
 Dickey, D. A. and Fuller, W. A. (1981). Likelihood ratio statistics for
 autoregressive time series with a unit root. \emph{Econometrica}, 49, 1057-1072.
+
+MacKinnon, J. G. (1996). Numerical distribution functions for unit root
+and cointegration tests. \emph{Journal of Applied Econometrics}, 11, 601-618.
 
 MacKinnon, J. G. (2010). Critical values for cointegration tests. Queen's
 Economics Department Working Paper 1227.

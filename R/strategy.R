@@ -218,7 +218,9 @@ strategy_path <- function(reject, strategy, allow_no_constant = FALSE,
 #'
 #' All regressions use the same lag order and the same sample. The lag order
 #' is selected once, under constant and trend (under the declared
-#' specification for Hamilton's rule), unless fixed with `lags`.
+#' specification for Hamilton's rule), unless fixed with `lags`; the
+#' regressions then use the maximal sample for that order (or the common
+#' selection sample with `final_sample = "common"`).
 #'
 #' The history distinguishes rejections of the unit-root null from
 #' rejections that only decide the path of the procedure (joint \eqn{\phi}
@@ -258,10 +260,12 @@ ur_strategy <- function(y, strategy = c("original", "conservative", "hamilton"),
                         trending = NULL, allow_no_constant = FALSE,
                         lags = NULL, max_lags = NULL,
                         criterion = c("MAIC", "AIC", "BIC", "MBIC"),
+                        final_sample = c("maximal", "common"),
                         level = 0.05, var = NULL) {
   call <- match.call()
   strategy <- match.arg(strategy)
   criterion <- match.arg(criterion)
+  final_sample <- match.arg(final_sample)
   check_level(level)
   check_flag(allow_no_constant, "allow_no_constant")
   y <- check_series(y, var = var)
@@ -298,10 +302,11 @@ ur_strategy <- function(y, strategy = c("original", "conservative", "hamilton"),
   } else {
     sel <- lag_table(y, selection_trend, max_lags, criterion)
     k <- sel$lags
-    first <- sel$kmax + 2L
+    first <- if (final_sample == "common") sel$kmax + 2L else k + 2L
     selection <- list(method = criterion, kmax = sel$kmax,
                       detrending = sel$detrending, table = sel$table,
-                      final_sample = "common", selected_under = selection_trend)
+                      final_sample = final_sample, selected_under = selection_trend,
+                      notes = sel$notes)
   }
 
   nobs <- length(y) - first + 1L
@@ -396,8 +401,9 @@ print.ur_strategy <- function(x, ...) {
   } else {
     cat(sprintf("  Lags: %d (%s, kmax = %d, selected under \"%s\")\n",
                 x$lags, ls$method, as.integer(ls$kmax), ls$selected_under))
+    for (note in ls$notes) cat("  Note: ", note, "\n", sep = "")
   }
-  cat(sprintf("  Common sample: N = %d (t = %d, ..., %d)   Level: %s\n\n",
+  cat(sprintf("  Sample (all regressions): N = %d (t = %d, ..., %d)   Level: %s\n\n",
               x$nobs, x$sample[1], x$sample[2], fmt_level(x$settings$level)))
   h <- x$history
   cat(sprintf("  %-4s %-6s %-10s %9s %9s  %-10s  %s\n", "Step", "Regr.",

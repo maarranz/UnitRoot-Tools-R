@@ -4,6 +4,14 @@ lag_criteria <- c("MAIC", "AIC", "BIC", "MBIC")
 
 default_kmax <- function(n) as.integer(floor(12 * (n / 100)^(1 / 4)))
 
+# Largest k_max for which every candidate regression (including the ADF
+# regression with its deterministic terms and k_max lags on the common
+# sample) keeps two residual degrees of freedom (spec, Decision D3).
+kmax_cap <- function(n, trend) {
+  d <- c(n = 0L, c = 1L, ct = 2L)[[trend]]
+  as.integer(floor((n - 4L - d) / 2))
+}
+
 #' Lag order for the ADF regression
 #'
 #' Chooses the number of lagged differences in the ADF regression by an
@@ -27,13 +35,18 @@ default_kmax <- function(n) as.integer(floor(12 * (n / 100)^(1 / 4)))
 #' @param trend Deterministic specification: `"n"`, `"c"` or `"ct"`, or an
 #'   alias accepted by [match_trend()].
 #' @param max_lags Largest order considered, \eqn{k_{\max}}. Default:
-#'   \eqn{\lfloor 12 (T/100)^{1/4} \rfloor} (Schwert, 1989).
+#'   \eqn{\lfloor 12 (T/100)^{1/4} \rfloor} (Schwert, 1989), capped at
+#'   \eqn{\lfloor (T-4-d)/2 \rfloor}, where \eqn{d} is the number of
+#'   deterministic terms, so that every candidate regression keeps two residual
+#'   degrees of freedom (the cap only binds for \eqn{T \le 21}; a note says so).
+#'   A larger `max_lags` is an error.
 #' @param criterion One of `"MAIC"` (default), `"AIC"`, `"BIC"`, `"MBIC"`.
 #' @param var When `y` has several columns, the name of the column to use.
 #'
 #' @return An object of class `ur_lags`: a list with the selected order
-#'   (`lags`), `criterion`, `kmax`, `trend`, `nobs`, `sample` and `table`, a
-#'   data frame with one row per order and one column per criterion.
+#'   (`lags`), `criterion`, `kmax`, `trend`, `nobs`, `sample`, `table` (a
+#'   data frame with one row per order and one column per criterion) and
+#'   `notes` (e.g. when the default `kmax` was capped).
 #' @references
 #' Ng, S. and Perron, P. (2001). Lag length selection and the construction of
 #' unit root tests with good size and power. *Econometrica*, 69, 1519-1554.
@@ -57,13 +70,29 @@ select_lags <- function(y, trend = "c", max_lags = NULL,
 # Internal version on a validated numeric series.
 lag_table <- function(y, trend, max_lags, criterion) {
   n <- length(y)
-  kmax <- if (is.null(max_lags)) default_kmax(n) else check_order(max_lags, "max_lags")
+  cap <- kmax_cap(n, trend)
+  if (cap < 0L) {
+    stop("The series is too short for lag selection with trend = \"", trend,
+         "\" (T = ", n, ").", call. = FALSE)
+  }
+  notes <- character()
+  if (is.null(max_lags)) {
+    rule <- default_kmax(n)
+    kmax <- min(rule, cap)
+    if (kmax < rule) {
+      notes <- sprintf(paste0("Default kmax capped from %d to %d: with T = %d, ",
+                              "larger orders leave fewer than two residual ",
+                              "degrees of freedom."), rule, kmax, n)
+    }
+  } else {
+    kmax <- check_order(max_lags, "max_lags")
+    if (kmax > cap) {
+      stop("`max_lags` = ", kmax, " is too large for T = ", n, " with trend = \"",
+           trend, "\"; the largest feasible value is ", cap, ".", call. = FALSE)
+    }
+  }
   first <- kmax + 2L
   nobs <- n - first + 1L
-  if (nobs < kmax + 4L) {
-    stop("The series is too short for max_lags = ", kmax, " (T = ", n,
-         "). Use a smaller `max_lags`.", call. = FALSE)
-  }
 
   ytilde <- ols_detrend(y, trend)
   rows <- lapply(0:kmax, function(k) {
@@ -88,7 +117,7 @@ lag_table <- function(y, trend, max_lags, criterion) {
   structure(list(lags = selected, criterion = criterion, kmax = kmax,
                  trend = trend, nobs = nobs, sample = c(first, n),
                  detrending = if (trend == "n") "none" else "OLS",
-                 table = tab),
+                 table = tab, notes = notes),
             class = "ur_lags")
 }
 
@@ -116,5 +145,6 @@ print.ur_lags <- function(x, ...) {
                       ` ` = mark, check.names = FALSE)
   print(shown, row.names = FALSE, right = TRUE)
   cat(sprintf("\n  Selected by %s: k = %d\n", x$criterion, x$lags))
+  for (note in x$notes) cat("  Note: ", note, "\n", sep = "")
   invisible(x)
 }

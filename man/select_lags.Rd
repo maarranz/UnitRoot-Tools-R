@@ -20,7 +20,11 @@ data frame, tibble or tsibble (see \code{var}).}
 alias accepted by \code{\link[=match_trend]{match_trend()}}.}
 
 \item{max_lags}{Largest order considered, \eqn{k_{\max}}. Default:
-\eqn{\lfloor 12 (T/100)^{1/4} \rfloor} (Schwert, 1989).}
+\eqn{\lfloor 12 (T/100)^{1/4} \rfloor} (Schwert, 1989), capped at
+\eqn{\lfloor (T-4-d)/2 \rfloor}, where \eqn{d} is the number of
+deterministic terms, so that every candidate regression keeps two residual
+degrees of freedom (the cap only binds for \eqn{T \le 21}; a note says so).
+A larger \code{max_lags} is an error.}
 
 \item{criterion}{One of \code{"MAIC"} (default), \code{"AIC"}, \code{"BIC"}, \code{"MBIC"}.}
 
@@ -28,8 +32,9 @@ alias accepted by \code{\link[=match_trend]{match_trend()}}.}
 }
 \value{
 An object of class \code{ur_lags}: a list with the selected order
-(\code{lags}), \code{criterion}, \code{kmax}, \code{trend}, \code{nobs}, \code{sample} and \code{table}, a
-data frame with one row per order and one column per criterion.
+(\code{lags}), \code{criterion}, \code{kmax}, \code{trend}, \code{nobs}, \code{sample}, \code{table} (a
+data frame with one row per order and one column per criterion) and
+\code{notes} (e.g. when the default \code{kmax} was capped).
 }
 \description{
 Chooses the number of lagged differences in the ADF regression by an
