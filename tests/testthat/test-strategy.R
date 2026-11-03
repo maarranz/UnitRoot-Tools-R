@@ -210,3 +210,27 @@ test_that("print and summary describe the path", {
   expect_match(sm, "H0: b = 0: unit root \\(ct regression\\)", all = FALSE)
   expect_match(sm, "Terminal test", all = FALSE)
 })
+
+test_that("history reports a p-value for each step (none for the phi tables)", {
+  y <- log(utils::read.csv(system.file("fixtures", "enders_rgdp.csv",
+                                       package = "unitroottools"))$rgdp)
+  s <- ur_strategy(y, "original", lags = 1)
+  h <- s$history
+  expect_true("p_value" %in% names(h))
+  N <- s$nobs
+  for (i in seq_len(nrow(h))) {
+    tr <- c(tau3 = "ct", tau2 = "c", tau1 = "n")
+    switch(h$test[i],
+      tau3 = , tau2 = , tau1 = expect_equal(h$p_value[i], tau_p_value(h$statistic[i], tr[[h$test[i]]], N)),
+      phi3 = , phi1 = expect_true(is.na(h$p_value[i])),
+      aux_trend = , aux_const = {
+        expect_equal(h$p_value[i] < h$level[i], h$reject[i])
+        expect_true(h$p_value[i] >= 0 && h$p_value[i] <= 1)
+      },
+      cond_ct = , cond_c = expect_equal(h$p_value[i] < h$level[i], h$reject[i]))
+  }
+  # the published example: t(a0) = 6.80 is far in the tail
+  expect_lt(h$p_value[h$test == "aux_const"], 1e-6)
+  out <- capture.output(print(s))
+  expect_match(out, "p-value", all = FALSE)
+})

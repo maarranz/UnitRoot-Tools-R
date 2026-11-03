@@ -51,6 +51,7 @@ strategy_statistics <- function(y, k, first, level) {
     cv <- tau_critical_values(trend, nobs)[[lv]]
     stat <- unname(r[[trend]]$tau)
     list(statistic = stat, critical_value = cv, reject = stat < cv,
+         p_value = tau_p_value(stat, trend, nobs),
          calibration = sprintf("%s, N = %d", mackinnon_source[[trend]], nobs))
   }
   phi_entry <- function(trend, name) {
@@ -58,6 +59,7 @@ strategy_statistics <- function(y, k, first, level) {
     cv <- p$values[[lv]]
     stat <- r[[trend]]$phi[[name]]
     list(statistic = stat, critical_value = cv, reject = stat > cv,
+         p_value = NA_real_,   # tabulated critical values only
          calibration = sprintf("Dickey-Fuller (1981), T = %s row", format(p$size)))
   }
   # t test of a deterministic coefficient with the unit root imposed (b = 0):
@@ -69,6 +71,7 @@ strategy_statistics <- function(y, k, first, level) {
     stat <- f$t_values[[coef_name]]
     cv <- stats::qt(1 - level / 2, f$df)
     list(statistic = stat, critical_value = cv, reject = abs(stat) > cv,
+         p_value = 2 * stats::pt(-abs(stat), f$df),
          calibration = sprintf("Student t, df = %d, two-sided", f$df), df = f$df)
   }
   # conditional t test of b in the regression with the retained deterministic
@@ -78,6 +81,7 @@ strategy_statistics <- function(y, k, first, level) {
     stat <- f$t_values[["y_lag1"]]
     cv <- stats::qt(level, f$df)
     list(statistic = stat, critical_value = cv, reject = stat < cv,
+         p_value = stats::pt(stat, f$df),
          calibration = sprintf("Student t, df = %d, lower tail", f$df), df = f$df)
   }
 
@@ -346,7 +350,7 @@ strategy_history <- function(steps, tests, level) {
     data.frame(
       step = i, stage = info$stage, regression = info$regression, test = nm,
       null = info$null, statistic = t$statistic,
-      critical_value = t$critical_value, level = level,
+      critical_value = t$critical_value, p_value = t$p_value, level = level,
       calibration = t$calibration, reject = t$reject,
       rejection_type = if (t$reject) rejection_types[[nm]] else "none",
       next_action = steps$next_action[i], reason = steps$reason[i],
@@ -406,17 +410,19 @@ print.ur_strategy <- function(x, ...) {
   cat(sprintf("  Sample (all regressions): N = %d (t = %d, ..., %d)   Level: %s\n\n",
               x$nobs, x$sample[1], x$sample[2], fmt_level(x$settings$level)))
   h <- x$history
-  cat(sprintf("  %-4s %-6s %-10s %9s %9s  %-10s  %s\n", "Step", "Regr.",
-              "Test", "Statistic", "Crit.val.", "Decision", "Next"))
+  cat(sprintf("  %-4s %-6s %-10s %9s %9s %8s  %-10s  %s\n", "Step", "Regr.",
+              "Test", "Statistic", "Crit.val.", "p-value", "Decision", "Next"))
   for (i in seq_len(nrow(h))) {
-    cat(sprintf("  %-4d %-6s %-10s %9s %9s  %-10s  %s\n", h$step[i],
+    pv <- if (is.na(h$p_value[i])) "-" else fmt_pvalue(h$p_value[i])
+    cat(sprintf("  %-4d %-6s %-10s %9s %9s %8s  %-10s  %s\n", h$step[i],
                 h$regression[i], test_labels[[h$test[i]]],
-                fmt_num(h$statistic[i]), fmt_num(h$critical_value[i]),
+                fmt_num(h$statistic[i]), fmt_num(h$critical_value[i]), pv,
                 if (h$reject[i]) "reject" else "not reject", h$next_action[i]))
   }
   cat(sprintf("\n  Specification: %s\n", trend_labels[[x$specification]]))
   cat(sprintf("  Conclusion:    %s\n", x$conclusion))
-  cat("\n  Note: no p-value or size is reported for the sequence as a whole.\n")
+  cat("\n  Note: p-values are for each step on its own (none for the phi tables);\n",
+      "  no p-value or size is reported for the sequence as a whole.\n", sep = "")
   invisible(x)
 }
 
@@ -433,8 +439,9 @@ print.summary.ur_strategy <- function(x, ...) {
   h <- r$history
   for (i in seq_len(nrow(h))) {
     cat(sprintf("  %d. %s   H0: %s\n", h$step[i], test_labels[[h$test[i]]], h$null[i]))
-    cat(sprintf("     statistic %s, critical value %s [%s]: %s",
+    cat(sprintf("     statistic %s, critical value %s%s [%s]: %s",
                 fmt_num(h$statistic[i]), fmt_num(h$critical_value[i]),
+                if (is.na(h$p_value[i])) "" else paste0(", p-value ", fmt_pvalue(h$p_value[i])),
                 h$calibration[i], if (h$reject[i]) "reject" else "do not reject"))
     if (h$reject[i]) cat(sprintf(" (%s)", gsub("_", " ", h$rejection_type[i])))
     cat(sprintf("\n     -> %s: %s\n", h$next_action[i], h$reason[i]))

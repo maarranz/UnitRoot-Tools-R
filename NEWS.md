@@ -27,7 +27,15 @@ These follow decisions D1, D3 and D7-D10 of the specification
 * New tests against 120-digit reference calculations shared with the Python
   package (`inst/fixtures/python/`).
 
-## Phase 2B audit (first findings)
+## Other changes
+
+* The history of `ur_strategy()` now reports a p-value for each step
+  (MacKinnon, 1996, for the tau tests; Student t for the conditional and
+  auxiliary t tests; none for the phi tables).
+* `plot()` of `simulate_df()` results is readable at small sizes, and the
+  vignette draws its figures larger.
+
+## Phase 2B audit
 
 * The statistics of `kpss()` and `dfgls()` (computed by urca) are now tested
   against independent implementations of the published formulas.

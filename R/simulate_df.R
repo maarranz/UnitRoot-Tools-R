@@ -91,18 +91,24 @@ print.df_simulation <- function(x, ...) {
 #' @export
 plot.df_simulation <- function(x, ...) {
   rng <- range(c(x$tau, -4.5, 3))
-  graphics::hist(x$tau, breaks = 60, freq = FALSE, xlim = rng,
+  dens <- stats::density(x$tau)
+  h <- graphics::hist(x$tau, breaks = 60, plot = FALSE)
+  peak <- max(dens$y, h$density, stats::dnorm(0))
+  top <- 1.35 * peak                                     # room for the legend
+  graphics::hist(x$tau, breaks = 60, freq = FALSE, xlim = rng, ylim = c(0, top),
                  col = "grey85", border = "white",
-                 main = sprintf("Simulated distribution of %s (T = %d, R = %d)",
-                                x$statistic_name, x$T, x$R),
+                 main = sprintf("%s under the unit-root null", x$statistic_name),
+                 sub = sprintf("T = %d, R = %d replications", x$T, x$R),
                  xlab = x$statistic_name, ...)
-  graphics::lines(stats::density(x$tau), lwd = 2)
+  graphics::lines(dens, lwd = 2)
   graphics::curve(stats::dnorm(x), add = TRUE, lty = 2, lwd = 2)
   q5 <- x$quantiles$simulated[x$quantiles$level == 0.05]
-  graphics::abline(v = q5, lwd = 2)
-  graphics::abline(v = stats::qnorm(0.05), lty = 2, lwd = 2)
-  graphics::legend("topright", bty = "n", lty = c(1, 2), lwd = 2,
-                   legend = c(sprintf("simulated (5%%: %.2f)", q5),
-                              sprintf("N(0,1) (5%%: %.2f)", stats::qnorm(0.05))))
+  graphics::segments(q5, 0, q5, 1.05 * peak, lwd = 2)
+  graphics::segments(stats::qnorm(0.05), 0, stats::qnorm(0.05), 1.05 * peak,
+                     lty = 2, lwd = 2)
+  graphics::legend("topright", bty = "n", lty = c(1, 2), lwd = 2, cex = 0.85,
+                   seg.len = 2.5,
+                   legend = c(sprintf("simulated, 5%%: %.2f", q5),
+                              sprintf("N(0,1), 5%%: %.2f", stats::qnorm(0.05))))
   invisible(x)
 }
