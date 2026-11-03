@@ -19,11 +19,11 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Miguel A. Arranz \email{CHANGE-ME@example.org}
+\strong{Maintainer}: Miguel A. Arranz \email{maarranz@eco.uc3m.es}
 
 Authors:
 \itemize{
-  \item Miguel A. Arranz \email{CHANGE-ME@example.org}
+  \item Miguel A. Arranz \email{maarranz@eco.uc3m.es}
 }
 
 }

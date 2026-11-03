@@ -79,11 +79,11 @@ new_ur_test <- function(method, test, statistic_name, statistic,
     null = null,
     alternative = alternative,
     trend = match_trend(trend),
-    lags = as.integer(lags),
+    lags = as_whole(lags, "lags", allow_na = TRUE),
     bandwidth_rule = bandwidth_rule,
     lag_selection = lag_selection,
-    nobs = as.integer(nobs),
-    sample = as.integer(sample),
+    nobs = as_whole(nobs, "nobs"),
+    sample = as_whole(sample, "sample", length = 2L),
     critical_values = critical_values,
     tail = tail,
     p_value = as.numeric(p_value),
@@ -98,28 +98,69 @@ new_ur_test <- function(method, test, statistic_name, statistic,
     call = call
   )
   class(x) <- "ur_test"
-  validate_ur_test(x)
+  validate_fields(x)
   x$reject <- ur_decision(x$statistic, x$critical_values, x$tail,
                           x$p_value, x$level)
-  x
+  validate_ur_test(x)
+}
+
+# Whole numbers are converted to integer only if they are exactly whole;
+# 2.5 is an error, never 2.
+as_whole <- function(v, name, allow_na = FALSE, length = 1L) {
+  ok <- is.numeric(v) && !is.logical(v) && length(v) == length &&
+    (if (allow_na) all(is.na(v) | (is.finite(v) & v == round(v)))
+     else all(!is.na(v) & is.finite(v) & v == round(v)))
+  if (!ok) {
+    stop("Invalid ur_test: `", name, "` must be ",
+         if (length == 1L) "a whole number" else paste(length, "whole numbers"),
+         if (allow_na) " or NA" else "", ".", call. = FALSE)
+  }
+  as.integer(v)
 }
 
 #' @rdname new_ur_test
 #' @param x An object of class `ur_test`.
 #' @return `validate_ur_test()` returns `x` invisibly, or stops with an
-#'   informative error.
+#'   informative error. It checks every field of the contract, including that
+#'   the stored decision agrees with the statistic, critical values, tail,
+#'   p-value and level.
 #' @export
 validate_ur_test <- function(x) {
+  validate_fields(x)
+  if (!is.logical(x$reject) || length(x$reject) != 1L || is.na(x$reject)) {
+    stop("Invalid ur_test: `reject` must be TRUE or FALSE.", call. = FALSE)
+  }
+  expected <- ur_decision(x$statistic, x$critical_values, x$tail,
+                          x$p_value, x$level)
+  if (!identical(x$reject, expected)) {
+    stop("Invalid ur_test: the stored decision (reject = ", x$reject,
+         ") does not agree with the statistic, critical values and level.",
+         call. = FALSE)
+  }
+  invisible(x)
+}
+
+# Every field except the decision (the constructor computes the decision
+# from these fields, then runs the full validator).
+validate_fields <- function(x) {
   fail <- function(...) stop("Invalid ur_test: ", ..., call. = FALSE)
   is_string <- function(v) is.character(v) && length(v) == 1L && !is.na(v) && nzchar(v)
   is_number <- function(v) is.numeric(v) && length(v) == 1L && is.finite(v)
+  is_int <- function(v, n = 1L) is.integer(v) && length(v) == n
 
+  if (!inherits(x, "ur_test") || !is.list(x)) fail("not an object of class `ur_test`.")
   for (f in c("method", "test", "statistic_name", "null", "alternative", "engine")) {
     if (!is_string(x[[f]])) fail("`", f, "` must be a non-empty string.")
   }
   if (!is_number(x$statistic)) fail("`statistic` must be a finite number.")
+  if (!is_string(x$trend) || !x$trend %in% c("n", "c", "ct")) {
+    fail("`trend` must be one of \"n\", \"c\", \"ct\" (canonical codes).")
+  }
+  if (!is_string(x$tail) || !x$tail %in% c("lower", "upper")) {
+    fail("`tail` must be \"lower\" or \"upper\".")
+  }
 
-  if (length(x$lags) != 1L || (!is.na(x$lags) && x$lags < 0L)) {
+  if (!is_int(x$lags) || (!is.na(x$lags) && x$lags < 0L)) {
     fail("`lags` must be a non-negative integer or NA.")
   }
   if (!is.null(x$bandwidth_rule) && !is_string(x$bandwidth_rule)) {
@@ -127,44 +168,47 @@ validate_ur_test <- function(x) {
   }
   if (!is.null(x$lag_selection)) {
     ls <- x$lag_selection
-    if (!is.list(ls) || !is_string(ls$method) || !is_number(ls$kmax)) {
-      fail("`lag_selection` must be NULL or a list with `method` and `kmax`.")
+    if (!is.list(ls) || !is_string(ls$method) || !is_number(ls$kmax) ||
+        ls$kmax < 0 || ls$kmax != round(ls$kmax)) {
+      fail("`lag_selection` must be NULL or a list with `method` and a whole-number `kmax`.")
     }
     if (is.na(x$lags) || x$lags > ls$kmax) {
       fail("selected `lags` must lie between 0 and `lag_selection$kmax`.")
     }
   }
 
-  if (length(x$nobs) != 1L || is.na(x$nobs) || x$nobs < 1L) {
+  if (!is_int(x$nobs) || is.na(x$nobs) || x$nobs < 1L) {
     fail("`nobs` must be a positive integer.")
   }
-  if (length(x$sample) != 2L || anyNA(x$sample) || x$sample[1] > x$sample[2]) {
-    fail("`sample` must be two integers (first, last) with first <= last.")
+  if (!is_int(x$sample, 2L) || anyNA(x$sample) || x$sample[1] < 1L ||
+      x$sample[1] > x$sample[2]) {
+    fail("`sample` must be two integers (first, last) with 1 <= first <= last.")
   }
   if (x$sample[2] - x$sample[1] + 1L != x$nobs) {
     fail("`nobs` must equal the length of `sample`.")
   }
 
-  cv <- x$critical_values
-  if (!is.numeric(cv) || is.null(names(cv)) || anyNA(cv) || any(!is.finite(cv))) {
-    fail("`critical_values` must be a named numeric vector of finite values.")
+  check_cv <- function(cv, what, tail) {
+    if (!is.numeric(cv) || is.null(names(cv)) || anyNA(cv) || any(!is.finite(cv))) {
+      fail("`", what, "` must be a named numeric vector of finite values.")
+    }
+    lv <- suppressWarnings(as.numeric(names(cv)))
+    if (anyNA(lv) || any(lv <= 0 | lv >= 1) || anyDuplicated(lv)) {
+      fail("names of `", what, "` must be distinct significance levels in (0, 1).")
+    }
+    if (!all(vapply(required_levels, function(l) any(abs(lv - l) < 1e-12), logical(1)))) {
+      fail("`", what, "` must include the levels 0.01, 0.05 and 0.10.")
+    }
+    d <- diff(cv[order(lv)])
+    ok <- if (tail == "lower") all(d > 0) else all(d < 0)
+    if (!ok) {
+      fail("`", what, "` are not ordered consistently with a ", tail, "-tail test.")
+    }
+    lv
   }
-  lv <- suppressWarnings(as.numeric(names(cv)))
-  if (anyNA(lv) || any(lv <= 0 | lv >= 1)) {
-    fail("names of `critical_values` must be significance levels in (0, 1).")
-  }
-  if (!all(vapply(required_levels, function(l) any(abs(lv - l) < 1e-12), logical(1)))) {
-    fail("`critical_values` must include the levels 0.01, 0.05 and 0.10.")
-  }
-  ord <- order(lv)
-  d <- diff(cv[ord])
-  ok <- if (x$tail == "lower") all(d > 0) else all(d < 0)
-  if (!ok) {
-    fail("`critical_values` are not ordered consistently with a ",
-         x$tail, "-tail test.")
-  }
+  lv <- check_cv(x$critical_values, "critical_values", x$tail)
 
-  if (length(x$p_value) != 1L ||
+  if (!is.numeric(x$p_value) || length(x$p_value) != 1L ||
       (!is.na(x$p_value) && (x$p_value < 0 || x$p_value > 1))) {
     fail("`p_value` must be NA or a number in [0, 1].")
   }
@@ -189,8 +233,10 @@ validate_ur_test <- function(x) {
   }
 
   os <- x$other_statistics
-  if (!is.numeric(os) || (length(os) > 0L && is.null(names(os)))) {
-    fail("`other_statistics` must be a named numeric vector.")
+  if (!is.numeric(os) || any(!is.finite(os)) ||
+      (length(os) > 0L && (is.null(names(os)) || any(!nzchar(names(os))) ||
+                           anyDuplicated(names(os))))) {
+    fail("`other_statistics` must be a named numeric vector of finite values.")
   }
   ocv <- x$other_critical_values
   if (!is.list(ocv) || (length(ocv) > 0L && (is.null(names(ocv)) ||
@@ -198,14 +244,17 @@ validate_ur_test <- function(x) {
     fail("`other_critical_values` must be a list named after entries of `other_statistics`.")
   }
   for (nm in names(ocv)) {
-    v <- ocv[[nm]]
-    lvv <- suppressWarnings(as.numeric(names(v)))
-    if (!is.numeric(v) || anyNA(lvv) || any(!is.finite(v))) {
-      fail("`other_critical_values$", nm, "` must be a named numeric vector of finite values.")
-    }
+    check_cv(ocv[[nm]], paste0("other_critical_values$", nm), "upper")
+  }
+
+  if (!is.character(x$warnings) || anyNA(x$warnings)) {
+    fail("`warnings` must be a character vector.")
   }
   if (!is.null(x$regression) && !is.list(x$regression)) {
     fail("`regression` must be NULL or a list.")
+  }
+  if (!is.null(x$call) && !is.call(x$call)) {
+    fail("`call` must be NULL or a call.")
   }
   invisible(x)
 }
@@ -274,6 +323,7 @@ print.ur_test <- function(x, ...) {
               x$nobs, x$sample[1], x$sample[2]))
   cat(sprintf("  Statistic:        %s\n", fmt_num(x$statistic)))
   cat(sprintf("  Critical values:  %s\n", fmt_cvs(x$critical_values)))
+  cat(sprintf("  Source:           %s\n", x$calibration$source))
   if (!is.na(x$p_value)) cat(sprintf("  p-value:          %s\n", fmt_pvalue(x$p_value)))
   cat("\n  ", decision_line(x), "\n", sep = "")
   for (w in x$warnings) cat("  Warning: ", w, "\n", sep = "")

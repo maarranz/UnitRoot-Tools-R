@@ -262,8 +262,9 @@ ur_strategy <- function(y, strategy = c("original", "conservative", "hamilton"),
   call <- match.call()
   strategy <- match.arg(strategy)
   criterion <- match.arg(criterion)
+  check_level(level)
+  check_flag(allow_no_constant, "allow_no_constant")
   y <- check_series(y, var = var)
-  format_level(level)
 
   if (strategy == "hamilton") {
     if (is.null(trending) || !is.logical(trending) || length(trending) != 1L ||
@@ -291,10 +292,7 @@ ur_strategy <- function(y, strategy = c("original", "conservative", "hamilton"),
       stop("Give either `lags` (fixed order) or `max_lags` (selection), not both.",
            call. = FALSE)
     }
-    if (length(lags) != 1L || is.na(lags) || lags < 0 || lags != round(lags)) {
-      stop("`lags` must be a non-negative integer.", call. = FALSE)
-    }
-    k <- as.integer(lags)
+    k <- check_order(lags, "lags")
     first <- k + 2L
     selection <- NULL
   } else {

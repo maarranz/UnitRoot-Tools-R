@@ -103,7 +103,9 @@ approximations).}
 An object of class \code{ur_test}.
 
 \code{validate_ur_test()} returns \code{x} invisibly, or stops with an
-informative error.
+informative error. It checks every field of the contract, including that
+the stored decision agrees with the statistic, critical values, tail,
+p-value and level.
 }
 \description{
 Objects of class \code{ur_test} hold the result of a single unit-root or

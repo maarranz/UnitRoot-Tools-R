@@ -112,3 +112,47 @@ test_that("summary adds calibration, other statistics, lag table and engine", {
   expect_match(out, "Lag selection: MAIC, kmax = 12, detrending: OLS", all = FALSE)
   expect_match(out, "Engine: internal 0.0.0.9000", all = FALSE)
 })
+
+test_that("M3: the validator enforces the whole contract", {
+  r <- make_result()
+  bad <- r; bad$reject <- !bad$reject
+  expect_error(validate_ur_test(bad), "stored decision")
+  bad <- r; bad$reject <- NA
+  expect_error(validate_ur_test(bad), "`reject` must be TRUE or FALSE")
+  bad <- r; bad$trend <- "drift"
+  expect_error(validate_ur_test(bad), "canonical codes")
+  bad <- r; bad$tail <- "both"
+  expect_error(validate_ur_test(bad), "`tail` must be")
+  bad <- r; bad$lags <- 4.5
+  expect_error(validate_ur_test(bad), "`lags` must be a non-negative integer")
+  bad <- r; bad$nobs <- 187
+  expect_error(validate_ur_test(bad), "`nobs` must be a positive integer")
+  bad <- r; bad$other_statistics[["phi3"]] <- NaN
+  expect_error(validate_ur_test(bad), "finite values")
+  bad <- r; bad$call <- "adf(y)"
+  expect_error(validate_ur_test(bad), "`call` must be NULL or a call")
+  bad <- r; class(bad) <- "list"
+  expect_error(validate_ur_test(bad), "not an object of class")
+  expect_invisible(validate_ur_test(r))
+})
+
+test_that("M3: the constructor never truncates whole-number fields", {
+  expect_error(make_result(lags = 4.5), "`lags` must be a whole number or NA")
+  expect_error(make_result(nobs = 187.2), "`nobs` must be a whole number")
+  expect_error(make_result(sample = c(14.5, 200)), "`sample` must be 2 whole numbers")
+  expect_identical(make_result(lags = 4)$lags, 4L)
+})
+
+test_that("M3: accompanying critical values get the same checks as the main ones", {
+  ocv <- list(phi3 = c("0.01" = 8.73, "0.05" = 6.49, "0.1" = 5.47))
+  expect_s3_class(make_result(other_critical_values = ocv), "ur_test")
+  ocv_bad <- list(phi3 = c("0.01" = 5.47, "0.05" = 6.49, "0.1" = 8.73))
+  expect_error(make_result(other_critical_values = ocv_bad), "upper-tail")
+  ocv_bad <- list(phi3 = c("0.05" = 6.49))
+  expect_error(make_result(other_critical_values = ocv_bad), "0.01, 0.05 and 0.10")
+})
+
+test_that("print shows the source of the critical values", {
+  out <- capture.output(print(make_result()))
+  expect_match(out, "Source:\\s+MacKinnon \\(2010\\)", all = FALSE)
+})

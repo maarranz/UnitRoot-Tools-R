@@ -57,10 +57,7 @@ select_lags <- function(y, trend = "c", max_lags = NULL,
 # Internal version on a validated numeric series.
 lag_table <- function(y, trend, max_lags, criterion) {
   n <- length(y)
-  kmax <- if (is.null(max_lags)) default_kmax(n) else as.integer(max_lags)
-  if (length(kmax) != 1L || is.na(kmax) || kmax < 0L) {
-    stop("`max_lags` must be a non-negative integer.", call. = FALSE)
-  }
+  kmax <- if (is.null(max_lags)) default_kmax(n) else check_order(max_lags, "max_lags")
   first <- kmax + 2L
   nobs <- n - first + 1L
   if (nobs < kmax + 4L) {

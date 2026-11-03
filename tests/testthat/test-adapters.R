@@ -50,7 +50,7 @@ test_that("dfgls() returns urca's DF-GLS statistic and requires lags", {
     expect_identical(r$nobs, length(stats::residuals(u@testreg)))
   }
   expect_error(dfgls(y), "Give the number of lagged differences")
-  expect_error(dfgls(y, lags = -1), "non-negative integer")
+  expect_error(dfgls(y, lags = -1), "non-negative whole number")
 })
 
 test_that("adapters check inputs before calling urca", {
@@ -59,7 +59,7 @@ test_that("adapters check inputs before calling urca", {
   expect_error(dfgls(c(NA, y), lags = 1), "missing or non-finite")    # urca would drop it
   expect_error(pp(y, trend = "n"), "not available here")
   expect_error(kpss(y, bandwidth = "andrews"), "not available in this version")
-  expect_error(kpss(y, bandwidth = 1.5), "non-negative integer")
+  expect_error(kpss(y, bandwidth = 1.5), "non-negative whole number")
 })
 
 test_that("adapter results print like every other test", {

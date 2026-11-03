@@ -2,7 +2,7 @@ Package: unitroottools
 Title: Transparent Unit-Root Testing and Deterministic-Specification Strategies
 Version: 0.0.0.9000
 Authors@R:
-    person("Miguel A.", "Arranz", email = "CHANGE-ME@example.org",
+    person("Miguel A.", "Arranz", email = "maarranz@eco.uc3m.es",
            role = c("aut", "cre"))
 Description: A unified interface to unit-root and stationarity tests, with
     deterministic-specification strategies (Dolado-Jenkinson-Sosvilla-Rivero

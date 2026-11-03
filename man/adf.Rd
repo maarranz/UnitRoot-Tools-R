@@ -34,7 +34,8 @@ order is selected by \code{criterion}.}
 the \code{"common"} sample used for selection (default) or on the
 \code{"maximal"} sample for the selected order.}
 
-\item{level}{Significance level of the reported decision.}
+\item{level}{Significance level of the reported decision: 0.01, 0.05 or
+0.10 (the levels with tabulated critical values).}
 
 \item{var}{When \code{y} has several columns, the name of the column to use.}
 }

@@ -15,7 +15,8 @@ data frame, tibble or tsibble (see \code{var}).}
 \item{lags}{Number of lagged differences in the DF-GLS regression
 (required).}
 
-\item{level}{Significance level of the reported decision.}
+\item{level}{Significance level of the reported decision: 0.01, 0.05 or
+0.10.}
 
 \item{var}{When \code{y} has several columns, the name of the column to use.}
 }

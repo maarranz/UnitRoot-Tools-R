@@ -17,6 +17,10 @@ check_series <- function(y, var = NULL, arg = "y") {
   if (!is.null(var) && (!is.character(var) || length(var) != 1L || is.na(var))) {
     stop("`var` must be a single column name (a character string).", call. = FALSE)
   }
+  if (length(dim(y)) > 2L) {
+    stop("`", arg, "` is an array with ", length(dim(y)), " dimensions; ",
+         "a unit-root test needs a single series.", call. = FALSE)
+  }
 
   if (inherits(y, "tbl_ts")) {
     y <- tsibble_series(y, var, arg)
@@ -37,6 +41,11 @@ check_series <- function(y, var = NULL, arg = "y") {
     stop("`var` can only be used when `", arg, "` has columns.", call. = FALSE)
   }
 
+  if (!is.null(dim(y)) && (length(dim(y)) > 2L || NCOL(y) != 1L)) {
+    stop("The selected series has ", paste(dim(y), collapse = " x "),
+         " values in a matrix or array; a unit-root test needs a single ",
+         "column of observations.", call. = FALSE)
+  }
   if (!is.numeric(y) || is.logical(y)) {
     stop("`", arg, "` must be numeric.", call. = FALSE)
   }
@@ -56,7 +65,9 @@ check_series <- function(y, var = NULL, arg = "y") {
 pick_column <- function(x, var, arg) {
   if (is.data.frame(x)) {
     cols <- names(x)
-    numeric_cols <- cols[vapply(x, function(v) is.numeric(v) && !is.logical(v), logical(1))]
+    numeric_cols <- cols[vapply(x, function(v) {
+      is.numeric(v) && !is.logical(v) && is.null(dim(v))
+    }, logical(1))]
     get <- function(nm) x[[nm]]
   } else {
     x <- as.matrix(x)

@@ -111,7 +111,7 @@ Details that matter in practice:
 |---|---|
 | v0.2: inference tools | Response-surface critical values for φ; long-run variance module (kernels, automatic bandwidths, AR-spectral estimator); internal PP (Z_α and Z_τ) and KPSS; DF-GLS with MAIC lag selection; Ng-Perron M tests and ERS point-optimal test; bootstrap tests through bootUR; first CRAN release |
 | v0.3: bootstrap | Own bootstrap engine (sieve, wild, block and dependent wild schemes), able to bootstrap any statistic, including a whole testing strategy |
-| v0.4: specification uncertainty | Monte Carlo tools (size, power, branch frequencies); union-of-rejections test; bootstrap-calibrated strategies; Hamilton's Case 3 (drift under the null) |
+| v0.4: specification uncertainty | Monte Carlo tools (size, power, branch frequencies); union-of-rejections test; bootstrap-calibrated strategies; Hamilton's Case 3 (drift under the null), introduced with the Monte Carlo tools |
 | v0.5: robustness | Unit-root tests robust to additive outliers; tests allowing for structural breaks |
 
 ## Specification

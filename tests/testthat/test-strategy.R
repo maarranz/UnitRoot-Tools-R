@@ -190,7 +190,7 @@ test_that("hamilton requires a declaration; misuse is reported", {
 
 test_that("argument checks", {
   y <- sim_trend()
-  expect_error(ur_strategy(y, level = 0.025), "0.01, 0.05 or 0.10")
+  expect_error(ur_strategy(y, level = 0.025), "one of 0.01, 0.05, 0.1")
   expect_error(ur_strategy(y[1:30], lags = 8), "at least 25 effective")
   expect_error(ur_strategy(y, lags = 1, max_lags = 4), "either `lags`")
 })

@@ -52,7 +52,7 @@ test_that("lag selection: common sample by default, maximal on request", {
 test_that("argument checks", {
   y <- sim_series()
   expect_error(adf(y, lags = 2, max_lags = 4), "either `lags`")
-  expect_error(adf(y, lags = 1.5), "non-negative integer")
+  expect_error(adf(y, lags = 1.5), "non-negative whole number")
   expect_error(adf(y, trend = "ctt"), "Unknown deterministic")
   expect_error(adf(c(y, NA)), "missing or non-finite")
 })

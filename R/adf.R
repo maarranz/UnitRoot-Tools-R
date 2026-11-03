@@ -36,7 +36,8 @@ adf_alternatives <- c(
 #' @param final_sample After lag selection, estimate the test regression on
 #'   the `"common"` sample used for selection (default) or on the
 #'   `"maximal"` sample for the selected order.
-#' @param level Significance level of the reported decision.
+#' @param level Significance level of the reported decision: 0.01, 0.05 or
+#'   0.10 (the levels with tabulated critical values).
 #'
 #' @return An object of class `ur_test` (see [new_ur_test()]).
 #' @references
@@ -59,6 +60,7 @@ adf <- function(y, trend = "c", lags = NULL, max_lags = NULL,
   call <- match.call()
   criterion <- match.arg(criterion)
   final_sample <- match.arg(final_sample)
+  check_level(level)
   y <- check_series(y, var = var)
   trend <- match_trend(trend)
 
@@ -67,10 +69,7 @@ adf <- function(y, trend = "c", lags = NULL, max_lags = NULL,
       stop("Give either `lags` (fixed order) or `max_lags` (selection), not both.",
            call. = FALSE)
     }
-    if (length(lags) != 1L || is.na(lags) || lags < 0 || lags != round(lags)) {
-      stop("`lags` must be a non-negative integer.", call. = FALSE)
-    }
-    k <- as.integer(lags)
+    k <- check_order(lags, "lags")
     first <- k + 2L
     selection <- NULL
   } else {

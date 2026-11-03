@@ -98,7 +98,7 @@ Convention: (a) by default, with (b) available as `final_sample = "maximal"` (us
 
 ## Minimum sample
 
-- The fit is refused if $N \le p_U + 1$.
+- The fit is refused if $N \le p_U + 1$, i.e. at least two residual degrees of freedom are required (this applies to every regression the package fits).
 - A warning is issued when $N < 25$, the smallest sample size in the tabulated critical values.
 - Specification strategies require $N \ge 25$ (as in Python).
 
@@ -191,7 +191,9 @@ Every test returns an object of class `ur_test` (R) / `URTestResult` (Python) wi
 | `regression` | record or null | Fitted regression (coefficients, standard errors, RSS, residuals); may be omitted for speed |
 | `call` | language | The call (R only) |
 
-Methods (R): `print`, `summary`, `tidy`, `glance` (via `generics`). `print` states the null hypothesis, statistic, critical value and decision in words.
+Methods (R): `print` and `summary`; `tidy` and `glance` (via `generics`) are planned, not yet implemented. `print` states the null hypothesis, statistic, critical values and their source, and the decision in words; `summary` adds the calibration details, accompanying statistics, lag-selection table and test regression.
+
+`validate_ur_test()` checks every field of this contract, including that the stored decision agrees with the statistic, critical values, tail, p-value and level. The constructor never truncates: a non-whole `lags`, `nobs` or `sample` is an error.
 
 # Specification strategies {#sec-strategies}
 
@@ -284,7 +286,7 @@ Rules:
 **Case 3 (optional, experimental):** regression `c` with a non-zero drift under the null, where the $t$ statistic on $b$ is asymptotically $N(0,1)$ (West 1988). Available only as `inference = "west_normal"`. The result reports the estimated drift relative to its standard error and warns when that ratio is small, since the normal approximation is then poor.
 
 ::: {.callout-important}
-**Decision D6 (settled):** Case 3 is deferred to Phase 2, where it is introduced together with the Monte Carlo harness (which can show how the normal approximation degrades as the drift shrinks). The warning threshold is set then.
+**Decision D6 (settled):** Case 3 is deferred to the specification-uncertainty phase (v0.4), where it is introduced together with the Monte Carlo harness (which can show how the normal approximation degrades as the drift shrinks). The warning threshold is set then.
 :::
 
 # Validation standard {#sec-validation}
@@ -327,7 +329,7 @@ Checked against the urca 1.3-4 reference documentation. Each limitation is the d
 | D3 | Default $k_{\max}$ | Schwert $\lfloor 12(T/100)^{1/4}\rfloor$ | Settled |
 | D4 | $\tau$ critical values | MacKinnon (2010) response surfaces | Settled |
 | D5 | Conditional tests in strategies | Student-$t$, lower tail for $b$ | Settled |
-| D6 | Hamilton Case 3 | Deferred to Phase 2 | Settled |
+| D6 | Hamilton Case 3 | Deferred to v0.4 (with the Monte Carlo harness) | Settled |
 
 # References
 

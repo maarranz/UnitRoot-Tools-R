@@ -51,8 +51,9 @@ qr_fit <- function(X, response) {
                 rss = sum(response^2), residuals = response,
                 nobs = n, df = n, sigma2 = sum(response^2) / n))
   }
-  if (n <= p) {
-    stop("Not enough observations: N = ", n, " with ", p, " regressors.",
+  if (n <= p + 1L) {
+    stop("Not enough observations: N = ", n, " with ", p, " regressors ",
+         "(at least two residual degrees of freedom are needed).",
          call. = FALSE)
   }
   q <- qr(X)

@@ -21,9 +21,8 @@ bandwidth_args <- function(bandwidth) {
     return(list(lags = bandwidth, use.lag = NULL,
                 rule = bandwidth_rules[[bandwidth]]))
   }
-  if (is.numeric(bandwidth) && length(bandwidth) == 1L && !is.na(bandwidth) &&
-      bandwidth >= 0 && bandwidth == round(bandwidth)) {
-    return(list(lags = "short", use.lag = as.integer(bandwidth),
+  if (is.numeric(bandwidth) && !is.logical(bandwidth)) {
+    return(list(lags = "short", use.lag = check_order(bandwidth, "bandwidth"),
                 rule = "fixed by the user"))
   }
   stop("`bandwidth` must be \"short\", \"long\" or a non-negative integer. ",
@@ -47,6 +46,8 @@ bandwidth_args <- function(bandwidth) {
 #'
 #' @inheritParams adf
 #' @param trend `"c"` or `"ct"` (or an alias accepted by [match_trend()]).
+#' @param level Significance level of the reported decision: 0.01, 0.05 or
+#'   0.10.
 #' @param bandwidth `"short"` (default), `"long"`, or a non-negative integer.
 #' @return An object of class `ur_test`.
 #' @references
@@ -58,6 +59,7 @@ bandwidth_args <- function(bandwidth) {
 #' @export
 pp <- function(y, trend = "c", bandwidth = "short", level = 0.05, var = NULL) {
   call <- match.call()
+  check_level(level)
   y <- check_series(y, var = var)
   trend <- match_trend(trend, allowed = c("c", "ct"))
   bw <- bandwidth_args(bandwidth)
@@ -93,6 +95,8 @@ pp <- function(y, trend = "c", bandwidth = "short", level = 0.05, var = NULL) {
 #' critical values.
 #'
 #' @inheritParams pp
+#' @param level Significance level of the reported decision: 0.01, 0.025,
+#'   0.05 or 0.10.
 #' @return An object of class `ur_test`.
 #' @references
 #' Kwiatkowski, D., Phillips, P. C. B., Schmidt, P. and Shin, Y. (1992).
@@ -104,6 +108,7 @@ pp <- function(y, trend = "c", bandwidth = "short", level = 0.05, var = NULL) {
 #' @export
 kpss <- function(y, trend = "c", bandwidth = "short", level = 0.05, var = NULL) {
   call <- match.call()
+  check_level(level, c(0.01, 0.025, 0.05, 0.10))
   y <- check_series(y, var = var)
   trend <- match_trend(trend, allowed = c("c", "ct"))
   bw <- bandwidth_args(bandwidth)
@@ -158,12 +163,10 @@ dfgls <- function(y, trend = "c", lags, level = 0.05, var = NULL) {
     stop("Give the number of lagged differences with `lags`: automatic lag ",
          "selection for DF-GLS is not available in this version.", call. = FALSE)
   }
-  if (length(lags) != 1L || is.na(lags) || lags < 0 || lags != round(lags)) {
-    stop("`lags` must be a non-negative integer.", call. = FALSE)
-  }
+  k <- check_order(lags, "lags")
+  check_level(level)
   y <- check_series(y, var = var)
   trend <- match_trend(trend, allowed = c("c", "ct"))
-  k <- as.integer(lags)
   u <- urca::ur.ers(y, type = "DF-GLS",
                     model = if (trend == "c") "constant" else "trend",
                     lag.max = k)
