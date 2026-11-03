@@ -369,7 +369,7 @@ Checked against the urca 1.3-4 reference documentation. Each limitation is the d
 | D11 | DF-GLS critical values and p-values | Own finite-sample response surfaces in $(T, k)$ from the package's simulation; p-values by MacKinnon's (1996) method | Settled 3 Nov |
 | D12 | Phillips–Perron $Z_\tau$ | Internal implementation of Phillips and Perron (1988) / Hamilton (1994, eq. 17.6.8), replacing urca | Settled 3 Nov |
 
-**Known divergences of the Python implementation (to be resolved there):** default $k_{\max}$ uses the ceiling (D3); the cap allows one residual degree of freedom instead of two (D3); asymptotic MacKinnon (1994) p-values (D8); plain AIC/BIC from the detrended regression (D7, admissible as an alternative). The Python implementation has no Hamilton strategy yet.
+**Known divergences of the Python implementation (to be resolved there; details in `notes-for-python.md`):** DF-GLS critical values from ARCH depend only on $N = T-k-1$ and are conservative when lags are used (D11); asymptotic MacKinnon (1994) p-values (D8); default $k_{\max}$ uses the ceiling, and its cap allows one residual degree of freedom instead of two (D3); plain AIC/BIC from the detrended regression (D7, admissible as an alternative). The Python implementation has no Hamilton strategy yet.
 
 # References
 
