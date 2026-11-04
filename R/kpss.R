@@ -24,6 +24,28 @@ kpss_upper_prob <- function(q, lam, K = 200L) {
 
 kpss_cv_cache <- new.env(parent = emptyenv())
 
+# Quantiles of the limit where the p-value is bounded (P = 0.999 and 0.001),
+# as for the simulated calibrations: beyond them the integral is not
+# evaluated (for large statistics it does not converge numerically) and the
+# p-value is reported as the bound.
+kpss_p_range <- function(trend) {
+  key <- paste0("range_", trend)
+  if (!is.null(kpss_cv_cache[[key]])) return(kpss_cv_cache[[key]])
+  lam <- kpss_limit[[c(c = "mu", ct = "tau")[[trend]]]]
+  r <- vapply(c(0.999, 0.001), function(p) {
+    stats::uniroot(function(q) kpss_upper_prob(q, lam) - p, c(0.005, 5), tol = 1e-10)$root
+  }, numeric(1))
+  kpss_cv_cache[[key]] <- r
+  r
+}
+
+kpss_p_value <- function(stat, trend) {
+  r <- kpss_p_range(trend)
+  if (stat <= r[1]) return(0.999)
+  if (stat >= r[2]) return(0.001)
+  kpss_upper_prob(stat, kpss_limit[[c(c = "mu", ct = "tau")[[trend]]]])
+}
+
 kpss_critical_values <- function(trend) {
   if (!is.null(kpss_cv_cache[[trend]])) return(kpss_cv_cache[[trend]])
   lam <- kpss_limit[[c(c = "mu", ct = "tau")[[trend]]]]
@@ -105,13 +127,22 @@ kpss <- function(y, trend = "c", kernel = "bartlett", bandwidth = "short",
   Z <- if (trend == "c") cbind(const = rep(1, n)) else cbind(const = 1, trend = t)
   fit <- qr_fit(Z, y)
   e <- fit$residuals
+  if (sqrt(mean(e^2)) <= 1e-10 * max(1, sqrt(mean(y^2)))) {
+    stop("The residuals of the regression on the deterministic terms are zero: ",
+         "the series is constant", if (trend == "ct") " or an exact linear trend", ". ",
+         "KPSS is not defined.", call. = FALSE)
+  }
   bw <- resolve_bandwidth(bandwidth, e, kernel, n_rule = n, n_label = "T")
   if (bw$b - 1 >= n) {
     stop("`bandwidth` is too large for T = ", n, ".", call. = FALSE)
   }
   v <- long_run_variance(e, kernel, bw$b)
+  if (!(v$lrv > 0)) {
+    stop("The estimated long-run variance is not positive; try another kernel or bandwidth.",
+         call. = FALSE)
+  }
   stat <- sum(cumsum(e)^2) / (n^2 * v$lrv)
-  lam <- kpss_limit[[c(c = "mu", ct = "tau")[[trend]]]]
+  pv <- kpss_p_value(stat, trend)
   stationary <- c(c = "stationary around a constant level",
                   ct = "stationary around a linear trend")[[trend]]
   new_ur_test(
@@ -123,11 +154,14 @@ kpss <- function(y, trend = "c", kernel = "bartlett", bandwidth = "short",
     bandwidth_rule = bandwidth_text(kernel, bw),
     nobs = n, sample = c(1L, n),
     critical_values = kpss_critical_values(trend), tail = "upper",
-    p_value = kpss_upper_prob(stat, lam),
+    p_value = pv,
     calibration = list(
       method = "limit_distribution",
-      source = "exact limiting distribution (kernel eigenvalues, Imhof inversion)",
-      note = "asymptotic; Kwiatkowski et al. (1992) tabulate simulated values that differ in the third decimal"),
+      source = "limiting distribution, computed numerically (kernel eigenvalues, Imhof inversion)",
+      note = paste(c("asymptotic; Kwiatkowski et al. (1992) tabulate simulated values that differ in the third decimal",
+                     if (pv <= 0.001) "the statistic lies beyond the 0.001 quantile: the p-value is below 0.001 (0.001 is reported)"
+                     else if (pv >= 0.999) "the statistic lies below the 0.999 quantile: the p-value is above 0.999 (0.999 is reported)"),
+                   collapse = "; ")),
     level = level,
     other_statistics = c(gamma0 = unname(v$gamma0), long_run_variance = unname(v$lrv),
                          bandwidth = unname(v$b)),

@@ -13,6 +13,14 @@ Fixes from the audit of 0.2.0 (4 November 2026).
   with a note in the result. Inside the range, p-values change only in the
   third or fourth decimal. The shared DF-GLS JSON file and its Python reader
   use the same rule.
+* `kpss()` no longer fails for very large statistics (e.g. a trending series
+  with `bandwidth = 0`, where the numerical integration did not converge):
+  beyond the 0.001 and 0.999 quantiles of the limit the p-value is reported
+  as the bound, as for the other calibrations. A constant series (or an
+  exact linear trend with `trend = "ct"`) now stops with a clear error,
+  instead of a statistic made of rounding noise or an integration error.
+  The source is described as the limiting distribution "computed
+  numerically" rather than "exact".
 
 # unitroottools 0.2.0
 
