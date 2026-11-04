@@ -223,6 +223,52 @@ $\phi_1$, $\phi_2$, $\phi_3$: own response surfaces in $(T, k)$ of the form of D
 `boot_ur()` calls `bootUR::boot_adf()` or `bootUR::boot_union()` (Smeekes and Wilms) and returns a `ur_test` with the bootstrap p-value and no critical values; the decision is taken from the p-value. bootUR is in Suggests. Only `lags = NULL` (selection) or 0 is accepted, because bootUR 1.0.5 fails with a fixed positive lag order. The package's own bootstrap engine is planned for v0.3.
 :::
 
+# Bootstrap engine (v0.3, planned) {#sec-bootstrap}
+
+::: {.callout-important}
+**Decision D18 (settled 4 November 2026; to be implemented in v0.3): the package's own bootstrap.**
+A bootstrap that can resample under the unit-root null and re-run *any* test of the package, with its own conventions, and a whole specification strategy. bootUR (D17) remains available for its own tests; this engine covers what it cannot do: the package's statistics and lag conventions (Perron–Qu MAIC, maximal sample), the GLS-based tests, PP, and strategies.
+:::
+
+## Null process
+
+Let $u_t = \Delta y_t - \hat\mu$, $t = 2, \dots, T$, with $\hat\mu$ the mean of $\Delta y_t$. Bootstrap series are built from a resampled $u^*_t$ and cumulated, which imposes the unit root:
+$$
+y^*_1 = y_1, \qquad y^*_t = y^*_{t-1} + \delta + u^*_t, \quad t = 2, \dots, T.
+$$
+Tests with a constant do not depend on $y_1$. The drift $\delta$ is 0 for single tests: the null of a test with a constant is a driftless random walk, and tests with a trend do not depend on the drift. For strategies, see below.
+
+## Schemes
+
+| Scheme | `scheme` | Resampling of $u^*$ | Handles |
+|---|---|---|---|
+| Sieve (Chang and Park 2003) | `"sieve"` | AR($p$) on $u_t$; centred residuals drawn with replacement; $u^*$ generated recursively | Serial correlation |
+| Wild sieve | `"wild"` | As the sieve, with residuals $\hat\varepsilon_t w_t$, $w_t$ Rademacher | Serial correlation and heteroskedasticity |
+| Stationary bootstrap (Politis and Romano 1994) | `"stationary"` | Blocks of $u_t$ of geometric random length, wrapping around the end | Serial correlation, nonparametrically |
+| Moving block bootstrap (Künsch 1989; Swensen 2003 for differences) | `"mbb"` | Overlapping blocks of $u_t$ of fixed length | Serial correlation, nonparametrically |
+
+*Sieve order.* $p$ is chosen once, by AIC on $u_t$ over $0, \dots, \lfloor 12(T/100)^{1/4}\rfloor$ on a common sample, and the fitted AR($p$) (OLS, no intercept) is the bootstrap process for every replication. It does not depend on the lags of the test, whether these are selected or fixed: the sieve describes the data, the test's lag order is the user's choice for the test (a test with `lags = 0` on strongly autocorrelated data must still be bootstrapped from an autocorrelated process). `sieve_order` sets $p$ explicitly. The recursion starts from the observed $u_2, \dots, u_{p+1}$.
+
+*Block length.* Mean block length (stationary) or block length (moving block) by Politis and White (2004), with the correction of Patton, Politis and White (2009), computed on $u_t$ (the stationary and circular-block values, respectively); `block_length` sets it explicitly. Implemented in the package (no dependency on `np` or `blocklength`).
+
+Not included: the residual-based block bootstrap (Paparoditis and Politis 2003) and the autoregressive wild bootstrap (the latter is available through `boot_ur()`).
+
+## Test and p-value
+
+Each bootstrap series is passed to the same function with the same arguments as the original test. Lags are treated as the user asked on the original data: if they were selected (the default), they are re-selected on every $y^*$ (as bootUR does), so that the bootstrap reproduces the effect of the selection; if they were fixed, they stay fixed and the bootstrap is conditional on that order. The p-value is
+$$
+p^* = \frac{1 + \#\{b : S^*_b \text{ at least as extreme as } S\}}{B + 1},
+$$
+with "extreme" in the test's tail. Defaults: $B = 999$; `seed` for reproducibility. The result is a `ur_test` with calibration method `"bootstrap"`, no critical values (or bootstrap quantiles as critical values), the decision taken from $p^*$, and a record of the scheme, $p$ or the block length, $B$ and the seed.
+
+## Strategies
+
+For a strategy the outcome is not a statistic but a terminal branch and a conclusion, so the bootstrap estimates *how the procedure behaves under the unit root* rather than a p-value of a statistic. Bootstrap series are generated under two nulls: with drift ($\delta = \hat\mu$, the least favourable case for the Dolado–Enders path, whose $\phi$ steps concern the drift) and without ($\delta = 0$). On each series the whole `ur_strategy()` is run with the same arguments (every pre-test and branch, lags as above). Reported under each null: the frequency with which the procedure rejects the unit root (its bootstrap size at the nominal levels of its steps) and the frequency of each terminal branch. Calibrating the levels of the steps so that the procedure has a given size is a v0.4 item.
+
+## Scope and validation
+
+KPSS is excluded: its null is stationarity, which needs a different design (a process for the detrended levels). Validation before release: size at 5% under the null with AR(1) errors ($\phi = -0.5, 0, 0.5$), MA(1) errors ($\theta = -0.5$, the hard case), GARCH(1,1) and a variance break (wild sieve), $T = 50, 100, 250$, each scheme with ADF, DF-GLS and $MZ_t$; comparison with bootUR's sieve and moving block bootstraps where they overlap; results and code archived in `data-raw/`.
+
 # The result contract {#sec-contract}
 
 Every test returns an object of class `ur_test` (R) / `URTestResult` (Python) with the following fields, whatever engine computed it.
@@ -404,22 +450,28 @@ Checked against the urca 1.3-4 reference documentation. Each limitation is the d
 | D15 | Ng–Perron M tests and ERS $P_T$ | GLS detrending, Perron–Qu lags, AR spectral density; own simulation in $(T, k)$, tabulated and interpolated in $1/T$ | Settled 4 Nov |
 | D16 | $\phi$ statistics and PP's $Z_\alpha$ | Own response surfaces in $(T, k)$ for $\phi_1, \phi_2, \phi_3$ (replacing the Dickey–Fuller tables) and for the normalized bias $n\hat b$ | Settled 3 Nov |
 | D17 | Bootstrap tests | Adapter to bootUR (`boot_ur()`): ADF and union tests; p-value only | Settled 3 Nov |
+| D18 | Own bootstrap engine | Null imposed on $\Delta y$; sieve, wild sieve, stationary and moving block schemes; sieve order by AIC, fixed across replications; test lags re-selected (or fixed) as on the data; strategies under nulls with and without drift (rejection and branch frequencies); no KPSS | Settled 4 Nov; v0.3 |
 
 **Known divergences of the Python implementation (to be resolved there; details in `notes-for-python.md`):** DF-GLS critical values from ARCH depend only on $N = T-k-1$ and are conservative when lags are used (D11); asymptotic MacKinnon (1994) p-values (D8); default $k_{\max}$ uses the ceiling, and its cap allows one residual degree of freedom instead of two (D3); plain AIC/BIC from the detrended regression (D7, admissible as an alternative). The Python implementation has no Hamilton strategy yet.
 
 # References
 
+- Chang, Y. and Park, J. Y. (2003). A sieve bootstrap for the test of a unit root. *Journal of Time Series Analysis*, 24, 379–400.
 - Dickey, D. A. and Fuller, W. A. (1981). Likelihood ratio statistics for autoregressive time series with a unit root. *Econometrica*, 49, 1057–1072.
 - Dolado, J. J., Jenkinson, T. and Sosvilla-Rivero, S. (1990). Cointegration and unit roots. *Journal of Economic Surveys*, 4, 249–273.
 - Elliott, G., Rothenberg, T. J. and Stock, J. H. (1996). Efficient tests for an autoregressive unit root. *Econometrica*, 64, 813–836.
 - Enders, W. *Supplementary Manual to accompany Applied Econometric Time Series*, 4th ed., Section 4.4 and Table B.
 - Hamilton, J. D. (1994). *Time Series Analysis*. Princeton University Press, ch. 17.
-- MacKinnon, J. G. (1996). Numerical distribution functions for unit root and cointegration tests. *Journal of Applied Econometrics*, 11, 601–618.
-- Perron, P. and Qu, Z. (2007). A simple modification to improve the finite sample properties of Ng and Perron's unit root tests. *Economics Letters*, 94, 12–19.
+- Künsch, H. R. (1989). The jackknife and the bootstrap for general stationary observations. *Annals of Statistics*, 17, 1217–1241.
 - MacKinnon, J. G. (1996). Numerical distribution functions for unit root and cointegration tests. *Journal of Applied Econometrics*, 11, 601–618.
 - MacKinnon, J. G. (2010). Critical values for cointegration tests. Queen's Economics Department Working Paper 1227.
 - Ng, S. and Perron, P. (2001). Lag length selection and the construction of unit root tests with good size and power. *Econometrica*, 69, 1519–1554.
+- Paparoditis, E. and Politis, D. N. (2003). Residual-based block bootstrap for unit root testing. *Econometrica*, 71, 813–855.
+- Patton, A., Politis, D. N. and White, H. (2009). Correction to "Automatic block-length selection for the dependent bootstrap". *Econometric Reviews*, 28, 372–375.
 - Perron, P. and Qu, Z. (2007). A simple modification to improve the finite sample properties of Ng and Perron's unit root tests. *Economics Letters*, 94, 12–19.
 - Pfaff, B. urca: Unit Root and Cointegration Tests for Time Series Data, R package version 1.3-4.
+- Politis, D. N. and Romano, J. P. (1994). The stationary bootstrap. *Journal of the American Statistical Association*, 89, 1303–1313.
+- Politis, D. N. and White, H. (2004). Automatic block-length selection for the dependent bootstrap. *Econometric Reviews*, 23, 53–70.
 - Schwert, G. W. (1989). Tests for unit roots: a Monte Carlo investigation. *Journal of Business & Economic Statistics*, 7, 147–159.
+- Swensen, A. R. (2003). Bootstrapping unit root tests for integrated processes. *Journal of Time Series Analysis*, 24, 99–126.
 - West, K. D. (1988). Asymptotic normality, when regressors have a unit root. *Econometrica*, 56, 1397–1417.
