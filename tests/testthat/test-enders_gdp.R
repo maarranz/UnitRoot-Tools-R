@@ -50,8 +50,9 @@ test_that("the original procedure follows Enders' path and rejects", {
   expect_identical(o$specification, "c")
   expect_true(o$unit_root_rejected)
   within_rounding(o$history$statistic[o$history$test == "aux_const"], 6.80, 2)
-  # phi3 is compared with the T = 250 row, as in Enders (5% value 6.34)
-  expect_equal(o$history$critical_value[o$history$test == "phi3"], 6.34)
+  # Enders compares phi3 with the T = 250 row of Dickey-Fuller's table (5%
+  # value 6.34); the package's response surface at this T agrees to rounding
+  within_rounding(o$history$critical_value[o$history$test == "phi3"], 6.34, 2)
 })
 
 test_that("the conservative procedure retains the constant and does not reject", {

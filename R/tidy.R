@@ -63,9 +63,12 @@ tidy.ur_test <- function(x, ...) {
       statistic_name = nm,
       statistic = unname(os[[nm]]),
       critical_value = crit,
-      p_value = NA_real_,
-      reject = if (is.na(crit)) NA else unname(os[[nm]]) > crit,
-      tail = if (is.null(cv)) NA_character_ else "upper",
+      p_value = if (is.null(cv) || is.null(attr(cv, "p_value"))) NA_real_
+                else attr(cv, "p_value"),
+      reject = if (is.na(crit)) NA
+               else if (other_tail(cv) == "lower") unname(os[[nm]]) < crit
+               else unname(os[[nm]]) > crit,
+      tail = if (is.null(cv)) NA_character_ else other_tail(cv),
       source = if (is.null(cv) || is.null(attr(cv, "source"))) NA_character_
                else attr(cv, "source"),
       stringsAsFactors = FALSE

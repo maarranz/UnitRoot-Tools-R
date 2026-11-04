@@ -154,12 +154,13 @@ Convention (Perron and Qu 2007): the lag order of DF-GLS (and later the Ng–Per
 
 Each result records its **calibration**: the method, the source and any approximation.
 
-| Method | Use in v0.1 |
+| Method | Use |
 |---|---|
-| `table` | Tabulated finite-sample critical values |
-| `response_surface` | Critical values or p-values from a response-surface regression |
+| `table` | Tabulated finite-sample critical values (no longer used by the package's own tests) |
+| `response_surface` | Critical values and p-values from response surfaces: MacKinnon's ($\tau$, $Z_\tau$) and the package's own (DF-GLS, $\phi$, $Z_\alpha$, Ng–Perron, ERS) |
+| `limit_distribution` | Exact limiting distribution computed numerically (KPSS, D14) |
 | `conventional_t` | Student-$t$ reference distribution (conditional tests in strategies) |
-| `bootstrap` | Phase 2 onwards (bootUR adapter), Phase 3 (own engine) |
+| `bootstrap` | Bootstrap p-values (bootUR adapter, D17; own engine planned) |
 
 ::: {.callout-important}
 **Decision D4 (settled): source of $\tau$ critical values.**
@@ -219,13 +220,13 @@ Every test returns an object of class `ur_test` (R) / `URTestResult` (Python) wi
 | `lag_selection` | record or null | Method, $k_{\max}$, criterion table, detrending (null when lags were fixed by the user) |
 | `nobs` | integer | Effective sample size $N$ |
 | `sample` | pair of integers | First and last $t$ of the effective sample |
-| `critical_values` | named numbers | At least levels 0.01, 0.05, 0.10 |
+| `critical_values` | named numbers | At least levels 0.01, 0.05, 0.10; empty only for a bootstrap calibration that gives a p-value (D17) |
 | `tail` | string | `"lower"` (rejects for small values: unit-root tests) or `"upper"` (rejects for large values: KPSS, $\phi$); critical values must be ordered consistently |
 | `p_value` | number or missing | Only when the calibration provides one; never interpolated from three critical values |
 | `calibration` | record | Method, source, approximation note (e.g. "table lookup at N=100") |
 | `level`, `reject` | number, logical | Decision at the chosen level (default 0.05): from the critical value at that level when available, otherwise from the p-value; an error if neither exists |
 | `other_statistics` | named numbers | e.g. the $\phi$ statistics accompanying $\tau_3$ |
-| `other_critical_values` | named list | Optional: critical values for entries of `other_statistics` (same format as `critical_values`, upper tail), each with its source |
+| `other_critical_values` | named list | Optional: critical values for entries of `other_statistics` (same format as `critical_values`), each with attributes `source`, `tail` (`"upper"` by default, or `"lower"`) and, when available, `p_value` |
 | `engine` | string | e.g. `"internal 0.1.0"`, `"urca 1.3-4"` |
 | `warnings` | strings | Small-sample and approximation warnings |
 | `regression` | record or null | Fitted regression (coefficients, standard errors, RSS, residuals); may be omitted for speed |
@@ -359,6 +360,7 @@ Checked against the urca 1.3-4 reference documentation. Each limitation is the d
 | `ur.pp` | *(no longer used)* The $Z_\tau$ correction uses sums over $y_t$ where Phillips and Perron (1988) and Hamilton (1994, eq. 17.6.8) use $y_{t-1}$: the statistic differs from theirs by up to 0.12 at $T = 30$, 0.02 at $T = 264$ (Phase 2B audit; an independent implementation and ARCH agree with the published formula to $10^{-13}$). Bandwidth rule applied to $T-1$ | Replaced by an internal implementation (Decision D12) |
 | `ur.kpss` | *(no longer used)* Bandwidth `"short"`/`"long"`/`"nil"` or user-specified; no automatic bandwidth; critical values from Kwiatkowski et al.'s simulated table | Replaced by an internal implementation (Decisions D13, D14); the statistic agrees with urca's for the same Bartlett bandwidth |
 | `ur.ers` | DF-GLS: `lag.max` is the fixed number of lagged differences, no lag selection; P-test selects lags by BIC; applies `na.omit` internally. Critical values are too liberal: with a constant, urca uses the Dickey–Fuller no-constant surface, whereas the finite-sample DF-GLS distribution has a heavier left tail; with a trend, it uses the *next larger* row of Elliott, Rothenberg and Stock's Table 1. Simulated size at nominal 5% (20,000 replications, no lags): constant 10.0% ($T = 50$), 8.0% ($T = 100$), 6.6% ($T = 250$); trend 7.2%, 6.5%, 5.3%. The statistic itself agrees with an independent implementation to $10^{-14}$ | Statistic from urca; lag selection internal (D9); critical values and p-value internal (Decision D11) |
+| `bootUR::boot_adf`, `boot_union` (1.0.5) | Fixing the lag order fails for any minimum lag of 1 or more (`Mat::submat(): indices out of bounds`); the statistic is computed after detrending, so it differs slightly from `adf()` (e.g. −1.820 against −1.811); exports its own `adf()`, which masks or is masked by ours | Adapter allows only lag selection or `lags = 0`; reports bootUR's statistic as such; calls bootUR with `::` |
 | — | No Ng–Perron M-tests | Internal implementation in Phase 2 |
 | all | S4 objects, no common result, no decision or provenance | `ur_test` contract over every backend |
 
@@ -380,6 +382,9 @@ Checked against the urca 1.3-4 reference documentation. Each limitation is the d
 | D12 | Phillips–Perron $Z_\tau$ | Internal implementation of Phillips and Perron (1988) / Hamilton (1994, eq. 17.6.8), replacing urca | Settled 3 Nov |
 | D13 | Long-run variance (PP, KPSS) | Bartlett, Parzen, QS kernels; Schwert, fixed, Andrews (1991) or Newey–West (1994) bandwidths | Settled 3 Nov |
 | D14 | KPSS critical values and p-values | Exact limiting distribution (kernel eigenvalues, Imhof) | Settled 3 Nov |
+| D15 | Ng–Perron M tests and ERS $P_T$ | GLS detrending, Perron–Qu lags, AR spectral density; own response surfaces in $(T, k)$ | Settled 3 Nov; surfaces still being validated (not yet in the package) |
+| D16 | $\phi$ statistics and PP's $Z_\alpha$ | Own response surfaces in $(T, k)$ for $\phi_1, \phi_2, \phi_3$ (replacing the Dickey–Fuller tables) and for the normalized bias $n\hat b$ | Settled 3 Nov |
+| D17 | Bootstrap tests | Adapter to bootUR (`boot_ur()`): ADF and union tests; p-value only | Settled 3 Nov |
 
 **Known divergences of the Python implementation (to be resolved there; details in `notes-for-python.md`):** DF-GLS critical values from ARCH depend only on $N = T-k-1$ and are conservative when lags are used (D11); asymptotic MacKinnon (1994) p-values (D8); default $k_{\max}$ uses the ceiling, and its cap allows one residual degree of freedom instead of two (D3); plain AIC/BIC from the detrended regression (D7, admissible as an alternative). The Python implementation has no Hamilton strategy yet.
 

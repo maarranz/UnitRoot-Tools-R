@@ -29,8 +29,11 @@
 #' (Schwert's rules applied to \eqn{n = T - 1}), a fixed number of
 #' autocovariances, `"andrews"` or `"newey-west"` (automatic).
 #'
-#' The normalized-bias statistic \eqn{Z_\alpha} is reported in
-#' `other_statistics`, without critical values.
+#' The normalized-bias statistic \eqn{Z_\alpha} (Hamilton 1994, eq.
+#' 17.6.7) is reported in `other_statistics`, with critical values and a
+#' p-value from the finite-sample distribution of the Dickey-Fuller
+#' normalized bias \eqn{n \hat b}, which has the same limit (own simulation);
+#' `summary()` and [tidy()] show them.
 #'
 #' @inheritParams adf
 #' @param trend `"c"` or `"ct"` (or an alias accepted by [match_trend()]).
@@ -92,6 +95,7 @@ pp <- function(y, trend = "c", kernel = "bartlett", bandwidth = "short",
       note = sprintf("evaluated at N = %d; Z_tau has the Dickey-Fuller tau limit distribution", r$nobs),
       p_value_source = "MacKinnon (1996) finite-sample p-value for tau (urca::punitroot)"),
     level = level,
+    other_critical_values = list(Z_alpha = z_alpha_calibration(z_alpha, trend, n + 1L)),
     other_statistics = c(Z_alpha = unname(z_alpha),
                          t_b = unname(f$t_values[["y_lag1"]]),
                          gamma0 = unname(g0), long_run_variance = unname(lrv),
@@ -101,4 +105,15 @@ pp <- function(y, trend = "c", kernel = "bartlett", bandwidth = "short",
     regression = list(coefficients = coef_table, rss = f$rss, df = f$df,
                       sigma2 = f$sigma2),
     call = call)
+}
+
+# Critical values and p-value of Z_alpha: the finite-sample distribution of
+# the Dickey-Fuller normalized bias n * b_hat, which has the same limit
+# (own response surfaces `rho_rs`, Decision D16).
+z_alpha_calibration <- function(z, trend, T) {
+  rs <- rho_rs[[trend]]
+  cv <- rs_critical_values(rs, T, 0L, tail = "lower")
+  structure(cv, tail = "lower",
+            p_value = rs_p_value(rs, unname(z), T, 0L, tail = "lower"),
+            source = sprintf("unitroottools Dickey-Fuller normalized-bias response surfaces (own simulation), T = %d", T))
 }

@@ -58,8 +58,11 @@ strong negative moving-average components.
 (Schwert's rules applied to \eqn{n = T - 1}), a fixed number of
 autocovariances, \code{"andrews"} or \code{"newey-west"} (automatic).
 
-The normalized-bias statistic \eqn{Z_\alpha} is reported in
-\code{other_statistics}, without critical values.
+The normalized-bias statistic \eqn{Z_\alpha} (Hamilton 1994, eq.
+17.6.7) is reported in \code{other_statistics}, with critical values and a
+p-value from the finite-sample distribution of the Dickey-Fuller
+normalized bias \eqn{n \hat b}, which has the same limit (own simulation);
+\code{summary()} and \code{\link[=tidy]{tidy()}} show them.
 }
 \examples{
 set.seed(1)

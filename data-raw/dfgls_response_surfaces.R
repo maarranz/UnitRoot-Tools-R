@@ -24,30 +24,8 @@ d <- d[d$T >= Tmin, ]
 probs <- sort(unique(d$prob))
 ks <- sort(unique(d$k))
 
-fit_trend <- function(tr) {
-  intercept <- numeric(length(probs))
-  slopes <- array(NA_real_, c(length(ks), length(probs), 3),
-                  dimnames = list(k = ks, prob = probs, term = c("1/T", "1/T^2", "1/T^3")))
-  diag <- data.frame(prob = probs, ratio = NA_real_, maxabs = NA_real_, rms = NA_real_)
-  for (i in seq_along(probs)) {
-    dd <- d[d$trend == tr & abs(d$prob - probs[i]) < 1e-12, ]
-    dd$w <- 1 / dd$se^2
-    dd$kf <- factor(dd$k, levels = ks)
-    m <- lm(q ~ kf:I(1/T) + kf:I(1/T^2) + kf:I(1/T^3), data = dd, weights = w)
-    cf <- coef(m)
-    intercept[i] <- cf[["(Intercept)"]]
-    for (j in seq_along(ks)) {
-      lv <- paste0("kf", ks[j])
-      slopes[j, i, ] <- cf[c(paste0(lv, ":I(1/T)"), paste0(lv, ":I(1/T^2)"), paste0(lv, ":I(1/T^3)"))]
-    }
-    r <- m$residuals
-    diag[i, -1] <- c(sum(dd$w * r^2) / m$df.residual, max(abs(r)), sqrt(mean(r^2)))
-  }
-  design <- aggregate(T ~ k, data = d[d$trend == tr, ], FUN = min)
-  names(design)[2] <- "Tmin"
-  list(probs = probs, intercept = intercept, slopes = slopes, ks = ks,
-       design = design, fit = diag)
-}
+source("surface_fit.R")
+fit_trend <- function(tr) fit_surface(d[d$trend == tr, ], Tmin = Tmin)
 
 dfgls_rs <- list(c = fit_trend("c"), ct = fit_trend("ct"))
 for (tr in names(dfgls_rs)) {

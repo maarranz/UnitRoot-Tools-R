@@ -77,7 +77,7 @@ test_that("small samples are flagged", {
   set.seed(2)
   r <- adf(cumsum(rnorm(22)), trend = "c", lags = 0)
   expect_match(r$warnings, "below 25", all = FALSE)
-  expect_match(r$warnings, "extrapolation", all = FALSE)
+  expect_match(r$warnings, "phi statistics: T = 22 is below the smallest sample size", all = FALSE)
 })
 
 test_that("works with ts and tidy inputs", {
@@ -98,7 +98,7 @@ test_that("print and summary show the test, phi statistics and lag table", {
   s <- capture.output(print(summary(r)))
   expect_match(s, "Accompanying statistics", all = FALSE)
   expect_match(s, "phi3", all = FALSE)
-  expect_match(s, "Dickey and Fuller \\(1981\\), table row T = 100", all = FALSE)
+  expect_match(s, "phi response surfaces \\(own simulation\\), T = \\d+, k = \\d+", all = FALSE)
   expect_match(s, "test regression on the maximal sample", all = FALSE)
   expect_match(s, "y_lag1", all = FALSE)
 })

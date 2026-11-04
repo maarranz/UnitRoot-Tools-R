@@ -51,8 +51,8 @@ required_levels <- c(0.01, 0.05, 0.10)
 #'   (e.g. the \eqn{\phi} statistics reported with \eqn{\tau_3}).
 #' @param other_critical_values Optional named list, one element per entry
 #'   of `other_statistics` that has critical values: a named numeric vector
-#'   in the same format as `critical_values`, optionally with a `source`
-#'   attribute. These statistics are upper-tail (reject for large values).
+#'   in the same format as `critical_values`, optionally with attributes
+#'   `source`, `tail` (`"upper"`, the default, or `"lower"`) and `p_value`.
 #' @param engine Engine that computed the result, e.g. `"internal 0.1.0"`
 #'   or `"urca 1.3-4"`.
 #' @param warnings Character vector of warnings (small samples,
@@ -211,7 +211,17 @@ validate_fields <- function(x) {
     }
     lv
   }
-  lv <- check_cv(x$critical_values, "critical_values", x$tail)
+  # A bootstrap calibration may give only a p-value (no critical values).
+  bootstrap_only <- is.list(x$calibration) && identical(x$calibration$method, "bootstrap") &&
+    is.numeric(x$critical_values) && length(x$critical_values) == 0L
+  lv <- if (bootstrap_only) {
+    if (!is_number(x$p_value)) {
+      fail("a bootstrap result without critical values must have a p-value.")
+    }
+    numeric()
+  } else {
+    check_cv(x$critical_values, "critical_values", x$tail)
+  }
 
   if (!is.numeric(x$p_value) || length(x$p_value) != 1L ||
       (!is.na(x$p_value) && (x$p_value < 0 || x$p_value > 1))) {
@@ -252,7 +262,16 @@ validate_fields <- function(x) {
     fail("`other_critical_values` must be a list named after entries of `other_statistics`.")
   }
   for (nm in names(ocv)) {
-    check_cv(ocv[[nm]], paste0("other_critical_values$", nm), "upper")
+    tl <- other_tail(ocv[[nm]])
+    if (!tl %in% c("lower", "upper")) {
+      fail("`other_critical_values$", nm, "` has an invalid `tail` attribute.")
+    }
+    check_cv(ocv[[nm]], paste0("other_critical_values$", nm), tl)
+    pv <- attr(ocv[[nm]], "p_value")
+    if (!is.null(pv) && (!is_number(pv) || pv < 0 || pv > 1)) {
+      fail("the `p_value` attribute of `other_critical_values$", nm,
+           "` must be a number in [0, 1].")
+    }
   }
 
   if (!is.character(x$warnings) || anyNA(x$warnings)) {
@@ -330,7 +349,9 @@ print.ur_test <- function(x, ...) {
   cat(sprintf("  Effective sample: N = %d (t = %d, ..., %d)\n\n",
               x$nobs, x$sample[1], x$sample[2]))
   cat(sprintf("  Statistic:        %s\n", fmt_num(x$statistic)))
-  cat(sprintf("  Critical values:  %s\n", fmt_cvs(x$critical_values)))
+  cat(sprintf("  Critical values:  %s\n",
+              if (length(x$critical_values)) fmt_cvs(x$critical_values)
+              else "none (the decision uses the bootstrap p-value)"))
   cat(sprintf("  Source:           %s\n", x$calibration$source))
   if (!is.na(x$p_value)) cat(sprintf("  p-value:          %s\n", fmt_pvalue(x$p_value)))
   cat("\n  ", decision_line(x), "\n", sep = "")
@@ -360,17 +381,18 @@ print.summary.ur_test <- function(x, ...) {
     for (n in names(r$other_statistics)) {
       cv <- r$other_critical_values[[n]]
       if (is.null(cv)) {
-        cat(sprintf("  %-6s %9s\n", n, fmt_num(r$other_statistics[[n]])))
+        cat(sprintf("  %-7s %9s\n", n, fmt_num(r$other_statistics[[n]])))
       } else {
         lv <- as.numeric(names(cv))
         i5 <- which(abs(lv - r$level) < 1e-12)
         dec <- if (length(i5) == 1L) {
-          if (r$other_statistics[[n]] > cv[[i5]]) "  reject" else "  do not reject"
+          if (other_reject(r$other_statistics[[n]], cv, i5)) "  reject" else "  do not reject"
         } else ""
-        cat(sprintf("  %-6s %9s   %s%s\n", n, fmt_num(r$other_statistics[[n]]),
-                    fmt_cvs(cv), dec))
+        pv <- attr(cv, "p_value")
+        cat(sprintf("  %-7s %9s   %s%s%s\n", n, fmt_num(r$other_statistics[[n]]),
+                    fmt_cvs(cv), if (is.null(pv)) "" else paste0("   p = ", fmt_pvalue(pv)), dec))
         if (!is.null(attr(cv, "source"))) {
-          cat(sprintf("  %-6s %9s   [%s]\n", "", "", attr(cv, "source")))
+          cat(sprintf("  %-7s %9s   [%s]\n", "", "", attr(cv, "source")))
         }
       }
     }
@@ -395,4 +417,14 @@ print.summary.ur_test <- function(x, ...) {
   }
   cat(sprintf("\nEngine: %s\n", r$engine))
   invisible(x)
+}
+
+# Tail of an accompanying statistic (attribute of its critical values).
+other_tail <- function(cv) {
+  tl <- attr(cv, "tail")
+  if (is.null(tl)) "upper" else tl
+}
+
+other_reject <- function(stat, cv, i) {
+  if (other_tail(cv) == "lower") stat < cv[[i]] else stat > cv[[i]]
 }

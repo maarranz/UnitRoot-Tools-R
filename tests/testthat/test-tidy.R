@@ -9,7 +9,8 @@ test_that("tidy() of an ADF test: one row per statistic, values from the result"
   expect_equal(td$critical_value[1], r$critical_values[["0.05"]])
   expect_equal(td$critical_value[3], r$other_critical_values$phi3[["0.05"]])
   expect_equal(td$p_value[1], r$p_value)
-  expect_true(all(is.na(td$p_value[2:3])))
+  expect_equal(td$p_value[3], attr(r$other_critical_values$phi3, "p_value"))
+  expect_true(all(td$p_value[2:3] > 0 & td$p_value[2:3] < 1))
   expect_identical(td$reject[1], r$reject)
   expect_identical(td$reject[3], unname(r$other_statistics[["phi3"]] >
                                           r$other_critical_values$phi3[["0.05"]]))

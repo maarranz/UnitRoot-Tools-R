@@ -78,3 +78,20 @@ phi_critical_values <- function(name, nobs) {
   names(cv) <- c("0.01", "0.05", "0.1")
   list(values = cv, size = r$size, extrapolated = r$extrapolated)
 }
+
+# ---- phi: own response surfaces (D16) -----------------------------------------
+#
+# Upper-tail critical values at 1, 5 and 10% and the p-value of a phi
+# statistic, from the surfaces `phi_rs` (R/sysdata.rda, estimated in
+# data-raw/phi_response_surfaces.R), for a series of length T with k lagged
+# differences. The Dickey-Fuller (1981) tables above are kept for reference
+# and for tests.
+
+phi_source <- "unitroottools phi response surfaces (own simulation)"
+
+phi_calibration <- function(name, stat, T, k) {
+  rs <- phi_rs[[name]]
+  cv <- rs_critical_values(rs, T, k, tail = "upper")
+  structure(cv, source = sprintf("%s, T = %d, k = %d", phi_source, T, k),
+            tail = "upper", p_value = rs_p_value(rs, unname(stat), T, k, tail = "upper"))
+}

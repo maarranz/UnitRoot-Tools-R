@@ -87,8 +87,8 @@ the critical values).}
 
 \item{other_critical_values}{Optional named list, one element per entry
 of \code{other_statistics} that has critical values: a named numeric vector
-in the same format as \code{critical_values}, optionally with a \code{source}
-attribute. These statistics are upper-tail (reject for large values).}
+in the same format as \code{critical_values}, optionally with attributes
+\code{source}, \code{tail} (\code{"upper"}, the default, or \code{"lower"}) and \code{p_value}.}
 
 \item{engine}{Engine that computed the result, e.g. \code{"internal 0.1.0"}
 or \code{"urca 1.3-4"}.}

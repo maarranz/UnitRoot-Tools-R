@@ -55,12 +55,13 @@ strategy_statistics <- function(y, k, first, level) {
          calibration = sprintf("%s, N = %d", mackinnon_source[[trend]], nobs))
   }
   phi_entry <- function(trend, name) {
-    p <- phi_critical_values(name, nobs)
-    cv <- p$values[[lv]]
     stat <- r[[trend]]$phi[[name]]
+    T_eq <- nobs + k + 1L
+    p <- phi_calibration(name, stat, T_eq, k)
+    cv <- p[[lv]]
     list(statistic = stat, critical_value = cv, reject = stat > cv,
-         p_value = NA_real_,   # tabulated critical values only
-         calibration = sprintf("Dickey-Fuller (1981), T = %s row", format(p$size)))
+         p_value = attr(p, "p_value"),
+         calibration = sprintf("%s, T = %d, k = %d", phi_source, T_eq, k))
   }
   # t test of a deterministic coefficient with the unit root imposed (b = 0):
   # drop y_lag1 from the design; no I(1) regressors remain, so Student t.

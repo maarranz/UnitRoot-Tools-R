@@ -1,5 +1,17 @@
 # unitroottools (development version)
 
+* The φ statistics of `adf()` and `ur_strategy()` now take their critical
+  values and p-values from the package's own finite-sample response
+  surfaces in the sample size and the number of lags (decision D16),
+  replacing the Dickey-Fuller (1981) tables. Without lags they agree with
+  the tables (e.g. φ3 at T = 100: 8.76/6.48/5.47 against 8.73/6.49/5.47);
+  with lags they also account for k. φ statistics now have p-values
+  (shown by `summary()`, `tidy()` and the strategy history).
+* `pp()`'s Z_alpha now has critical values and a p-value, from the
+  finite-sample distribution of the Dickey-Fuller normalized bias (D16).
+* New `boot_ur()`: bootstrap ADF and union-of-rejections tests through the
+  bootUR package (in Suggests; decision D17). The result is a `ur_test`
+  whose decision uses the bootstrap p-value.
 * New long-run-variance module (decision D13) for `pp()` and `kpss()`:
   Bartlett, Parzen and Quadratic Spectral kernels (`kernel =`), and
   automatic bandwidths `bandwidth = "andrews"` (Andrews, 1991) and
@@ -11,7 +23,7 @@
   before, differs in the third decimal (e.g. 0.146 instead of 0.148 at 5%
   with a trend).
 * `pp()` also reports the normalized-bias statistic Z_alpha (in
-  `other_statistics`, without critical values).
+  `other_statistics`).
 * Results of `pp()` and `kpss()` describe the long-run variance used
   ("Bartlett kernel, 4 autocovariances (short rule, ...)").
 * The DF-GLS response surfaces are also available as a language-neutral

@@ -76,21 +76,24 @@ values and where they come from, and the decision.
 
 | Function | Purpose |
 |---|---|
-| `adf()` | Augmented Dickey-Fuller test: τ statistic with its p-value, and the φ statistics with their critical values |
+| `adf()` | Augmented Dickey-Fuller test: τ statistic and the φ statistics, each with critical values and p-value |
 | `select_lags()` | Lag order by AIC, BIC, MAIC or MBIC, all candidates on the same sample, with the full table |
 | `ur_strategy()` | Choosing the deterministic terms: `"original"` (Dolado-Jenkinson-Sosvilla-Rivero / Enders), `"conservative"`, `"hamilton"`; full history of every step |
-| `pp()` | Phillips-Perron Z_τ test, with its p-value |
+| `pp()` | Phillips-Perron Z_τ test, with its p-value, and Z_α with its own critical values |
 | `kpss()` | KPSS test, with stationarity as the null hypothesis; critical values and p-value from the exact limiting distribution |
 | `dfgls()` | DF-GLS test (Elliott-Rothenberg-Stock), lags chosen by MAIC as recommended by Perron and Qu (2007), with finite-sample critical values and p-value from the package's own simulation |
+| `boot_ur()` | Bootstrap ADF and union-of-rejections tests through the bootUR package (optional; p-value only) |
 | `tidy()`, `glance()` | Results as one-row-per-statistic or one-row-per-test data frames, easy to combine across series |
 | `simulate_df()` | Monte Carlo of the Dickey-Fuller distribution, with a plot against N(0,1) |
 
 Details that matter in practice:
 
 - **Critical values.** τ uses MacKinnon's response surfaces at the effective
-  sample size, with MacKinnon's (1996) p-values; φ uses the Dickey-Fuller
-  (1981) tables (correcting a typo in urca's φ3 table for T = 250). Each
-  result records its source.
+  sample size, with MacKinnon's (1996) p-values. The φ statistics, DF-GLS
+  and Z_α use this package's own finite-sample
+  response surfaces in the sample size and the number of lags, estimated by
+  Monte Carlo (code in `data-raw/`); KPSS uses its exact limiting
+  distribution. Every result records its source and has a p-value.
 - **Lags.** Chosen over 0, ..., kmax with kmax = ⌊12(T/100)^¼⌋ (Schwert), all
   candidates on the same sample; the test regression is then estimated on all
   the observations available for the chosen order (`final_sample = "common"`
@@ -111,15 +114,14 @@ Details that matter in practice:
   Quadratic Spectral kernel; Schwert's rules, a fixed number of
   autocovariances, or automatic bandwidths (Andrews, Newey-West).
 - **Current limits.** The `dfgls()` statistic is computed by urca (checked
-  against an independent implementation); everything else is internal. No
-  critical values for Phillips-Perron's Z_α yet; KPSS critical values are
-  asymptotic (exact).
+  against an independent implementation); everything else is internal. KPSS
+  critical values are asymptotic (exact).
 
 ## Forthcoming
 
 | Phase | Content |
 |---|---|
-| v0.2: inference tools | Response-surface critical values for φ; long-run variance module (kernels, automatic bandwidths, AR-spectral estimator); internal PP (Z_α and Z_τ), KPSS and DF-GLS; Ng-Perron M tests and ERS point-optimal test; bootstrap tests through bootUR; first CRAN release |
+| v0.2: inference tools (remaining) | Ng-Perron M tests and ERS point-optimal test with own critical values; first CRAN release |
 | v0.3: bootstrap | Own bootstrap engine (sieve, wild, block and dependent wild schemes), able to bootstrap any statistic, including a whole testing strategy |
 | v0.4: specification uncertainty | Monte Carlo tools (size, power, branch frequencies); union-of-rejections test; bootstrap-calibrated strategies; Hamilton's Case 3 (drift under the null), introduced with the Monte Carlo tools |
 | v0.5: robustness | Unit-root tests robust to additive outliers; tests allowing for structural breaks |

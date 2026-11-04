@@ -1,0 +1,28 @@
+# bootUR adapter (Decision D17)
+
+test_that("boot_ur(): bootUR's results in the common format", {
+  skip_if_not_installed("bootUR")
+  set.seed(1)
+  y <- cumsum(stats::rnorm(120))
+  r <- boot_ur(y, trend = "ct", B = 199, seed = 7)
+  set.seed(7)
+  b <- bootUR::boot_adf(y, B = 199, deterministics = "trend", detrend = "OLS",
+                        max_lag = default_kmax(120), show_progress = FALSE, do_parallel = FALSE)
+  expect_equal(r$statistic, unname(b$statistic))
+  expect_equal(r$p_value, unname(b$p.value))
+  expect_identical(r$lags, as.integer(b$details$`selected lags`[1]))
+  expect_identical(r$reject, r$p_value < 0.05)
+  expect_length(r$critical_values, 0L)
+  expect_identical(r$calibration$method, "bootstrap")
+  expect_match(r$engine, "^bootUR ")
+  expect_identical(boot_ur(y, trend = "ct", B = 199, seed = 7)$p_value, r$p_value)   # reproducible
+  g <- boot_ur(y, trend = "c", detrend = "GLS", B = 199, seed = 2)
+  expect_match(g$method, "GLS detrending")
+  u <- boot_ur(y, union = TRUE, B = 199, seed = 3)
+  expect_identical(u$test, "Union")
+  expect_named(u$other_statistics, c("t_c_OLS", "t_ct_OLS", "t_c_GLS", "t_ct_GLS"))
+  expect_output(print(u), "none \\(the decision uses the bootstrap p-value\\)")
+  expect_identical(nrow(tidy(u)), 5L)
+  expect_error(boot_ur(y, lags = 2), "cannot fix the number of lags")
+  expect_error(boot_ur(y, B = 10), "at least 99")
+})

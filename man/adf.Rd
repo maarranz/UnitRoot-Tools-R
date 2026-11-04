@@ -59,8 +59,10 @@ The statistic is the t ratio of \eqn{b} (\eqn{\tau_1}, \eqn{\tau_2} or
 \eqn{\tau_3}). Its critical values come from MacKinnon's response surfaces
 evaluated at the effective sample size. The joint statistics
 \eqn{\phi_1} (\code{"c"}) or \eqn{\phi_2} and \eqn{\phi_3} (\code{"ct"}) are
-reported alongside, with Dickey and Fuller (1981) critical values; they
-are computed from restricted regressions on the same sample.
+reported alongside; they are computed from restricted regressions on the
+same sample. Their critical values and p-values come from the package's
+own finite-sample response surfaces in the sample size and the number of
+lags (they agree with Dickey and Fuller's 1981 tables without lags).
 
 \strong{Lags.} Give \code{lags} to fix the number of lagged differences; the
 regression then uses the maximal sample, \eqn{t = k + 2, \dots, T}.

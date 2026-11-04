@@ -19,8 +19,10 @@ adf_alternatives <- c(
 #' \eqn{\tau_3}). Its critical values come from MacKinnon's response surfaces
 #' evaluated at the effective sample size. The joint statistics
 #' \eqn{\phi_1} (`"c"`) or \eqn{\phi_2} and \eqn{\phi_3} (`"ct"`) are
-#' reported alongside, with Dickey and Fuller (1981) critical values; they
-#' are computed from restricted regressions on the same sample.
+#' reported alongside; they are computed from restricted regressions on the
+#' same sample. Their critical values and p-values come from the package's
+#' own finite-sample response surfaces in the sample size and the number of
+#' lags (they agree with Dickey and Fuller's 1981 tables without lags).
 #'
 #' **Lags.** Give `lags` to fix the number of lagged differences; the
 #' regression then uses the maximal sample, \eqn{t = k + 2, \dots, T}.
@@ -105,10 +107,18 @@ adf_result <- function(r, selection, level, call) {
       r$nobs))
   }
 
-  phi_cv <- lapply(names(r$phi), function(nm) phi_critical_values(nm, r$nobs))
+  # phi statistics: own response surfaces (D16), indexed by the length of a
+  # series whose maximal sample is the effective sample, T = N + k + 1
+  T_eq <- r$nobs + r$k + 1L
+  phi_cv <- lapply(names(r$phi), function(nm) {
+    phi_calibration(nm, r$phi[[nm]], T_eq, r$k)
+  })
   names(phi_cv) <- names(r$phi)
-  if (any(vapply(phi_cv, `[[`, logical(1), "extrapolated"))) {
-    warn <- c(warn, "phi critical values: T = 25 row used for N < 25 (extrapolation).")
+  if (length(phi_cv)) {
+    w <- unique(unlist(lapply(names(r$phi), function(nm) {
+      rs_design_warnings(phi_rs[[nm]], T_eq, r$k)
+    })))
+    if (length(w)) warn <- c(warn, paste("phi statistics:", w))
   }
 
   fit <- r$fit
@@ -138,10 +148,7 @@ adf_result <- function(r, selection, level, call) {
     ),
     level = level,
     other_statistics = r$phi,
-    other_critical_values = lapply(phi_cv, function(p) {
-      structure(p$values, source = sprintf(
-        "Dickey and Fuller (1981), table row T = %s", format(p$size)))
-    }),
+    other_critical_values = phi_cv,
     engine = engine_internal(),
     warnings = warn,
     regression = list(coefficients = coef_table, rss = fit$rss,
