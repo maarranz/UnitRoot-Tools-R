@@ -125,6 +125,7 @@ glance.ur_strategy <- function(x, ...) {
     sample_start = x$sample[1],
     sample_end = x$sample[2],
     steps = nrow(x$history),
+    n_warnings = length(x$warnings),
     stringsAsFactors = FALSE
   )
 }

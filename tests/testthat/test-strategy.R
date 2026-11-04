@@ -237,3 +237,21 @@ test_that("history reports a p-value for each step", {
   out <- capture.output(print(s))
   expect_match(out, "p-value", all = FALSE)
 })
+
+test_that("strategies report substituted calibrations and warnings of every step (audit A2)", {
+  set.seed(12)
+  s <- ur_strategy(cumsum(stats::rnorm(100)), lags = 25)
+  h <- s$history
+  phi_rows <- h$test %in% c("phi3", "phi1")
+  expect_true(all(grepl("k = 21", h$calibration[phi_rows])))
+  expect_true(all(grepl("outside the simulated design", h$calibration[phi_rows])))
+  expect_true(all(nzchar(h$warnings[phi_rows])))
+  expect_match(s$warnings, "phi3: k = 25 exceeds the largest simulated lag order", all = FALSE)
+  expect_match(s$warnings, "phi1: ", all = FALSE)
+  expect_match(capture.output(print(s)), "Warning: phi3", all = FALSE)
+  expect_identical(glance(s)$n_warnings, length(s$warnings))
+  # inside the design: no warnings, calibration names the settings used
+  s0 <- ur_strategy(cumsum(stats::rnorm(200)), lags = 2)
+  expect_length(s0$warnings, 0L)
+  expect_true(all(h$warnings[!phi_rows] == ""))
+})

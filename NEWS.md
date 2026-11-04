@@ -26,6 +26,12 @@ Fixes from the audit of 0.2.0 (4 November 2026).
   accepted one, e.g. `dfgls(c(1, 3, 2), lags = 0)`).
 * `new_ur_test()` rejects whole-number fields beyond the integer range
   (e.g. `lags = 2^40`), which were stored as `NA`.
+* `ur_strategy()` no longer hides calibration substitutions: when a φ step
+  lies outside the simulated design (e.g. `lags = 25`, where k = 21 is
+  used), its `calibration` names the settings actually used, the history
+  has a new `warnings` column, and the strategy collects the warnings of
+  every visited step in `warnings`, printed with the result and counted by
+  `glance()` (`n_warnings`).
 
 # unitroottools 0.2.0
 

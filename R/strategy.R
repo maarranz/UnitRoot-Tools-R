@@ -59,9 +59,22 @@ strategy_statistics <- function(y, k, first, level) {
     T_eq <- nobs + k + 1L
     p <- phi_calibration(name, stat, T_eq, k)
     cv <- p[[lv]]
+    rs <- phi_rs[[name]]
+    # the settings actually used (outside the design: the boundary, D16)
+    k_eff <- min(k, max(rs$ks))
+    T_eff <- max(T_eq, rs$design$Tmin[match(k_eff, rs$design$k)])
+    w <- rs_design_warnings(rs, T_eq, k)
+    if (T_eq <= 30L && k >= 7L) {
+      w <- c(w, sprintf("with %d lags at T = %d the critical values and p-value are accurate only to about 5%%.",
+                        k, T_eq))
+    }
     list(statistic = stat, critical_value = cv, reject = stat > cv,
          p_value = attr(p, "p_value"),
-         calibration = sprintf("%s, T = %d, k = %d", phi_source, T_eq, k))
+         calibration = paste0(sprintf("%s, T = %d, k = %d", phi_source, T_eff, k_eff),
+                              if (T_eff != T_eq || k_eff != k)
+                                sprintf(" (series: T = %d, k = %d; outside the simulated design)", T_eq, k)
+                              else ""),
+         warnings = if (length(w)) paste(name, w, sep = ": ") else character())
   }
   # t test of a deterministic coefficient with the unit root imposed (b = 0):
   # drop y_lag1 from the design; no I(1) regressors remain, so Student t.
@@ -326,6 +339,9 @@ ur_strategy <- function(y, strategy = c("original", "conservative", "hamilton"),
 
   history <- strategy_history(path$steps, st$tests, level)
   terminal <- terminal_test(path$terminal, st, selection, level, call)
+  # warnings of every visited step, not only of the terminal test (audit A2)
+  visited <- unlist(lapply(path$steps$test, function(nm) st$tests[[nm]]$warnings))
+  warnings <- unique(c(if (!is.null(selection)) selection$notes, visited, terminal$warnings))
 
   structure(list(
     strategy = strategy,
@@ -338,6 +354,7 @@ ur_strategy <- function(y, strategy = c("original", "conservative", "hamilton"),
     lags = k, nobs = nobs, sample = c(first, length(y)),
     lag_selection = selection,
     history = history,
+    warnings = warnings,
     engine = engine_internal(),
     call = call
   ), class = "ur_strategy")
@@ -352,7 +369,9 @@ strategy_history <- function(steps, tests, level) {
       step = i, stage = info$stage, regression = info$regression, test = nm,
       null = info$null, statistic = t$statistic,
       critical_value = t$critical_value, p_value = t$p_value, level = level,
-      calibration = t$calibration, reject = t$reject,
+      calibration = t$calibration,
+      warnings = if (length(t$warnings)) paste(t$warnings, collapse = " ") else "",
+      reject = t$reject,
       rejection_type = if (t$reject) rejection_types[[nm]] else "none",
       next_action = steps$next_action[i], reason = steps$reason[i],
       stringsAsFactors = FALSE)
@@ -422,6 +441,7 @@ print.ur_strategy <- function(x, ...) {
   }
   cat(sprintf("\n  Specification: %s\n", trend_labels[[x$specification]]))
   cat(sprintf("  Conclusion:    %s\n", x$conclusion))
+  for (w in setdiff(x$warnings, if (!is.null(ls)) ls$notes)) cat("  Warning: ", w, "\n", sep = "")
   cat("\n  Note: p-values are for each step on its own;\n",
       "  no p-value or size is reported for the sequence as a whole.\n", sep = "")
   invisible(x)

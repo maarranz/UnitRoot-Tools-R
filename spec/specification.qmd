@@ -277,7 +277,7 @@ A strategy returns an object of class `ur_strategy` with:
 
 Lag order: selected **once** under `"ct"` (method and $k_{\max}$ as supplied) and held fixed throughout the sequence, as in Python. For Hamilton's rule, lags are selected under the declared specification.
 
-**History columns:** `step`, `stage` (`T`, `C`, `N`), `regression` (`ct`, `c`, `n`, `aux_ct`, `aux_c`), `test`, `null` (in words), `statistic`, `critical_value`, `level`, `calibration`, `reject`, `rejection_type`, `next_action`, `reason`.
+**History columns:** `step`, `stage` (`T`, `C`, `N`), `regression` (`ct`, `c`, `n`, `aux_ct`, `aux_c`), `test`, `null` (in words), `statistic`, `critical_value`, `p_value` (of the step on its own), `level`, `calibration` (the settings actually used; outside the simulated design it says so), `warnings` (of the step; empty if none), `reject`, `rejection_type`, `next_action`, `reason`. The strategy also carries `warnings`: those of every visited step and of the terminal test.
 
 `rejection_type` distinguishes three cases that must never be confused:
 
