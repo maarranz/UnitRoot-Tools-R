@@ -49,9 +49,10 @@ test_that("kpss(): internal statistic equals urca's; exact asymptotic critical v
   expect_identical(kpss(y)$statistic_name, "eta_mu")
 })
 
-test_that("dfgls() returns urca's DF-GLS statistic for fixed lags", {
+test_that("dfgls() is computed internally and agrees with urca's DF-GLS statistic", {
   y <- sim_rw()
-  for (trend in c("c", "ct")) for (k in c(0, 3)) {
+  expect_match(dfgls(y, lags = 1)$engine, "^internal ")
+  for (trend in c("c", "ct")) for (k in c(0, 3, 8)) {
     r <- dfgls(y, trend = trend, lags = k)
     u <- urca::ur.ers(y, type = "DF-GLS",
                       model = if (trend == "c") "constant" else "trend", lag.max = k)

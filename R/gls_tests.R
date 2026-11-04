@@ -233,3 +233,90 @@ ers_pt <- function(y, trend = "c", lags = NULL, max_lags = NULL,
                   method = "ERS point-optimal test", test = "ERS-PT",
                   rs = gls_rs[["PT"]][[trend]])
 }
+
+#' DF-GLS test
+#'
+#' Elliott-Rothenberg-Stock DF-GLS test of a unit root: the series is
+#' detrended by GLS (local-to-unity, \eqn{\bar c = -7} or \eqn{-13.5}) and a
+#' Dickey-Fuller regression without deterministic terms is run on the
+#' detrended series.
+#'
+#' **Lags.** Give `lags` to fix the number of lagged differences. Otherwise
+#' the order is selected as recommended by Perron and Qu (2007): by
+#' [select_lags()] (MAIC by default) on the series detrended by **OLS**,
+#' exactly as for [adf()]; the DF-GLS statistic is then computed on the
+#' GLS-detrended series with that number of lags, on the maximal sample.
+#'
+#' **Critical values and p-value.** The DF-GLS statistic has a heavier
+#' left tail in finite samples than the Dickey-Fuller distributions often
+#' used for it, and its quantiles also depend on the number of lagged
+#' differences. Critical values and the p-value therefore come from this
+#' package's own response surfaces, estimated from a Monte Carlo simulation
+#' of the statistic under the null for \eqn{T = 25, \dots, 1000} and
+#' \eqn{k = 0, \dots, 21} (see the specification, Decision D11). A warning
+#' is given when \eqn{(T, k)} lies outside the simulated range.
+#'
+#' The statistic is computed by the package (the same GLS detrending as
+#' [ng_perron()] and [ers_pt()]); it agrees with [urca::ur.ers()] to rounding
+#' error and with an independent implementation of the published formulas.
+#'
+#' @inheritParams pp
+#' @inheritParams select_lags
+#' @param lags Number of lagged differences in the DF-GLS regression. If
+#'   `NULL` (default), selected by `criterion` as described above.
+#' @return An object of class `ur_test`.
+#' @references
+#' Elliott, G., Rothenberg, T. J. and Stock, J. H. (1996). Efficient tests for
+#' an autoregressive unit root. *Econometrica*, 64, 813-836.
+#'
+#' Ng, S. and Perron, P. (2001). Lag length selection and the construction of
+#' unit root tests with good size and power. *Econometrica*, 69, 1519-1554.
+#'
+#' Perron, P. and Qu, Z. (2007). A simple modification to improve the finite
+#' sample properties of Ng and Perron's unit root tests. *Economics Letters*,
+#' 94, 12-19.
+#' @examples
+#' set.seed(1)
+#' y <- cumsum(rnorm(150))
+#' dfgls(y, trend = "c")
+#' dfgls(y, trend = "c", lags = 2)
+#' @export
+dfgls <- function(y, trend = "c", lags = NULL, max_lags = NULL,
+                  criterion = c("MAIC", "AIC", "BIC", "MBIC"),
+                  level = 0.05, var = NULL) {
+  call <- match.call()
+  criterion <- match.arg(criterion)
+  check_level(level)
+  y <- check_series(y, var = var)
+  trend <- match_trend(trend, allowed = c("c", "ct"))
+  lo <- gls_lag_order(y, trend, lags, max_lags, criterion)
+  k <- lo$k
+  n <- length(y)
+  stat <- dfgls_statistic(y, trend, k)
+  cv <- dfgls_critical_values(trend, n, k)
+  pv <- dfgls_p_value(stat, trend, n, k)
+  calibration <- list(
+    method = "response_surface",
+    source = "unitroottools DF-GLS response surfaces (own simulation)",
+    note = paste(c(sprintf("finite-sample quantiles for T = %d and k = %d lagged differences", n, k),
+                   p_value_note(pv)), collapse = "; "))
+  new_ur_test(
+    method = "DF-GLS test", test = "DF-GLS",
+    statistic_name = "tau_GLS", statistic = stat,
+    null = "unit root", alternative = adf_alternatives[[trend]], trend = trend,
+    lags = k, lag_selection = lo$selection, nobs = n - k - 1L, sample = c(k + 2L, n),
+    critical_values = cv, tail = "lower",
+    p_value = pv,
+    calibration = calibration, level = level, engine = engine_internal(),
+    warnings = c(lo$notes, dfgls_design_warnings(trend, n, k)),
+    call = call)
+}
+
+# DF-GLS t statistic: t ratio of yd_{t-1} in the regression of diff(yd)_t on
+# yd_{t-1} and k lagged differences, t = k+2..T, without deterministic terms,
+# where yd is the GLS-detrended series (Elliott, Rothenberg and Stock 1996).
+dfgls_statistic <- function(y, trend, k) {
+  yd <- gls_detrend(y, trend)$yd
+  d <- adf_design(yd, "n", k, k + 2L)
+  unname(qr_fit(d$X, d$response)$t_values[["y_lag1"]])
+}

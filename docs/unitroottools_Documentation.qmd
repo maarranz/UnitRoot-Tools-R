@@ -63,7 +63,7 @@ Three conventions hold throughout:
 | `adf()` | `urca::ur.df()`, `tseries::adf.test()` | MAIC/MBIC lag selection on a common sample, MacKinnon critical values *and* p-values at the effective sample size, the φ statistics with their tables, full selection table |
 | `ur_strategy()` | — | Dolado–Jenkinson–Sosvilla-Rivero / Enders procedure, a conservative variant and Hamilton's rule, each step recorded |
 | `pp()` | `urca::ur.pp()` | Follows the published formula (urca's version differs by up to 0.1 in small samples); p-value |
-| `dfgls()` | `urca::ur.ers()` | Lag selection by Perron and Qu (2007); finite-sample critical values and p-value (urca's are too liberal: about 8% size at a nominal 5% with T = 100) |
+| `dfgls()` | `urca::ur.ers()` | Same statistic (computed internally); lag selection by Perron and Qu (2007); finite-sample critical values and p-value (urca's are too liberal: about 8% size at a nominal 5% with T = 100) |
 | `kpss()` | `urca::ur.kpss()`, `tseries::kpss.test()` | Same statistic; kernels and automatic bandwidths; critical values and p-value from the limiting distribution, computed numerically (the published table is off in the third decimal) |
 | `tidy()`, `glance()` | — | Results of any test as data frames |
 

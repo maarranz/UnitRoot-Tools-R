@@ -1,6 +1,6 @@
 Package: unitroottools
 Title: Transparent Unit-Root Testing and Deterministic-Specification Strategies
-Version: 0.2.1
+Version: 0.2.1.9000
 Authors@R:
     person("Miguel A.", "Arranz", email = "maarranz@eco.uc3m.es",
            role = c("aut", "cre"))

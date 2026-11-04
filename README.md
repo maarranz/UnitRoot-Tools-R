@@ -115,10 +115,10 @@ Details that matter in practice:
 - **Long-run variance** (for `pp()` and `kpss()`): Bartlett, Parzen or
   Quadratic Spectral kernel; Schwert's rules, a fixed number of
   autocovariances, or automatic bandwidths (Andrews, Newey-West).
-- **What is computed elsewhere.** The `dfgls()` statistic is computed by
-  urca (checked against an independent implementation); τ p-values come from
-  `urca::punitroot()` (MacKinnon's own routine); `boot_ur()` delegates the
-  statistic and the bootstrap to bootUR. Everything else is internal.
+- **What is computed elsewhere.** τ p-values come from `urca::punitroot()`
+  (MacKinnon's own routine); `boot_ur()` delegates the statistic and the
+  bootstrap to bootUR. Everything else, including every test statistic, is
+  computed by the package.
 - **Approximations.** KPSS critical values are asymptotic (from the limiting
   distribution, computed numerically). Phillips-Perron uses the
   finite-sample Dickey-Fuller distributions, which share the limits of Z_τ

@@ -1,3 +1,11 @@
+# unitroottools (development version)
+
+* `dfgls()` is computed by the package instead of `urca::ur.ers()`, with the
+  same GLS detrending and lag handling as `ng_perron()` and `ers_pt()`. The
+  statistic is unchanged (it agrees with urca to 1e-12 and with an
+  independent implementation of the published formulas); `engine` now says
+  "internal". urca is now used only for MacKinnon's τ p-values.
+
 # unitroottools 0.2.1
 
 Fixes from the audit of 0.2.0 (4 November 2026).
