@@ -1,4 +1,4 @@
-# unitroottools (development version)
+# unitroottools 0.2.0
 
 * The φ statistics of `adf()` and `ur_strategy()` now take their critical
   values and p-values from the package's own finite-sample response
@@ -20,6 +20,11 @@
   trend, the limits differ from Ng and Perron's (2001) Table 1 (5% MZ_alpha
   -16.6 against -17.3, MZ_t -2.85 against -2.91); an independent simulation
   and urca's DF-GLS agree with the package.
+* When the lag order is large for the sample size, `ng_perron()` and
+  `ers_pt()` warn that the null distribution is very heavy-tailed (5%
+  critical value of MZ_alpha more than twice its no-lag value) and the test
+  can hardly reject; `adf()` warns that its φ critical values are accurate
+  only to about 5% at T <= 30 with 7 or more lags.
 * New `boot_ur()`: bootstrap ADF and union-of-rejections tests through the
   bootUR package (in Suggests; decision D17). The result is a `ur_test`
   whose decision uses the bootstrap p-value.

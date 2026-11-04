@@ -71,6 +71,12 @@ asymptotic ones (the spectral estimate is unstable), so the p-value is a
 better guide than a comparison with published tables. With a trend, the
 limits differ slightly from Ng and Perron's (2001) Table 1; see the
 specification (D15).
+
+When the lag order is large for the sample size, the spectral estimate is
+unstable and the null distributions are very heavy-tailed (at \eqn{T = 25}
+with 6 lags the 5\% critical value of \eqn{MZ_\alpha} is about -800). The
+result then carries a warning: the critical values are valid, but the
+test can hardly reject.
 }
 \examples{
 set.seed(1)

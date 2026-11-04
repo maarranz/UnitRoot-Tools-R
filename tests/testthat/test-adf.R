@@ -102,3 +102,10 @@ test_that("print and summary show the test, phi statistics and lag table", {
   expect_match(s, "test regression on the maximal sample", all = FALSE)
   expect_match(s, "y_lag1", all = FALSE)
 })
+
+test_that("phi accuracy is flagged at T <= 30 with 7 or more lags", {
+  set.seed(3)
+  y <- cumsum(rnorm(30))
+  expect_match(adf(y, trend = "ct", lags = 7)$warnings, "accurate only to about 5%", all = FALSE)
+  expect_false(any(grepl("accurate only", adf(y, trend = "ct", lags = 3)$warnings)))
+})

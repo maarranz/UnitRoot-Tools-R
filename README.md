@@ -8,9 +8,9 @@ every step of the decision. Developed for *Applied Time Series Econometrics*
 (ATSE) at Universidad Carlos III de Madrid; companion to the Python package
 UnitRoot-Tools.
 
-> **Status: teaching version (v0.1 in preparation).** The functions listed
+> **Status: teaching version (v0.2).** The functions listed
 > under [What it does](#what-it-does) are implemented and validated. Interfaces
-> may still change before the first CRAN release.
+> may still change before version 1.0.
 
 ## Installation
 
@@ -39,7 +39,7 @@ pak::pak("maarranz/UnitRoot-Tools-R")
 
 To update to the latest version, run the same command again. To install a
 fixed release instead, add its tag, e.g.
-`remotes::install_github("maarranz/UnitRoot-Tools-R@v0.1.1", build_vignettes = TRUE)`
+`remotes::install_github("maarranz/UnitRoot-Tools-R@v0.2.0", build_vignettes = TRUE)`
 (releases are listed in [NEWS.md](NEWS.md)). The package needs
 R 4.1 or later; its non-base dependencies,
 [urca](https://CRAN.R-project.org/package=urca) and
@@ -123,7 +123,6 @@ Details that matter in practice:
 
 | Phase | Content |
 |---|---|
-| v0.2: inference tools (remaining) | Documentation of the new tests; release |
 | v0.3: bootstrap | Own bootstrap engine (sieve, wild, block and dependent wild schemes), able to bootstrap any statistic, including a whole testing strategy |
 | v0.4: specification uncertainty | Monte Carlo tools (size, power, branch frequencies); union-of-rejections test; bootstrap-calibrated strategies; Hamilton's Case 3 (drift under the null), introduced with the Monte Carlo tools |
 | v0.5: robustness | Unit-root tests robust to additive outliers; tests allowing for structural breaks |

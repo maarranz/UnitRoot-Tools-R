@@ -97,8 +97,28 @@ gls_test_result <- function(stat_name, value, others, trend, lo, level, call,
                     if (is.null(extra_note)) "" else paste0("; ", extra_note))),
     level = level, other_statistics = others,
     engine = engine_internal(),
-    warnings = c(lo$notes, rs_design_warnings(rs, T, k)),
+    warnings = c(lo$notes, rs_design_warnings(rs, T, k), gls_heavy_tail_warning(trend, T, k)),
     call = call)
+}
+
+# The GLS tests share the autoregressive spectral density s2_AR, which is
+# unstable when the lag order is large for the sample size: the null
+# distributions then have very heavy tails (e.g. the 5% quantile of MZa at
+# T = 25 with 6 lags is about -800, against -8.6 without lags). The critical
+# values are still those of the simulation, but such a test can hardly
+# reject. Flagged when the 5% quantile of MZa is more than twice its value
+# without lags at the same T.
+gls_heavy_tail_warning <- function(trend, T, k) {
+  if (k == 0L) return(character())
+  rs <- gls_rs$MZa[[trend]]
+  j <- which.min(abs(rs$probs - 0.05))
+  ratio <- rs_quantiles(rs, T, k)[[j]] / rs_quantiles(rs, T, 0L)[[j]]
+  if (ratio <= 2) return(character())
+  sprintf(paste("With %d lags at T = %d the null distribution is very heavy-tailed",
+                "(the 5%% critical value of MZa is %s times its value without lags):",
+                "the critical values are valid, but the test can hardly reject.",
+                "Consider fewer lags or a longer sample."),
+          k, T, format(signif(ratio, 2)))
 }
 
 #' Ng-Perron M tests
@@ -127,6 +147,12 @@ gls_test_result <- function(stat_name, value, others, trend, lo, level, call,
 #' better guide than a comparison with published tables. With a trend, the
 #' limits differ slightly from Ng and Perron's (2001) Table 1; see the
 #' specification (D15).
+#'
+#' When the lag order is large for the sample size, the spectral estimate is
+#' unstable and the null distributions are very heavy-tailed (at \eqn{T = 25}
+#' with 6 lags the 5% critical value of \eqn{MZ_\alpha} is about -800). The
+#' result then carries a warning: the critical values are valid, but the
+#' test can hardly reject.
 #'
 #' @inheritParams dfgls
 #' @param statistic The statistic reported as the test: `"MZt"` (default),

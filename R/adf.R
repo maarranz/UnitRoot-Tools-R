@@ -119,6 +119,12 @@ adf_result <- function(r, selection, level, call) {
       rs_design_warnings(phi_rs[[nm]], T_eq, r$k)
     })))
     if (length(w)) warn <- c(warn, paste("phi statistics:", w))
+    # the phi surfaces are accurate to about 1% except at T <= 30 with 7 or
+    # more lags, where the error reaches 2-5% (data-raw/phi_simulate.R)
+    if (T_eq <= 30L && r$k >= 7L) {
+      warn <- c(warn, sprintf(paste("phi statistics: with %d lags at T = %d their critical",
+                                    "values and p-values are accurate only to about 5%%."), r$k, T_eq))
+    }
   }
 
   fit <- r$fit

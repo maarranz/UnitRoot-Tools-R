@@ -89,3 +89,13 @@ test_that("limits agree with an independent large-T simulation", {
                  rs_critical_values(gls_rs$PT[[tr]], 1e9, 0), tolerance = 0.01)
   }
 })
+
+test_that("heavy tails with many lags at small T are flagged", {
+  set.seed(13)
+  y <- cumsum(stats::rnorm(30))
+  r <- ng_perron(y, "c", lags = 5)
+  expect_match(r$warnings, "very heavy-tailed", all = FALSE)
+  expect_match(ers_pt(y, "ct", lags = 3)$warnings, "very heavy-tailed", all = FALSE)
+  expect_false(any(grepl("heavy-tailed", ng_perron(y, "c", lags = 0)$warnings)))
+  expect_false(any(grepl("heavy-tailed", ng_perron(cumsum(stats::rnorm(300)), "c", lags = 2)$warnings)))
+})
