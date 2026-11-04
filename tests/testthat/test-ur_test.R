@@ -141,6 +141,9 @@ test_that("M3: the constructor never truncates whole-number fields", {
   expect_error(make_result(nobs = 187.2), "`nobs` must be a whole number")
   expect_error(make_result(sample = c(14.5, 200)), "`sample` must be 2 whole numbers")
   expect_identical(make_result(lags = 4)$lags, 4L)
+  # audit N3: values beyond the integer range are rejected, not stored as NA
+  expect_error(make_result(lags = 2^40), "within the integer range")
+  expect_error(make_result(nobs = 2^40), "within the integer range")
 })
 
 test_that("M3: accompanying critical values get the same checks as the main ones", {

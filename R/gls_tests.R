@@ -66,8 +66,9 @@ gls_lag_order <- function(y, trend, lags, max_lags, criterion) {
            call. = FALSE)
     }
     k <- check_order(lags, "lags")
-    if (length(y) - k - 1L < k + 2L) {
-      stop("`lags` = ", k, " is too large for T = ", length(y), ".", call. = FALSE)
+    if (length(y) - k - 1L < k + 3L) {   # two residual degrees of freedom
+      stop("`lags` = ", k, " is too large for T = ", length(y),
+         " (the test regression needs two residual degrees of freedom).", call. = FALSE)
     }
     return(list(k = k, selection = NULL, notes = character()))
   }

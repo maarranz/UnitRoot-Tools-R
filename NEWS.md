@@ -21,6 +21,11 @@ Fixes from the audit of 0.2.0 (4 November 2026).
   instead of a statistic made of rounding noise or an integration error.
   The source is described as the limiting distribution "computed
   numerically" rather than "exact".
+* `dfgls()`, `ng_perron()` and `ers_pt()` require two residual degrees of
+  freedom in the test regression, like the other tests (before, `dfgls()`
+  accepted one, e.g. `dfgls(c(1, 3, 2), lags = 0)`).
+* `new_ur_test()` rejects whole-number fields beyond the integer range
+  (e.g. `lags = 2^40`), which were stored as `NA`.
 
 # unitroottools 0.2.0
 

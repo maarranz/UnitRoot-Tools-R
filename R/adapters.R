@@ -79,8 +79,9 @@ dfgls <- function(y, trend = "c", lags = NULL, max_lags = NULL,
                       detrending = "OLS (Perron and Qu, 2007); statistic on GLS-detrended series",
                       table = sel$table, final_sample = "maximal", notes = sel$notes)
   }
-  if (length(y) - k - 1L < k + 2L) {
-    stop("`lags` = ", k, " is too large for T = ", length(y), ".", call. = FALSE)
+  if (length(y) - k - 1L < k + 3L) {   # two residual degrees of freedom
+    stop("`lags` = ", k, " is too large for T = ", length(y),
+         " (the test regression needs two residual degrees of freedom).", call. = FALSE)
   }
   u <- urca::ur.ers(y, type = "DF-GLS",
                     model = if (trend == "c") "constant" else "trend",

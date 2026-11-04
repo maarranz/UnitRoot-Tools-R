@@ -113,12 +113,12 @@ new_ur_test <- function(method, test, statistic_name, statistic,
 # 2.5 is an error, never 2.
 as_whole <- function(v, name, allow_na = FALSE, length = 1L) {
   ok <- is.numeric(v) && !is.logical(v) && length(v) == length &&
-    (if (allow_na) all(is.na(v) | (is.finite(v) & v == round(v)))
-     else all(!is.na(v) & is.finite(v) & v == round(v)))
+    (if (allow_na) all(is.na(v) | (is.finite(v) & v == round(v) & abs(v) <= .Machine$integer.max))
+     else all(!is.na(v) & is.finite(v) & v == round(v) & abs(v) <= .Machine$integer.max))
   if (!ok) {
     stop("Invalid ur_test: `", name, "` must be ",
          if (length == 1L) "a whole number" else paste(length, "whole numbers"),
-         if (allow_na) " or NA" else "", ".", call. = FALSE)
+         if (allow_na) " or NA" else "", " (within the integer range).", call. = FALSE)
   }
   as.integer(v)
 }

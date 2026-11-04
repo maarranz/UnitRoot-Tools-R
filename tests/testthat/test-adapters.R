@@ -60,6 +60,11 @@ test_that("dfgls() returns urca's DF-GLS statistic for fixed lags", {
     expect_identical(r$nobs, length(stats::residuals(u@testreg)))
   }
   expect_error(dfgls(y, lags = -1), "non-negative whole number")
+  # audit N1: two residual degrees of freedom, as for the native regressions
+  expect_error(dfgls(c(1, 3, 2), trend = "c", lags = 0), "two residual degrees of freedom")
+  expect_error(dfgls(cumsum(rnorm(9)), trend = "c", lags = 3), "two residual degrees of freedom")
+  expect_s3_class(dfgls(cumsum(rnorm(10)), trend = "c", lags = 3), "ur_test")
+  expect_error(ng_perron(cumsum(rnorm(9)), trend = "c", lags = 3), "two residual degrees of freedom")
   expect_error(dfgls(y, lags = 2, max_lags = 4), "either `lags`")
 })
 
