@@ -1,6 +1,6 @@
 # KPSS test of stationarity (spec: Decisions D13 and D14): internal
 # implementation with the long-run-variance module, and critical values and
-# p-values from the exact limiting distribution.
+# p-values from the limiting distribution, computed numerically.
 
 # P(eta > q) for eta = sum_k lambda_k Z_k^2, by Imhof (1961). The 200 largest
 # eigenvalues are used exactly; the rest contribute their mean (their variance
@@ -77,7 +77,7 @@ kpss_critical_values <- function(trend) {
 #' plug-in) or `"newey-west"` (Newey and West, 1994). Hobijn, Franses and Ooms
 #' (2004) recommend `kernel = "qs", bandwidth = "newey-west"` for this test.
 #'
-#' **Critical values and p-value** come from the exact limiting distribution
+#' **Critical values and p-value** come from the limiting distribution, computed numerically
 #' of the statistic, computed numerically (the eigenvalues of the covariance
 #' kernel of the Brownian bridge, and Imhof's inversion formula). The values
 #' tabulated by Kwiatkowski et al. (1992) were simulated and differ from

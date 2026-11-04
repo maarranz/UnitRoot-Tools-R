@@ -51,7 +51,7 @@ autocovariances, or chosen automatically: \code{"andrews"} (Andrews, 1991, AR(1)
 plug-in) or \code{"newey-west"} (Newey and West, 1994). Hobijn, Franses and Ooms
 (2004) recommend \verb{kernel = "qs", bandwidth = "newey-west"} for this test.
 
-\strong{Critical values and p-value} come from the exact limiting distribution
+\strong{Critical values and p-value} come from the limiting distribution, computed numerically
 of the statistic, computed numerically (the eigenvalues of the covariance
 kernel of the Brownian bridge, and Imhof's inversion formula). The values
 tabulated by Kwiatkowski et al. (1992) were simulated and differ from

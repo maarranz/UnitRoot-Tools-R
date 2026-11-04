@@ -35,7 +35,9 @@ required_levels <- c(0.01, 0.05, 0.10)
 #'   effective sample.
 #' @param critical_values Named numeric vector; names are significance
 #'   levels (e.g. `"0.01"`, `"0.05"`, `"0.1"`). Levels 0.01, 0.05 and 0.10
-#'   are required.
+#'   are required, except for a bootstrap calibration
+#'   (`calibration$method = "bootstrap"`), which may give an empty vector and
+#'   a p-value; the decision is then taken from the p-value.
 #' @param tail `"lower"` if the test rejects for small values (unit-root
 #'   tests), `"upper"` if it rejects for large values (KPSS, \eqn{\phi}).
 #' @param p_value P-value, or `NA` when the calibration does not provide

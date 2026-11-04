@@ -1,4 +1,4 @@
-# unitroottools (development version)
+# unitroottools 0.2.1
 
 Fixes from the audit of 0.2.0 (4 November 2026).
 
@@ -32,6 +32,19 @@ Fixes from the audit of 0.2.0 (4 November 2026).
   has a new `warnings` column, and the strategy collects the warnings of
   every visited step in `warnings`, printed with the result and counted by
   `glance()` (`n_warnings`).
+* Documentation: KPSS probabilities are described as computed numerically
+  from the limiting distribution (not "exact"); p-values and critical values
+  "agree closely" rather than "always"; the README lists what is computed by
+  urca and bootUR and the main approximations (asymptotic KPSS,
+  Dickey-Fuller distributions for Phillips-Perron, fixed-lag calibrations
+  versus selected lags); `boot_ur()` documents its own `trend` and
+  `max_lags`; `new_ur_test()` documents the bootstrap exception.
+* The Enders GDP tests also read their settings and expected values from the
+  shared fixture `inst/fixtures/enders_rgdp.json`, and check the data file.
+* Note for code written for 0.1.x: `pp()` and `kpss()` gained a `kernel`
+  argument before `bandwidth` in 0.2.0, so a positional call such as
+  `pp(y, "c", "long")` now passes `"long"` as the kernel (and stops with an
+  error). Name the argument: `pp(y, "c", bandwidth = "long")`.
 
 # unitroottools 0.2.0
 

@@ -8,7 +8,7 @@ every step of the decision. Developed for *Applied Time Series Econometrics*
 (ATSE) at Universidad Carlos III de Madrid; companion to the Python package
 UnitRoot-Tools.
 
-> **Status: teaching version (v0.2).** The functions listed
+> **Status: teaching version (v0.2.1).** The functions listed
 > under [What it does](#what-it-does) are implemented and validated. Interfaces
 > may still change before version 1.0.
 
@@ -39,7 +39,7 @@ pak::pak("maarranz/UnitRoot-Tools-R")
 
 To update to the latest version, run the same command again. To install a
 fixed release instead, add its tag, e.g.
-`remotes::install_github("maarranz/UnitRoot-Tools-R@v0.2.0", build_vignettes = TRUE)`
+`remotes::install_github("maarranz/UnitRoot-Tools-R@v0.2.1", build_vignettes = TRUE)`
 (releases are listed in [NEWS.md](NEWS.md)). The package needs
 R 4.1 or later; its non-base dependencies,
 [urca](https://CRAN.R-project.org/package=urca) and
@@ -80,7 +80,7 @@ values and where they come from, and the decision.
 | `select_lags()` | Lag order by AIC, BIC, MAIC or MBIC, all candidates on the same sample, with the full table |
 | `ur_strategy()` | Choosing the deterministic terms: `"original"` (Dolado-Jenkinson-Sosvilla-Rivero / Enders), `"conservative"`, `"hamilton"`; full history of every step |
 | `pp()` | Phillips-Perron Z_τ test, with its p-value, and Z_α with its own critical values |
-| `kpss()` | KPSS test, with stationarity as the null hypothesis; critical values and p-value from the exact limiting distribution |
+| `kpss()` | KPSS test, with stationarity as the null hypothesis; critical values and p-value from its limiting distribution, computed numerically |
 | `dfgls()` | DF-GLS test (Elliott-Rothenberg-Stock), lags chosen by MAIC as recommended by Perron and Qu (2007), with finite-sample critical values and p-value from the package's own simulation |
 | `ng_perron()` | Ng-Perron M tests (MZ_α, MZ_t, MSB, MP_T) on GLS-detrended data, lags by MAIC (Perron and Qu, 2007), own finite-sample critical values and p-value |
 | `ers_pt()` | Elliott-Rothenberg-Stock point-optimal test P_T, same conventions |
@@ -94,7 +94,7 @@ Details that matter in practice:
   sample size, with MacKinnon's (1996) p-values. The φ statistics, DF-GLS,
   the Ng-Perron and ERS tests and Z_α use this package's own finite-sample
   response surfaces in the sample size and the number of lags, estimated by
-  Monte Carlo (code in `data-raw/`); KPSS uses its exact limiting
+  Monte Carlo (code in `data-raw/`); KPSS uses its limiting
   distribution. Every result records its source and has a p-value.
 - **Lags.** Chosen over 0, ..., kmax with kmax = ⌊12(T/100)^¼⌋ (Schwert), all
   candidates on the same sample; the test regression is then estimated on all
@@ -115,9 +115,17 @@ Details that matter in practice:
 - **Long-run variance** (for `pp()` and `kpss()`): Bartlett, Parzen or
   Quadratic Spectral kernel; Schwert's rules, a fixed number of
   autocovariances, or automatic bandwidths (Andrews, Newey-West).
-- **Current limits.** The `dfgls()` statistic is computed by urca (checked
-  against an independent implementation); everything else is internal. KPSS
-  critical values are asymptotic (exact).
+- **What is computed elsewhere.** The `dfgls()` statistic is computed by
+  urca (checked against an independent implementation); τ p-values come from
+  `urca::punitroot()` (MacKinnon's own routine); `boot_ur()` delegates the
+  statistic and the bootstrap to bootUR. Everything else is internal.
+- **Approximations.** KPSS critical values are asymptotic (from the limiting
+  distribution, computed numerically). Phillips-Perron uses the
+  finite-sample Dickey-Fuller distributions, which share the limits of Z_τ
+  and Z_α but not their finite-sample distributions under serial
+  correlation. Own calibrations are for a fixed lag order; with selected
+  lags (the default), the size of the whole procedure can differ (e.g.
+  about 3-4% instead of 5% with MAIC at T = 100).
 
 ## Forthcoming
 

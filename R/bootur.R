@@ -42,6 +42,11 @@ bootur_methods <- c(AWB = "autoregressive wild bootstrap",
 #' [set.seed()]) for reproducible p-values.
 #'
 #' @inheritParams adf
+#' @param trend `"c"` (constant) or `"ct"` (constant and trend); not used by
+#'   the union test.
+#' @param max_lags Largest lag order bootUR considers when selecting the
+#'   lags; default \eqn{\lfloor 12 (T/100)^{1/4} \rfloor} (Schwert), passed
+#'   to bootUR as `max_lag` without the further cap used by [adf()].
 #' @param bootstrap Bootstrap method: `"AWB"` (default), `"BWB"`, `"DWB"`,
 #'   `"MBB"`, `"SB"` or `"SWB"` (see bootUR's `boot_adf()`).
 #' @param B Number of bootstrap replications (default 1999).

@@ -292,8 +292,10 @@ in words, deterministic terms, number of lags and how they were chosen,
 effective sample, critical values <em>and their source</em>, p-value,
 decision.</li>
 <li><strong>Decisions are taken from critical values</strong> computed
-for the actual sample size; the p-value is computed for the same sample
-size and agrees with them.</li>
+for the actual sample size (KPSS: asymptotic); the p-value is computed
+for the same sample size and agrees closely with them. Bootstrap tests
+(<code>boot_ur()</code>) have no critical values: their decision is
+taken from the bootstrap p-value.</li>
 <li><strong>Nothing is dropped silently.</strong> Missing values,
 irregular dates or several candidate columns are errors that say what to
 fix.</li>
@@ -347,8 +349,9 @@ finite-sample critical values and p-value (urca’s are too liberal: about
 <td style="text-align: left;"><code>urca::ur.kpss()</code>,
 <code>tseries::kpss.test()</code></td>
 <td style="text-align: left;">Same statistic; kernels and automatic
-bandwidths; critical values and p-value from the exact limiting
-distribution (the published table is off in the third decimal)</td>
+bandwidths; critical values and p-value from the limiting distribution,
+computed numerically (the published table is off in the third
+decimal)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"><code>tidy()</code>,
@@ -365,7 +368,7 @@ distribution (the published table is off in the third decimal)</td>
 automatically. Building the vignette needs <a href="https://pandoc.org">pandoc</a>, which comes with RStudio; without
 it, leave out <code>build_vignettes = TRUE</code> and read the vignette
 <a href="vignette.html">here</a>. To install a specific version, add the
-tag: <code>&quot;maarranz/UnitRoot-Tools-R@v0.2.0&quot;</code>.</p>
+tag: <code>&quot;maarranz/UnitRoot-Tools-R@v0.2.1&quot;</code>.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(unitroottools)</span></code></pre></div>
 <h3 id="example-used-below">Example used below</h3>
 <p>The logarithm of U.S. real GDP, 1947Q1–2012Q4 (264 observations), the
@@ -526,8 +529,9 @@ result has a bootstrap p-value and no critical values; the decision uses
 the p-value.</li>
 <li><strong><code>kpss()</code></strong> reverses the hypotheses:
 rejection is evidence <em>against</em> stationarity. Critical values and
-p-value from the exact limiting distribution (eigenvalues of the
-Brownian-bridge covariance kernel and Imhof’s formula).</li>
+p-value from the limiting distribution, computed numerically
+(eigenvalues of the Brownian-bridge covariance kernel and Imhof’s
+formula).</li>
 <li><strong>Long-run variance</strong> (<code>pp()</code> and
 <code>kpss()</code>): <code>kernel = &quot;bartlett&quot;</code> (default),
 <code>&quot;parzen&quot;</code> or <code>&quot;qs&quot;</code>;
@@ -587,8 +591,8 @@ MacKinnon (1996) without deterministic terms</td>
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mi>T</mi><mo>,</mo><mi>k</mi><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(T, k)</annotation></semantics></math>
 from a Monte Carlo simulation (code in <code>data-raw/</code>); they
 reproduce Dickey and Fuller’s (1981) tables without lags</td>
-<td style="text-align: left;">MacKinnon’s (1996) method on the same
-surfaces</td>
+<td style="text-align: left;">Interpolated between the simulated
+quantiles; reported as &lt; 0.001 or &gt; 0.999 beyond them</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Z</mi><mi>α</mi></msub><annotation encoding="application/x-tex">Z_\alpha</annotation></semantics></math>
@@ -602,8 +606,8 @@ normalized bias, which has the same limit</td>
 <td style="text-align: left;">Own response surfaces in
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mi>T</mi><mo>,</mo><mi>k</mi><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(T, k)</annotation></semantics></math>
 from a Monte Carlo simulation</td>
-<td style="text-align: left;">MacKinnon’s (1996) method on the same
-surfaces</td>
+<td style="text-align: left;">Interpolated between the simulated
+quantiles; reported as &lt; 0.001 or &gt; 0.999 beyond them</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Ng–Perron M tests, ERS
@@ -612,8 +616,8 @@ surfaces</td>
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mi>T</mi><mo>,</mo><mi>k</mi><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(T, k)</annotation></semantics></math>
 and interpolated in
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi>/</mi><mi>T</mi></mrow><annotation encoding="application/x-tex">1/T</annotation></semantics></math></td>
-<td style="text-align: left;">MacKinnon’s (1996) method on the same
-quantiles</td>
+<td style="text-align: left;">Interpolated between the simulated
+quantiles; reported as &lt; 0.001 or &gt; 0.999 beyond them</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Bootstrap (<code>boot_ur()</code>)</td>
@@ -622,9 +626,10 @@ quantiles</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">KPSS</td>
-<td style="text-align: left;">Exact limiting distribution (kernel
-eigenvalues, Imhof inversion)</td>
-<td style="text-align: left;">same distribution</td>
+<td style="text-align: left;">Limiting distribution, computed
+numerically (kernel eigenvalues, Imhof inversion)</td>
+<td style="text-align: left;">same distribution; &lt; 0.001 or &gt;
+0.999 beyond its 0.001/0.999 quantiles</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Conditional and auxiliary t tests in

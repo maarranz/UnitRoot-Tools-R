@@ -383,8 +383,9 @@ how many lags were used and how they were chosen, the effective sample,
 the critical values and where they come from, the p-value, and the
 decision. The critical values are MacKinnon’s, computed for the actual
 sample size rather than read from a table; the p-value (MacKinnon, 1996)
-is computed for the same sample size, so the two always agree. The
-decision is taken from the critical value.</p>
+is computed for the same sample size, so the two agree closely (to about
+four decimals at the tabulated levels). The decision is taken from the
+critical value.</p>
 <p><code>summary()</code> adds the accompanying
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ϕ</mi><annotation encoding="application/x-tex">\phi</annotation></semantics></math>
 statistics, with their own critical values, and the test regression:</p>
@@ -411,7 +412,7 @@ statistics, with their own critical values, and the test regression:</p>
 <span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a><span class="co">#&gt;   p-value: 0.831 [MacKinnon (1996) finite-sample p-value (urca::punitroot)]</span></span>
 <span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a><span class="co">#&gt; Accompanying statistics</span></span>
-<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a><span class="co">#&gt;   phi2       17.612   1%: 6.238   5%: 4.751   10%: 4.071   p = &lt; 0.001  reject</span></span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a><span class="co">#&gt;   phi2       17.612   1%: 6.238   5%: 4.751   10%: 4.071   p = 0.001  reject</span></span>
 <span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a><span class="co">#&gt;                       [unitroottools phi response surfaces (own simulation), T = 264, k = 1]</span></span>
 <span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a><span class="co">#&gt;   phi3        2.966   1%: 8.445   5%: 6.337   10%: 5.381   p = 0.471  do not reject</span></span>
 <span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a><span class="co">#&gt;                       [unitroottools phi response surfaces (own simulation), T = 264, k = 1]</span></span>
@@ -423,7 +424,7 @@ statistics, with their own critical values, and the test regression:</p>
 <span id="cb3-33"><a href="#cb3-33" tabindex="-1"></a><span class="co">#&gt; y_lag1  -0.0156305  1.050e-02  -1.489</span></span>
 <span id="cb3-34"><a href="#cb3-34" tabindex="-1"></a><span class="co">#&gt; dy_lag1  0.3662619  5.848e-02   6.263</span></span>
 <span id="cb3-35"><a href="#cb3-35" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb3-36"><a href="#cb3-36" tabindex="-1"></a><span class="co">#&gt; Engine: internal 0.2.0</span></span></code></pre></div>
+<span id="cb3-36"><a href="#cb3-36" tabindex="-1"></a><span class="co">#&gt; Engine: internal 0.2.0.9000</span></span></code></pre></div>
 </div>
 <div id="choosing-the-number-of-lags" class="section level2">
 <h2>2. Choosing the number of lags</h2>
@@ -502,7 +503,7 @@ and tests its way down:</p>
 <span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#&gt;   1    ct     tau3          -1.489    -3.427    0.831  not reject  test phi3</span></span>
 <span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt;   2    ct     phi3           2.966     6.337    0.471  not reject  go to stage C</span></span>
 <span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co">#&gt;   3    c      tau2          -2.049    -2.873    0.266  not reject  test phi1</span></span>
-<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt;   4    c      phi1          25.485     4.631  &lt; 0.001  reject      test constant, b = 0 imposed</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt;   4    c      phi1          25.485     4.631    0.001  reject      test constant, b = 0 imposed</span></span>
 <span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt;   5    aux_c  t(const)       6.797     1.969  &lt; 0.001  reject      conditional t test of b</span></span>
 <span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt;   6    c      t(b) cond.    -2.049    -1.651    0.021  reject      stop</span></span>
 <span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co">#&gt; </span></span>
@@ -597,7 +598,7 @@ null hypothesis</strong>: it tests stationarity against a unit root.</p>
 <span id="cb9-25"><a href="#cb9-25" tabindex="-1"></a><span class="co">#&gt;   Statistic:        -1.019</span></span>
 <span id="cb9-26"><a href="#cb9-26" tabindex="-1"></a><span class="co">#&gt;   Critical values:  1%: -3.480   5%: -2.915   10%: -2.627</span></span>
 <span id="cb9-27"><a href="#cb9-27" tabindex="-1"></a><span class="co">#&gt;   Source:           unitroottools DF-GLS response surfaces (own simulation)</span></span>
-<span id="cb9-28"><a href="#cb9-28" tabindex="-1"></a><span class="co">#&gt;   p-value:          0.862</span></span>
+<span id="cb9-28"><a href="#cb9-28" tabindex="-1"></a><span class="co">#&gt;   p-value:          0.863</span></span>
 <span id="cb9-29"><a href="#cb9-29" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb9-30"><a href="#cb9-30" tabindex="-1"></a><span class="co">#&gt;   Decision at 5%: do not reject H0 (unit root)</span></span>
 <span id="cb9-31"><a href="#cb9-31" tabindex="-1"></a><span class="fu">kpss</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>)</span>
@@ -611,7 +612,7 @@ null hypothesis</strong>: it tests stationarity against a unit root.</p>
 <span id="cb9-39"><a href="#cb9-39" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb9-40"><a href="#cb9-40" tabindex="-1"></a><span class="co">#&gt;   Statistic:        0.701</span></span>
 <span id="cb9-41"><a href="#cb9-41" tabindex="-1"></a><span class="co">#&gt;   Critical values:  1%: 0.218   2.5%: 0.177   5%: 0.148   10%: 0.119</span></span>
-<span id="cb9-42"><a href="#cb9-42" tabindex="-1"></a><span class="co">#&gt;   Source:           exact limiting distribution (kernel eigenvalues, Imhof inversion)</span></span>
+<span id="cb9-42"><a href="#cb9-42" tabindex="-1"></a><span class="co">#&gt;   Source:           limiting distribution, computed numerically (kernel eigenvalues, Imhof inversion)</span></span>
 <span id="cb9-43"><a href="#cb9-43" tabindex="-1"></a><span class="co">#&gt;   p-value:          &lt; 0.001</span></span>
 <span id="cb9-44"><a href="#cb9-44" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb9-45"><a href="#cb9-45" tabindex="-1"></a><span class="co">#&gt;   Decision at 5%: reject H0 (stationary around a linear trend)</span></span></code></pre></div>
@@ -677,20 +678,20 @@ and trend:</p>
 <span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>              <span class="fu">dfgls</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>), <span class="fu">kpss</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>))</span>
 <span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(tests, glance))</span>
 <span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>res[, <span class="fu">c</span>(<span class="st">&quot;test&quot;</span>, <span class="st">&quot;statistic_name&quot;</span>, <span class="st">&quot;statistic&quot;</span>, <span class="st">&quot;p_value&quot;</span>, <span class="st">&quot;reject&quot;</span>, <span class="st">&quot;lags&quot;</span>, <span class="st">&quot;nobs&quot;</span>)]</span>
-<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co">#&gt;     test statistic_name  statistic      p_value reject lags nobs</span></span>
-<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="co">#&gt; 1    ADF           tau3 -1.4891169 8.311624e-01  FALSE    1  262</span></span>
-<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co">#&gt; 2     PP          Z_tau -1.1105222 9.243191e-01  FALSE    5  263</span></span>
-<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt; 3 DF-GLS        tau_GLS -1.0192578 8.624955e-01  FALSE    1  262</span></span>
-<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co">#&gt; 4   KPSS        eta_tau  0.7007647 3.858184e-07   TRUE    5  264</span></span></code></pre></div>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co">#&gt;     test statistic_name  statistic   p_value reject lags nobs</span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="co">#&gt; 1    ADF           tau3 -1.4891169 0.8311624  FALSE    1  262</span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co">#&gt; 2     PP          Z_tau -1.1105222 0.9243191  FALSE    5  263</span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt; 3 DF-GLS        tau_GLS -1.0192578 0.8625359  FALSE    1  262</span></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co">#&gt; 4   KPSS        eta_tau  0.7007647 0.0010000   TRUE    5  264</span></span></code></pre></div>
 <p><code>tidy()</code> shows the accompanying statistics as well, for
 instance the
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ϕ</mi><annotation encoding="application/x-tex">\phi</annotation></semantics></math>
 statistics of the ADF test:</p>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">tidy</span>(<span class="fu">adf</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>))[, <span class="fu">c</span>(<span class="st">&quot;statistic_name&quot;</span>, <span class="st">&quot;statistic&quot;</span>, <span class="st">&quot;critical_value&quot;</span>, <span class="st">&quot;p_value&quot;</span>, <span class="st">&quot;reject&quot;</span>)]</span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="co">#&gt;   statistic_name statistic critical_value      p_value reject</span></span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="co">#&gt; 1           tau3 -1.489117      -3.427381 8.311624e-01  FALSE</span></span>
-<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co">#&gt; 2           phi2 17.611863       4.750761 2.536773e-06   TRUE</span></span>
-<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="co">#&gt; 3           phi3  2.965690       6.336793 4.707538e-01  FALSE</span></span></code></pre></div>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="co">#&gt;   statistic_name statistic critical_value   p_value reject</span></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="co">#&gt; 1           tau3 -1.489117      -3.427381 0.8311624  FALSE</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co">#&gt; 2           phi2 17.611863       4.750761 0.0010000   TRUE</span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="co">#&gt; 3           phi3  2.965690       6.336793 0.4707509  FALSE</span></span></code></pre></div>
 <p>The same functions work on a strategy: <code>glance()</code> gives
 its outcome in one row and <code>tidy()</code> its history.</p>
 </div>

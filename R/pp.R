@@ -33,7 +33,9 @@
 #' 17.6.7) is reported in `other_statistics`, with critical values and a
 #' p-value from the finite-sample distribution of the Dickey-Fuller
 #' normalized bias \eqn{n \hat b}, which has the same limit (own simulation);
-#' `summary()` and [tidy()] show them.
+#' as for \eqn{Z_\tau}, this is not the finite-sample distribution of
+#' \eqn{Z_\alpha} under serial correlation. `summary()` and [tidy()] show
+#' them.
 #'
 #' @inheritParams adf
 #' @param trend `"c"` or `"ct"` (or an alias accepted by [match_trend()]).

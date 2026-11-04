@@ -46,8 +46,8 @@ many lags were used and how they were chosen, the effective sample, the
 critical values and where they come from, the p-value, and the decision. The
 critical values are MacKinnon's, computed for the actual sample size rather
 than read from a table; the p-value (MacKinnon, 1996) is computed for the
-same sample size, so the two always agree. The decision is taken from the
-critical value.
+same sample size, so the two agree closely (to about four decimals at the
+tabulated levels). The decision is taken from the critical value.
 
 `summary()` adds the accompanying $\phi$ statistics, with their own critical
 values, and the test regression:

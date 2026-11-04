@@ -24,8 +24,8 @@ boot_ur(
 \item{y}{A univariate time series: numeric vector, \code{ts}, \code{zoo}/\code{xts}, or a
 data frame, tibble or tsibble (see \code{var}).}
 
-\item{trend}{Deterministic specification: \code{"n"}, \code{"c"} or \code{"ct"}, or an
-alias accepted by \code{\link[=match_trend]{match_trend()}}.}
+\item{trend}{\code{"c"} (constant) or \code{"ct"} (constant and trend); not used by
+the union test.}
 
 \item{bootstrap}{Bootstrap method: \code{"AWB"} (default), \code{"BWB"}, \code{"DWB"},
 \code{"MBB"}, \code{"SB"} or \code{"SWB"} (see bootUR's \code{boot_adf()}).}
@@ -38,12 +38,9 @@ alias accepted by \code{\link[=match_trend]{match_trend()}}.}
 
 \item{lags}{\code{NULL} (select) or 0.}
 
-\item{max_lags}{Largest order considered, \eqn{k_{\max}}. Default:
-\eqn{\lfloor 12 (T/100)^{1/4} \rfloor} (Schwert, 1989), capped at
-\eqn{\lfloor (T-4-d)/2 \rfloor}, where \eqn{d} is the number of
-deterministic terms, so that every candidate regression keeps two residual
-degrees of freedom (the cap only binds for \eqn{T \le 21}; a note says so).
-A larger \code{max_lags} is an error.}
+\item{max_lags}{Largest lag order bootUR considers when selecting the
+lags; default \eqn{\lfloor 12 (T/100)^{1/4} \rfloor} (Schwert), passed
+to bootUR as \code{max_lag} without the further cap used by \code{\link[=adf]{adf()}}.}
 
 \item{criterion}{One of \code{"MAIC"} (default), \code{"AIC"}, \code{"BIC"}, \code{"MBIC"}.}
 

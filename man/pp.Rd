@@ -62,7 +62,9 @@ The normalized-bias statistic \eqn{Z_\alpha} (Hamilton 1994, eq.
 17.6.7) is reported in \code{other_statistics}, with critical values and a
 p-value from the finite-sample distribution of the Dickey-Fuller
 normalized bias \eqn{n \hat b}, which has the same limit (own simulation);
-\code{summary()} and \code{\link[=tidy]{tidy()}} show them.
+as for \eqn{Z_\tau}, this is not the finite-sample distribution of
+\eqn{Z_\alpha} under serial correlation. \code{summary()} and \code{\link[=tidy]{tidy()}} show
+them.
 }
 \examples{
 set.seed(1)

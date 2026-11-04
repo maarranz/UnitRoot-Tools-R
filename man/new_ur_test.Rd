@@ -65,7 +65,9 @@ effective sample.}
 
 \item{critical_values}{Named numeric vector; names are significance
 levels (e.g. \code{"0.01"}, \code{"0.05"}, \code{"0.1"}). Levels 0.01, 0.05 and 0.10
-are required.}
+are required, except for a bootstrap calibration
+(\code{calibration$method = "bootstrap"}), which may give an empty vector and
+a p-value; the decision is then taken from the p-value.}
 
 \item{tail}{\code{"lower"} if the test rejects for small values (unit-root
 tests), \code{"upper"} if it rejects for large values (KPSS, \eqn{\phi}).}

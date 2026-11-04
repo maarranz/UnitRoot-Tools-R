@@ -62,3 +62,49 @@ test_that("the conservative procedure retains the constant and does not reject",
   expect_identical(s$specification, "c")
   expect_false(s$unit_root_rejected)
 })
+
+# The shared fixture file (audit N4): settings and expected values are read
+# from inst/fixtures/enders_rgdp.json, so R and Python check the same numbers.
+test_that("results match the shared Enders fixture (enders_rgdp.json)", {
+  skip_if_not_installed("jsonlite")
+  fx <- jsonlite::read_json(system.file("fixtures", "enders_rgdp.json", package = "unitroottools"))
+  ex <- fx$expected
+  # data identity: the CSV whose SHA-256 the fixture records
+  # (9a857973...d74d9; base R has only MD5, recorded here for the same file)
+  expect_identical(fx$source$csv_sha256,
+                   "9a857973fcf968ac62bcce3e9ace55d52af993c6003169178706e39daadd74d9")
+  expect_identical(unname(tools::md5sum(system.file("fixtures", fx$source$data_file,
+                                                    package = "unitroottools"))),
+                   "baff50bff996f44e2ccd0401828ec848")
+  y <- enders_fixture()
+  k <- fx$settings$lags
+  ct <- adf(y, trend = "ct", lags = k)
+  c1 <- adf(y, trend = "c", lags = k)
+  expect_identical(ct$nobs, as.integer(fx$settings$nobs))
+  check_block <- function(fit, coefs, column, digits) {
+    for (nm in names(coefs)) {
+      printed <- coefs[[nm]]
+      actual <- fit$regression$coefficients[nm, column]
+      # the documented exception: the (A2.3) intercept t value is truncated
+      if (identical(column, "t value") && nm == "const" && identical(fit$trend, "c")) {
+        expect_lte(abs(actual - printed), 0.01)
+      } else {
+        within_rounding(actual, printed, digits)
+      }
+    }
+  }
+  check_block(ct, ex$ct_coefficients, "Estimate", 4)
+  check_block(ct, ex$ct_t_values, "t value", 2)
+  check_block(c1, ex$c_coefficients, "Estimate", 4)
+  check_block(c1, ex$c_t_values, "t value", 2)
+  within_rounding(ct$other_statistics[["phi3"]], ex$phi3, 2)
+  within_rounding(c1$other_statistics[["phi1"]], ex$phi1, 2)
+  for (strategy in c("original", "conservative")) {
+    s <- ur_strategy(y, strategy, lags = k, level = fx$settings$level)
+    expect_identical(s$history$test, unlist(ex[[strategy]]$tests))
+    expect_identical(s$unit_root_rejected, ex[[strategy]]$unit_root_rejected)
+    expect_identical(s$specification, ex[[strategy]]$specification)
+  }
+  o <- ur_strategy(y, "original", lags = k)
+  within_rounding(o$history$statistic[o$history$test == "aux_const"], ex$aux_const_t, 2)
+})
