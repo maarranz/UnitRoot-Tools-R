@@ -312,7 +312,7 @@ fmt_level <- function(l) paste0(format(100 * l, trim = TRUE), "%")
 
 fmt_pvalue <- function(p) {
   if (is.na(p)) return(NA_character_)
-  if (p < 0.001) "< 0.001" else fmt_num(p, 3)
+  if (p <= 0.001) "< 0.001" else if (p >= 0.999) "> 0.999" else fmt_num(p, 3)
 }
 
 fmt_cvs <- function(cv) {

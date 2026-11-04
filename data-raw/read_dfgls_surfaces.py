@@ -30,16 +30,16 @@ def critical_values(trend, T, k):
     return [float(q[np.argmin(abs(p - a))]) for a in (0.01, 0.05, 0.10)]
 
 
-def p_value(stat, trend, T, k, npoints=11):
-    """MacKinnon (1996): local cubic of qnorm(p) on the nearest fitted quantiles."""
+def p_value(stat, trend, T, k):
+    """Linear interpolation of qnorm(p) between the quantiles; bounds outside."""
     q = quantiles(trend, T, k)
     p = np.array(SURFACES["trends"][trend]["probs"])
-    idx = np.argsort(abs(q - stat), kind="stable")[:npoints]
-    qq = q[idx]
-    X = np.column_stack([np.ones(npoints), qq, qq**2, qq**3])
-    z = np.array([_N.inv_cdf(v) for v in p[idx]])
-    b = np.linalg.lstsq(X, z, rcond=None)[0]
-    return min(max(_N.cdf(float(b @ np.array([1, stat, stat**2, stat**3]))), 0.0), 1.0)
+    if stat <= q[0]:
+        return float(p[0])
+    if stat >= q[-1]:
+        return float(p[-1])
+    z = np.array([_N.inv_cdf(v) for v in p])
+    return _N.cdf(float(np.interp(stat, q, z)))
 
 
 if __name__ == "__main__":

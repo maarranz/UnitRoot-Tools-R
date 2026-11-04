@@ -54,3 +54,16 @@ Python computes AIC/BIC from the detrended regression used by MAIC (so AIC equal
 - Hamilton's rule-based strategy (specification, section "Hamilton (rule-based)").
 - Per-step p-values in the strategy history.
 - Phillips–Perron: if added through ARCH, note that ARCH follows the published formula (it agrees with R's internal Z_τ to 2 × 10⁻¹³); urca does not.
+
+## Update (R 0.2.1): p-values from the shared quantiles
+
+The audit of R 0.2.0 found that the local cubic regression of qnorm(p) on
+the 11 quantiles nearest the statistic (the rule first written into
+`dfgls_response_surfaces.json`) must not be evaluated beyond the simulated
+quantiles: extrapolated, the cubic can turn back and give p = 1 for clearly
+stationary data (e.g. DF-GLS = -25 at T = 1000). R now uses, and the JSON
+`usage.p_value` now states: interpolate qnorm(p) linearly against the
+quantiles at the statistic (`np.interp`), and beyond the extreme quantiles
+report the bound 0.001 or 0.999. `data-raw/read_dfgls_surfaces.py` does
+this and reproduces R's reference p-values to 5e-15. Any Python code that
+copied the cubic rule should switch.

@@ -51,17 +51,29 @@ rs_critical_values <- function(rs, T, k, tail = "lower", levels = c(0.01, 0.05, 
   cv
 }
 
-# p-value as in MacKinnon (1996): a local cubic regression of qnorm(p) on the
-# fitted quantiles nearest to the statistic gives the distribution function
-# at the statistic; the p-value is F (lower tail) or 1 - F (upper tail).
-rs_p_value <- function(rs, stat, T, k, tail = "lower", npoints = 11L) {
+# p-value: the distribution function at the statistic, by linear
+# interpolation of qnorm(p) between the tabulated quantiles (monotone in the
+# statistic and exact at the 117 simulated probabilities); the p-value is F
+# (lower tail) or 1 - F (upper tail). Beyond the simulated quantiles the
+# distribution is not extrapolated: the p-value is reported as the bound
+# min(probs) = 0.001 or 1 - min(probs) = 0.999 (printed "< 0.001" or
+# "> 0.999"); p_value_note() says so in the result.
+rs_p_value <- function(rs, stat, T, k, tail = "lower") {
   q <- rs_quantiles(rs, T, k)
-  idx <- order(abs(q - stat))[seq_len(npoints)]
-  qq <- q[idx]
-  fit <- stats::lm.fit(cbind(1, qq, qq^2, qq^3), stats::qnorm(rs$probs[idx]))
-  F <- stats::pnorm(sum(fit$coefficients * c(1, stat, stat^2, stat^3)))
+  pr <- rs$probs
+  F <- if (stat <= q[1]) pr[1]
+       else if (stat >= q[length(q)]) pr[length(pr)]
+       else stats::pnorm(stats::approx(q, stats::qnorm(pr), xout = stat, ties = mean)$y)
   p <- if (tail == "lower") F else 1 - F
-  min(max(p, 0), 1)
+  p
+}
+
+# Note for a result whose p-value is a bound (statistic beyond the simulated
+# quantiles), or NULL.
+p_value_note <- function(p, probs = c(0.001, 0.999)) {
+  if (is.na(p) || (p > probs[1] && p < probs[2])) return(NULL)
+  sprintf("the statistic lies beyond the simulated quantiles: the p-value is %s",
+          if (p <= probs[1]) "below 0.001 (0.001 is reported)" else "above 0.999 (0.999 is reported)")
 }
 
 # Warnings when (T, k) lies outside the simulation design.
@@ -88,7 +100,7 @@ format_levels <- function(levels) {
 # DF-GLS (D11)
 dfgls_quantiles <- function(trend, T, k) rs_quantiles(dfgls_rs[[trend]], T, k)
 dfgls_critical_values <- function(trend, T, k) rs_critical_values(dfgls_rs[[trend]], T, k)
-dfgls_p_value <- function(stat, trend, T, k, npoints = 11L) {
-  rs_p_value(dfgls_rs[[trend]], stat, T, k, npoints = npoints)
+dfgls_p_value <- function(stat, trend, T, k) {
+  rs_p_value(dfgls_rs[[trend]], stat, T, k)
 }
 dfgls_design_warnings <- function(trend, T, k) rs_design_warnings(dfgls_rs[[trend]], T, k)

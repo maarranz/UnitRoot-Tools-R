@@ -212,10 +212,10 @@ All five point the same way for log GDP: the unit root is not rejected, and stat
 | Statistic | Critical values | p-value |
 |:--|:--|:--|
 | $\tau$ (ADF), $Z_\tau$ (PP) | MacKinnon (2010) response surfaces at the effective $N$; MacKinnon (1996) without deterministic terms | MacKinnon (1996), finite-sample, same $N$ |
-| $\phi_1, \phi_2, \phi_3$ | Own response surfaces in $(T, k)$ from a Monte Carlo simulation (code in `data-raw/`); they reproduce Dickey and Fuller's (1981) tables without lags | MacKinnon's (1996) method on the same surfaces |
+| $\phi_1, \phi_2, \phi_3$ | Own response surfaces in $(T, k)$ from a Monte Carlo simulation (code in `data-raw/`); they reproduce Dickey and Fuller's (1981) tables without lags | Interpolated between the simulated quantiles; reported as < 0.001 or > 0.999 beyond them |
 | $Z_\alpha$ (PP) | Own response surface for the Dickey–Fuller normalized bias, which has the same limit | same surface |
-| DF-GLS | Own response surfaces in $(T, k)$ from a Monte Carlo simulation | MacKinnon's (1996) method on the same surfaces |
-| Ng–Perron M tests, ERS $P_T$ | Own simulation, tabulated in $(T, k)$ and interpolated in $1/T$ | MacKinnon's (1996) method on the same quantiles |
+| DF-GLS | Own response surfaces in $(T, k)$ from a Monte Carlo simulation | Interpolated between the simulated quantiles; reported as < 0.001 or > 0.999 beyond them |
+| Ng–Perron M tests, ERS $P_T$ | Own simulation, tabulated in $(T, k)$ and interpolated in $1/T$ | Interpolated between the simulated quantiles; reported as < 0.001 or > 0.999 beyond them |
 | Bootstrap (`boot_ur()`) | none | bootUR's bootstrap p-value |
 | KPSS | Exact limiting distribution (kernel eigenvalues, Imhof inversion) | same distribution |
 | Conditional and auxiliary t tests in strategies | Student t | Student t |

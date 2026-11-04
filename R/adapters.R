@@ -88,10 +88,12 @@ dfgls <- function(y, trend = "c", lags = NULL, max_lags = NULL,
   n <- length(y)
   nobs <- n - k - 1L
   cv <- dfgls_critical_values(trend, n, k)
+  pv <- dfgls_p_value(unname(u@teststat), trend, n, k)
   calibration <- list(
     method = "response_surface",
     source = "unitroottools DF-GLS response surfaces (own simulation)",
-    note = sprintf("finite-sample quantiles for T = %d and k = %d lagged differences", n, k))
+    note = paste(c(sprintf("finite-sample quantiles for T = %d and k = %d lagged differences", n, k),
+                   p_value_note(pv)), collapse = "; "))
   design_warnings <- dfgls_design_warnings(trend, n, k)
   new_ur_test(
     method = "DF-GLS test", test = "DF-GLS",
@@ -99,7 +101,7 @@ dfgls <- function(y, trend = "c", lags = NULL, max_lags = NULL,
     null = "unit root", alternative = adf_alternatives[[trend]], trend = trend,
     lags = k, lag_selection = selection, nobs = nobs, sample = c(k + 2L, n),
     critical_values = cv, tail = "lower",
-    p_value = dfgls_p_value(unname(u@teststat), trend, n, k),
+    p_value = pv,
     calibration = calibration, level = level, engine = engine_urca(),
     warnings = c(notes, design_warnings),
     call = call)

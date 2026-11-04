@@ -83,18 +83,20 @@ gls_test_result <- function(stat_name, value, others, trend, lo, level, call,
   T <- lo$T
   k <- lo$k
   cv <- rs_critical_values(rs, T, k)
+  pv <- rs_p_value(rs, unname(value), T, k)
   new_ur_test(
     method = method, test = test,
     statistic_name = stat_name, statistic = unname(value),
     null = "unit root", alternative = adf_alternatives[[trend]], trend = trend,
     lags = k, lag_selection = lo$selection, nobs = T - k - 1L, sample = c(k + 2L, T),
     critical_values = cv, tail = "lower",
-    p_value = rs_p_value(rs, unname(value), T, k),
+    p_value = pv,
     calibration = list(
       method = "response_surface",
       source = "unitroottools GLS simulation tables (own simulation)",
       note = paste0(sprintf("finite-sample quantiles for T = %d and k = %d lagged differences, interpolated in 1/T", T, k),
-                    if (is.null(extra_note)) "" else paste0("; ", extra_note))),
+                    if (is.null(extra_note)) "" else paste0("; ", extra_note),
+                    if (is.null(p_value_note(pv))) "" else paste0("; ", p_value_note(pv)))),
     level = level, other_statistics = others,
     engine = engine_internal(),
     warnings = c(lo$notes, rs_design_warnings(rs, T, k), gls_heavy_tail_warning(trend, T, k)),

@@ -1,3 +1,19 @@
+# unitroottools (development version)
+
+Fixes from the audit of 0.2.0 (4 November 2026).
+
+* **p-values from the package's own calibrations** (DF-GLS, φ, Z_alpha,
+  Ng-Perron, ERS) could be wrong far in the tail: the local cubic used to
+  interpolate between simulated quantiles was extrapolated beyond them and
+  could turn back, giving p = 1 for clearly stationary data that the test
+  rejected (e.g. Ng-Perron MZ_t at T = 250). The distribution function is
+  now interpolated linearly in qnorm(p) between the 117 simulated quantiles
+  (monotone, exact at them). Beyond the simulated range the p-value is
+  reported as the bound 0.001 or 0.999, printed "< 0.001" or "> 0.999",
+  with a note in the result. Inside the range, p-values change only in the
+  third or fourth decimal. The shared DF-GLS JSON file and its Python reader
+  use the same rule.
+
 # unitroottools 0.2.0
 
 * The φ statistics of `adf()` and `ur_strategy()` now take their critical
