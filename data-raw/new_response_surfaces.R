@@ -19,3 +19,16 @@ rho_rs <- lapply(c(c = "c", ct = "ct"), function(tr) {
   rs
 })
 saveRDS(rho_rs, "rho_rs.rds")
+
+# GLS-based statistics (D15): Ng-Perron MZa, MZt, MSB, MPT and ERS PT, from
+# gls_simulate.R. Their tails explode at small T with many lags (the AR
+# spectral estimate when the lag coefficients sum to nearly one), which no
+# smooth surface in 1/T follows, so the simulated quantiles are tabulated and
+# interpolated (table_calibration(), surface_fit.R).
+gls <- read.csv("gls_quantiles.csv.gz")
+gls_rs <- lapply(c(MZa = "MZa", MZt = "MZt", MSB = "MSB", MPT = "MPT", PT = "PT"), function(s) {
+  lapply(c(c = "c", ct = "ct"), function(tr) {
+    table_calibration(gls[gls$statistic == s & gls$trend == tr, ])
+  })
+})
+saveRDS(gls_rs, "gls_rs.rds")

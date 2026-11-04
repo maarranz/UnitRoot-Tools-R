@@ -422,7 +422,7 @@ print.ur_strategy <- function(x, ...) {
   }
   cat(sprintf("\n  Specification: %s\n", trend_labels[[x$specification]]))
   cat(sprintf("  Conclusion:    %s\n", x$conclusion))
-  cat("\n  Note: p-values are for each step on its own (none for the phi tables);\n",
+  cat("\n  Note: p-values are for each step on its own;\n",
       "  no p-value or size is reported for the sequence as a whole.\n", sep = "")
   invisible(x)
 }

@@ -82,6 +82,8 @@ values and where they come from, and the decision.
 | `pp()` | Phillips-Perron Z_τ test, with its p-value, and Z_α with its own critical values |
 | `kpss()` | KPSS test, with stationarity as the null hypothesis; critical values and p-value from the exact limiting distribution |
 | `dfgls()` | DF-GLS test (Elliott-Rothenberg-Stock), lags chosen by MAIC as recommended by Perron and Qu (2007), with finite-sample critical values and p-value from the package's own simulation |
+| `ng_perron()` | Ng-Perron M tests (MZ_α, MZ_t, MSB, MP_T) on GLS-detrended data, lags by MAIC (Perron and Qu, 2007), own finite-sample critical values and p-value |
+| `ers_pt()` | Elliott-Rothenberg-Stock point-optimal test P_T, same conventions |
 | `boot_ur()` | Bootstrap ADF and union-of-rejections tests through the bootUR package (optional; p-value only) |
 | `tidy()`, `glance()` | Results as one-row-per-statistic or one-row-per-test data frames, easy to combine across series |
 | `simulate_df()` | Monte Carlo of the Dickey-Fuller distribution, with a plot against N(0,1) |
@@ -89,8 +91,8 @@ values and where they come from, and the decision.
 Details that matter in practice:
 
 - **Critical values.** τ uses MacKinnon's response surfaces at the effective
-  sample size, with MacKinnon's (1996) p-values. The φ statistics, DF-GLS
-  and Z_α use this package's own finite-sample
+  sample size, with MacKinnon's (1996) p-values. The φ statistics, DF-GLS,
+  the Ng-Perron and ERS tests and Z_α use this package's own finite-sample
   response surfaces in the sample size and the number of lags, estimated by
   Monte Carlo (code in `data-raw/`); KPSS uses its exact limiting
   distribution. Every result records its source and has a p-value.
@@ -121,7 +123,7 @@ Details that matter in practice:
 
 | Phase | Content |
 |---|---|
-| v0.2: inference tools (remaining) | Ng-Perron M tests and ERS point-optimal test with own critical values; first CRAN release |
+| v0.2: inference tools (remaining) | Documentation of the new tests; release |
 | v0.3: bootstrap | Own bootstrap engine (sieve, wild, block and dependent wild schemes), able to bootstrap any statistic, including a whole testing strategy |
 | v0.4: specification uncertainty | Monte Carlo tools (size, power, branch frequencies); union-of-rejections test; bootstrap-calibrated strategies; Hamilton's Case 3 (drift under the null), introduced with the Monte Carlo tools |
 | v0.5: robustness | Unit-root tests robust to additive outliers; tests allowing for structural breaks |

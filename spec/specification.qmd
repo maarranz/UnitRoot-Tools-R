@@ -157,7 +157,7 @@ Each result records its **calibration**: the method, the source and any approxim
 | Method | Use |
 |---|---|
 | `table` | Tabulated finite-sample critical values (no longer used by the package's own tests) |
-| `response_surface` | Critical values and p-values from response surfaces: MacKinnon's ($\tau$, $Z_\tau$) and the package's own (DF-GLS, $\phi$, $Z_\alpha$, Ng–Perron, ERS) |
+| `response_surface` | Critical values and p-values from response surfaces: MacKinnon's ($\tau$, $Z_\tau$) and the package's own (DF-GLS, $\phi$, $Z_\alpha$; Ng–Perron and ERS from interpolated simulation tables, D15) |
 | `limit_distribution` | Exact limiting distribution computed numerically (KPSS, D14) |
 | `conventional_t` | Student-$t$ reference distribution (conditional tests in strategies) |
 | `bootstrap` | Bootstrap p-values (bootUR adapter, D17; own engine planned) |
@@ -172,7 +172,7 @@ Convention: MacKinnon (2010) finite-sample response surfaces at the 1%, 5% and 1
 Convention: MacKinnon (1996) finite-sample p-values evaluated at the effective $N$ (in R through `urca::punitroot()`, which implements MacKinnon's own routine). The decision is always taken from the critical value (D4); the p-value is reported with its own source. The two sources are consistent: at the MacKinnon (2010) critical values the MacKinnon (1996) p-values equal 0.0100, 0.0500 and 0.1000 to four decimals for $N = 25, 50, 100, 262$ and every deterministic specification (0.0499 and 0.0999 at $N = 1000$ with a trend). The Python implementation currently reports asymptotic MacKinnon (1994) p-values, which can differ noticeably at $N = 25$; it is to move to MacKinnon (1996).
 :::
 
-**$\phi$ critical values (v0.1):** Dickey–Fuller (1981), as reproduced in Enders' Table B. Lookup rule (as in Python): use the largest tabulated sample size not exceeding $N$, capped at 500. This is a documented approximation, recorded as such in the result (with the table row used), and is scheduled for replacement by response surfaces in Phase 2. For $N < 25$ the $T = 25$ row is used and flagged as an extrapolation.
+**$\phi$ critical values (v0.1; replaced by own response surfaces in v0.2, Decision D16):** Dickey–Fuller (1981), as reproduced in Enders' Table B. Lookup rule (as in Python): use the largest tabulated sample size not exceeding $N$, capped at 500. This is a documented approximation, recorded as such in the result (with the table row used), and is scheduled for replacement by response surfaces in Phase 2. For $N < 25$ the $T = 25$ row is used and flagged as an extrapolation.
 
 Two differences from urca 1.3-4 are deliberate: (i) urca uses the next *larger* tabulated sample size (e.g. the $T = 50$ row for $25 \le N < 50$), which is less conservative; (ii) urca's $\phi_3$ row for $T = 250$ repeats the $T = 100$ values at 5% and 10% (6.49, 5.47); the published values are 6.34 and 5.39.
 
@@ -202,6 +202,25 @@ $\hat\lambda^2 = \hat\gamma_0 + 2\sum_{j \ge 1} w(j/b)\,\hat\gamma_j$, $\hat\gam
 ::: {.callout-important}
 **Decision D14 (settled 3 November 2026): KPSS critical values and p-values.**
 Under the null the KPSS statistics converge to $\sum_k \lambda_k Z_k^2$, with $\lambda_k$ the eigenvalues of the covariance kernel of the first-level ($\eta_\mu$: $K(s,t) = \min(s,t) - st$) or second-level Brownian bridge ($\eta_\tau$: $K(s,t) = \min(s,t) - st - 3st(1-s)(1-t)$). The eigenvalues are computed numerically (Nyström, 2000 points; for $\eta_\mu$ they equal $1/(k\pi)^2$ to six digits; their sums equal the means 1/6 and 1/15) and the distribution function by Imhof's (1961) inversion formula. Exact asymptotic critical values: $\eta_\mu$ 0.3473, 0.4614, 0.5806, 0.7435 and $\eta_\tau$ 0.1192, 0.1479, 0.1775, 0.2177 at 10, 5, 2.5 and 1%. Kwiatkowski et al.'s (1992) simulated table (0.347, 0.463, 0.574, 0.739; 0.119, 0.146, 0.176, 0.216) differs in the third decimal; a simulation with $T = 2000$ and 1,000,000 replications agrees with the exact values. The p-value is the same distribution evaluated at the statistic, so critical values and p-values agree by construction.
+:::
+
+::: {.callout-important}
+**Decision D15 (settled 4 November 2026): Ng–Perron M tests and ERS $P_T$.**
+Statistics on the GLS-detrended series $\tilde y_t$ ($\bar c = -7$ or $-13.5$, as for DF-GLS), with the autoregressive spectral density $s^2_{AR} = \hat\sigma^2_k/(1 - \sum_{j=1}^k \hat\beta_j)^2$ from the regression of $\Delta\tilde y_t$ on $\tilde y_{t-1}$ and $k$ lagged differences, and $\kappa = T^{-2}\sum_{t=2}^T \tilde y_{t-1}^2$: $MZ_\alpha = (T^{-1}\tilde y_T^2 - s^2_{AR})/(2\kappa)$, $MSB = (\kappa/s^2_{AR})^{1/2}$, $MZ_t = MZ_\alpha \cdot MSB$, $MP_T = (\bar c^2\kappa - \bar c\,T^{-1}\tilde y_T^2)/s^2_{AR}$ (constant) or $(\bar c^2\kappa + (1-\bar c)T^{-1}\tilde y_T^2)/s^2_{AR}$ (trend), and $P_T = (S(\bar\alpha) - \bar\alpha S(1))/s^2_{AR}$ (Ng and Perron 2001; Elliott, Rothenberg and Stock 1996). Lags as for DF-GLS (D9). Checked against an independent implementation to $10^{-10}$.
+
+*Calibration.* Simulation as for D11 ($T = 20, \dots, 1000$; $k$ up to 21; 200,000 replications per $(T, \text{trend})$; 117 probabilities). At small $T$ with several lags the tails explode, because $s^2_{AR}$ is huge when the lag coefficients sum to nearly one: the 5% quantile of $MZ_\alpha$ (constant) is $-8.6$ at $T = 25$ without lags but about $-800$ with 6. A smooth surface in $1/T$ cannot follow this (fitting one moves even its asymptote, to $-7.7$). The simulated quantiles are therefore tabulated by $(k, T)$ and interpolated linearly in $1/T$; above $T = 1000$, towards the limit, which does not depend on $k$ and is estimated from the $k = 0$ cells ($T \ge 50$) with the cubic of D11. Outside the design the boundary is used, with a warning, as in D11. Out-of-sample size at 5% (4,000 fresh replications for each of $T = 33, 45, 90, 175, 600, 2000$, $k = 0, 2, 4$, both trends, the five statistics): 4.0%–5.8% (simulation standard error 0.34%).
+
+*Asymptotic values.* With a constant they agree with Ng and Perron's (2001) Table 1 (5%: $MZ_\alpha$ $-8.03$ against $-8.10$; $MZ_t$ $-1.94$ against $-1.98$; $MP_T$ 3.31 against 3.17; $P_T$ 3.31 against ERS's 3.26). With a trend they do not: $MZ_\alpha$ $-16.6$ against $-17.3$, $MZ_t$ $-2.85$ against $-2.91$, $MSB$ 0.171 against 0.168, $MP_T$ 5.70 against 5.48. An independent vectorised simulation ($T = 10{,}000$, 50,000 replications: $MZ_\alpha$ $-16.69$, $MZ_t$ and DF-GLS $t$ $-2.85$) and urca's DF-GLS ($T = 1000$: $-2.877$ against this package's $-2.868$) agree with the package. The published trend values are not consistent among themselves either: $MZ_t$ and the DF-GLS $t$ share their limit, yet Ng–Perron give $-2.91$ and ERS $-2.89$.
+:::
+
+::: {.callout-important}
+**Decision D16 (settled 3 November 2026): $\phi$ statistics and PP's $Z_\alpha$.**
+$\phi_1$, $\phi_2$, $\phi_3$: own response surfaces in $(T, k)$ of the form of D11, from a simulation of the ADF regression under the null ($T = 25, \dots, 1000$, $k$ up to 21, 400,000 replications per $T$), upper tail; $T$ is the length of a series whose maximal sample is the effective sample ($T = N + k + 1$). Without lags they reproduce Dickey and Fuller's (1981) tables ($\phi_3$ at $T = 100$: 8.76, 6.48, 5.47 at 1, 5, 10% against 8.73, 6.49, 5.47; $\phi_1$ at $T = 25$: 7.90, 5.21, 4.14 against 7.88, 5.18, 4.12). The fit is weakest at $T = 25$–35 with 7–8 lags, where the upper tail is heavy (5% quantile of $\phi_3$ at $T = 25$, $k = 8$: 9.96 simulated, 9.48 fitted). $Z_\alpha$: critical values and p-value from a surface for the Dickey–Fuller normalized bias $n\hat b$ ($k = 0$), which has the same limit; asymptotically it reproduces Fuller's values (constant $-20.6$, $-14.1$, $-11.3$; trend $-29.4$, $-21.7$, $-18.3$).
+:::
+
+::: {.callout-important}
+**Decision D17 (settled 3 November 2026): bootstrap tests through bootUR.**
+`boot_ur()` calls `bootUR::boot_adf()` or `bootUR::boot_union()` (Smeekes and Wilms) and returns a `ur_test` with the bootstrap p-value and no critical values; the decision is taken from the p-value. bootUR is in Suggests. Only `lags = NULL` (selection) or 0 is accepted, because bootUR 1.0.5 fails with a fixed positive lag order. The package's own bootstrap engine is planned for v0.3.
 :::
 
 # The result contract {#sec-contract}
@@ -382,7 +401,7 @@ Checked against the urca 1.3-4 reference documentation. Each limitation is the d
 | D12 | Phillips–Perron $Z_\tau$ | Internal implementation of Phillips and Perron (1988) / Hamilton (1994, eq. 17.6.8), replacing urca | Settled 3 Nov |
 | D13 | Long-run variance (PP, KPSS) | Bartlett, Parzen, QS kernels; Schwert, fixed, Andrews (1991) or Newey–West (1994) bandwidths | Settled 3 Nov |
 | D14 | KPSS critical values and p-values | Exact limiting distribution (kernel eigenvalues, Imhof) | Settled 3 Nov |
-| D15 | Ng–Perron M tests and ERS $P_T$ | GLS detrending, Perron–Qu lags, AR spectral density; own response surfaces in $(T, k)$ | Settled 3 Nov; surfaces still being validated (not yet in the package) |
+| D15 | Ng–Perron M tests and ERS $P_T$ | GLS detrending, Perron–Qu lags, AR spectral density; own simulation in $(T, k)$, tabulated and interpolated in $1/T$ | Settled 4 Nov |
 | D16 | $\phi$ statistics and PP's $Z_\alpha$ | Own response surfaces in $(T, k)$ for $\phi_1, \phi_2, \phi_3$ (replacing the Dickey–Fuller tables) and for the normalized bias $n\hat b$ | Settled 3 Nov |
 | D17 | Bootstrap tests | Adapter to bootUR (`boot_ur()`): ADF and union tests; p-value only | Settled 3 Nov |
 

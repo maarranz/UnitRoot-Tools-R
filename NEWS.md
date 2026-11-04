@@ -9,6 +9,17 @@
   (shown by `summary()`, `tidy()` and the strategy history).
 * `pp()`'s Z_alpha now has critical values and a p-value, from the
   finite-sample distribution of the Dickey-Fuller normalized bias (D16).
+* New `ng_perron()` (MZ_alpha, MZ_t, MSB, MP_T) and `ers_pt()` (ERS
+  point-optimal P_T), on GLS-detrended data with lags chosen as for
+  `dfgls()` (decision D15). Critical values and p-values come from the
+  package's own simulation over T and k: the simulated quantiles are
+  tabulated and interpolated in 1/T, because at small T with many lags
+  their tails explode (e.g. the 5% quantile of MZ_alpha at T = 25 with 6
+  lags is about -800) and no smooth surface follows them. Out of sample, the
+  5% tests reject between 4.0% and 5.8% of the time under the null. With a
+  trend, the limits differ from Ng and Perron's (2001) Table 1 (5% MZ_alpha
+  -16.6 against -17.3, MZ_t -2.85 against -2.91); an independent simulation
+  and urca's DF-GLS agree with the package.
 * New `boot_ur()`: bootstrap ADF and union-of-rejections tests through the
   bootUR package (in Suggests; decision D17). The result is a `ur_test`
   whose decision uses the bootstrap p-value.

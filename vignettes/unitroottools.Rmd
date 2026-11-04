@@ -118,8 +118,7 @@ Note that the history separates rejections of the unit root from rejections
 that only decide the *path* (the $\phi$ tests and the tests of the
 deterministic terms).
 
-Each step has its own p-value (there is none for the $\phi$ tests, whose
-critical values come from tables). These p-values describe each test on its
+Each step has its own p-value. These p-values describe each test on its
 own. The procedure as a whole has no known size: it is a sequence of tests,
 each conditional on the results of the previous ones, so no p-value is given
 for it.
@@ -146,6 +145,22 @@ size the DF-GLS statistic has a heavier left tail than its limit
 distribution, and the asymptotic critical values used by other software
 reject a true unit root too often (about 8% of the time at the 5% level with
 $T = 100$ and a constant).
+
+The Ng-Perron M tests and the ERS point-optimal test use the same GLS
+detrending and lag choice; `ng_perron()` reports $MZ_t$ as the test and the
+other M statistics alongside:
+
+```{r}
+ng_perron(lgdp, trend = "ct")
+```
+
+With the bootUR package installed, `boot_ur()` gives bootstrap versions of
+the ADF test (and the union-of-rejections test, `union = TRUE`); the decision
+uses the bootstrap p-value:
+
+```{r, eval = requireNamespace("bootUR", quietly = TRUE)}
+boot_ur(lgdp, trend = "ct", B = 499, seed = 1)
+```
 
 A non-rejection is not evidence for the null. Using tests with both nulls is
 one way to see how strong the evidence is in each direction.

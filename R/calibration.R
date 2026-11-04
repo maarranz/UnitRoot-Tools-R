@@ -1,5 +1,5 @@
 # Critical values and p-values from the package's own response surfaces
-# (spec: Decisions D11, D16).
+# (spec: Decisions D11, D15, D16).
 #
 # A surface `rs` (estimated in data-raw/ and stored in R/sysdata.rda) gives,
 # for each tabulated probability p, the p-quantile of a statistic computed
@@ -7,6 +7,11 @@
 #   q_p(T, k) = theta_inf(p) + a_k(p) / T + b_k(p) / T^2 + c_k(p) / T^3.
 # Fields: probs, intercept, slopes [k, p, 3], ks, design (k, Tmin).
 # Objects: dfgls_rs (D11: DF-GLS t, by trend); phi_rs and rho_rs (D16).
+#
+# A tabulated calibration (type "table": gls_rs, D15) holds the simulated
+# quantiles themselves, table[k, T, p] on the grid Tgrid, and their limit
+# theta_inf(p); quantiles at other T are interpolated linearly in 1/T
+# between neighbouring grid points (beyond the largest, towards the limit).
 
 # Fitted quantiles at all tabulated probabilities. Outside the simulation
 # design the surface is not extrapolated: k is capped at the largest
@@ -15,7 +20,25 @@
 rs_quantiles <- function(rs, T, k) {
   kk <- min(k, max(rs$ks))
   T <- max(T, rs$design$Tmin[match(kk, rs$design$k)])
+  if (identical(rs$type, "table")) return(table_quantiles(rs, T, kk))
   drop(rs$intercept + rs$slopes[match(kk, rs$ks), , ] %*% c(1 / T, 1 / T^2, 1 / T^3))
+}
+
+table_quantiles <- function(rs, T, k) {
+  tab <- rs$table[match(k, rs$ks), , ]
+  ok <- !is.na(tab[, 1])
+  Ts <- rs$Tgrid[ok]
+  tab <- tab[ok, , drop = FALSE]
+  i <- findInterval(T, Ts)                # Ts[i] <= T < Ts[i + 1]
+  if (i >= length(Ts)) {                  # beyond the grid: towards the limit
+    lo <- tab[length(Ts), ]; hi <- rs$limit
+    x0 <- 1 / Ts[length(Ts)]; x1 <- 0
+  } else {
+    lo <- tab[i, ]; hi <- tab[i + 1L, ]
+    x0 <- 1 / Ts[i]; x1 <- 1 / Ts[i + 1L]
+  }
+  w <- (1 / T - x0) / (x1 - x0)
+  unname((1 - w) * lo + w * hi)
 }
 
 # Critical values for a lower-tail test (reject for small values) or an

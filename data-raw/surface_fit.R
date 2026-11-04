@@ -45,3 +45,25 @@ report_fit <- function(rs, label, probs = c(0.01, 0.05, 0.10, 0.90, 0.95, 0.99))
   cat(sprintf("%-8s max |residual| at p in {%s}: %.4f (RMS <= %.4f)\n", label,
               paste(probs, collapse = ", "), max(f$maxabs), max(f$rms)))
 }
+
+# Tabulated calibration (D15), for statistics whose small-sample quantiles
+# are too irregular for a smooth surface (the Ng-Perron and ERS statistics,
+# whose tails explode at small T with many lags): the simulated quantiles
+# themselves, by (k, T, prob), interpolated in 1/T by R/calibration.R; above
+# the largest simulated T, interpolation towards the limit theta_inf(p). The
+# limit does not depend on k; it is estimated by fit_surface() on the
+# well-behaved k = 0 cells with T >= Tlim.
+table_calibration <- function(d, Tlim = 50) {
+  probs <- sort(unique(d$prob))
+  ks <- sort(unique(d$k))
+  Tgrid <- sort(unique(d$T))
+  tab <- array(NA_real_, c(length(ks), length(Tgrid), length(probs)),
+               dimnames = list(k = ks, T = Tgrid, prob = probs))
+  idx <- cbind(match(d$k, ks), match(d$T, Tgrid), match(round(d$prob, 6), round(probs, 6)))
+  tab[idx] <- d$q
+  lim <- fit_surface(d[d$k == 0, ], Tmin = Tlim)
+  design <- aggregate(T ~ k, data = d, FUN = min)
+  names(design)[2] <- "Tmin"
+  list(type = "table", probs = probs, ks = ks, Tgrid = Tgrid, table = tab,
+       limit = lim$intercept, design = design, limit_fit = lim$fit)
+}

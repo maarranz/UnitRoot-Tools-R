@@ -446,16 +446,16 @@ test follows.</li>
 
   Step Regr.  Test       Statistic Crit.val.  p-value  Decision    Next
   1    ct     tau3          -1.489    -3.427    0.831  not reject  test phi3
-  2    ct     phi3           2.966     6.340        -  not reject  go to stage C
+  2    ct     phi3           2.966     6.337    0.471  not reject  go to stage C
   3    c      tau2          -2.049    -2.873    0.266  not reject  test phi1
-  4    c      phi1          25.485     4.630        -  reject      test constant, b = 0 imposed
+  4    c      phi1          25.485     4.631  &lt; 0.001  reject      test constant, b = 0 imposed
   5    aux_c  t(const)       6.797     1.969  &lt; 0.001  reject      conditional t test of b
   6    c      t(b) cond.    -2.049    -1.651    0.021  reject      stop
 
   Specification: constant
   Conclusion:    no unit root: stationary around a non-zero mean
 
-  Note: p-values are for each step on its own (none for the phi tables);
+  Note: p-values are for each step on its own;
   no p-value or size is reported for the sequence as a whole.</code></pre>
 <p>The original procedure removes the trend and then rejects the unit
 root through a conventional t test justified by the constant, a
@@ -471,7 +471,10 @@ procedure.</p>
 <h2 id="other-tests">Other tests</h2>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">pp</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>)       <span class="co"># Phillips-Perron Z_tau</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dfgls</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>)    <span class="co"># Elliott-Rothenberg-Stock DF-GLS</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">kpss</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>)     <span class="co"># KPSS: H0 is stationarity</span></span></code></pre></div>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">kpss</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>)     <span class="co"># KPSS: H0 is stationarity</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ng_perron</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>)  <span class="co"># Ng-Perron M tests (MZ_t reported; MZ_a, MSB, MP_T alongside)</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ers_pt</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>)     <span class="co"># ERS point-optimal P_T</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="fu">boot_ur</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>, <span class="at">B =</span> <span class="dv">999</span>, <span class="at">seed =</span> <span class="dv">1</span>)   <span class="co"># bootstrap ADF (needs bootUR)</span></span></code></pre></div>
 <ul>
 <li><strong><code>pp()</code></strong> corrects the Dickey–Fuller t
 ratio for serial correlation with a kernel estimate of the long-run
@@ -480,7 +483,7 @@ values and p-value as for
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>τ</mi><annotation encoding="application/x-tex">\tau</annotation></semantics></math>;
 the normalized-bias statistic
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Z</mi><mi>α</mi></msub><annotation encoding="application/x-tex">Z_\alpha</annotation></semantics></math>
-is reported alongside.</li>
+is reported alongside, with its own critical values and p-value.</li>
 <li><strong><code>dfgls()</code></strong> detrends by GLS
 (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><mi>c</mi><mo accent="true">‾</mo></mover><mo>=</mo><mo>−</mo><mn>7</mn></mrow><annotation encoding="application/x-tex">\bar c = -7</annotation></semantics></math>
 or
@@ -490,6 +493,32 @@ Without <code>lags</code>, the number of lags is chosen as Perron and Qu
 p-value come from the package’s own finite-sample simulation over the
 sample size and the number of lags (out-of-sample size at 5%:
 4.8–5.3%).</li>
+<li><strong><code>ng_perron()</code></strong> and
+<strong><code>ers_pt()</code></strong> use the same GLS detrending and
+lag choice as <code>dfgls()</code>, with the autoregressive estimate of
+the spectral density at frequency zero (Ng and Perron 2001; Elliott,
+Rothenberg and Stock 1996). <code>statistic =</code> chooses which M
+statistic is the test (<code>&quot;MZt&quot;</code> by default); the others are
+reported alongside. All reject for small values. Critical values and
+p-values come from the package’s own simulation, tabulated over
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>T</mi><annotation encoding="application/x-tex">T</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>
+and interpolated in
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi>/</mi><mi>T</mi></mrow><annotation encoding="application/x-tex">1/T</annotation></semantics></math>
+(out-of-sample size at 5%: 4.0–5.8%). With few observations and several
+lags they can be far from the asymptotic values, because the spectral
+estimate is unstable; with a trend, the limits differ slightly from Ng
+and Perron’s Table 1 (see D15 in the specification).</li>
+<li><strong><code>boot_ur()</code></strong> runs the bootstrap ADF test
+or the union-of-rejections test of the bootUR package (Smeekes and
+Wilms), install it with <code>install.packages(&quot;bootUR&quot;)</code>. Six
+bootstrap schemes (<code>bootstrap = &quot;AWB&quot;</code> by default,
+<code>&quot;BWB&quot;</code>, <code>&quot;DWB&quot;</code>, <code>&quot;MBB&quot;</code>,
+<code>&quot;SB&quot;</code>, <code>&quot;SWB&quot;</code>), <code>union = TRUE</code> for
+the union test, <code>B</code> replications and a <code>seed</code>. The
+result has a bootstrap p-value and no critical values; the decision uses
+the p-value.</li>
 <li><strong><code>kpss()</code></strong> reverses the hypotheses:
 rejection is evidence <em>against</em> stationarity. Critical values and
 p-value from the exact limiting distribution (eigenvalues of the
@@ -508,15 +537,17 @@ KPSS, Hobijn, Franses and Ooms (2004) recommend
 row per statistic (on a strategy: one row per outcome, and the
 history):</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>tests <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="fu">adf</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>), <span class="fu">pp</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>),</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>              <span class="fu">dfgls</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>), <span class="fu">kpss</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>))</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(tests, glance))</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>res[, <span class="fu">c</span>(<span class="st">&quot;test&quot;</span>, <span class="st">&quot;statistic_name&quot;</span>, <span class="st">&quot;statistic&quot;</span>, <span class="st">&quot;p_value&quot;</span>, <span class="st">&quot;reject&quot;</span>, <span class="st">&quot;lags&quot;</span>, <span class="st">&quot;nobs&quot;</span>)]</span></code></pre></div>
-<pre><code>    test statistic_name statistic p_value reject lags nobs
-1    ADF           tau3   -1.4891  0.8312  FALSE    1  262
-2     PP          Z_tau   -1.1105  0.9243  FALSE    5  263
-3 DF-GLS        tau_GLS   -1.0193  0.8625  FALSE    1  262
-4   KPSS        eta_tau    0.7008      NA   TRUE    5  264</code></pre>
-<p>All four point the same way for log GDP: the unit root is not
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>              <span class="fu">dfgls</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>), <span class="fu">ng_perron</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>),</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>              <span class="fu">kpss</span>(lgdp, <span class="at">trend =</span> <span class="st">&quot;ct&quot;</span>))</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, <span class="fu">lapply</span>(tests, glance))</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>res[, <span class="fu">c</span>(<span class="st">&quot;test&quot;</span>, <span class="st">&quot;statistic_name&quot;</span>, <span class="st">&quot;statistic&quot;</span>, <span class="st">&quot;p_value&quot;</span>, <span class="st">&quot;reject&quot;</span>, <span class="st">&quot;lags&quot;</span>, <span class="st">&quot;nobs&quot;</span>)]</span></code></pre></div>
+<pre><code>       test statistic_name statistic p_value reject lags nobs
+1       ADF           tau3   -1.4891  0.8312  FALSE    1  262
+2        PP          Z_tau   -1.1105  0.9243  FALSE    5  263
+3    DF-GLS        tau_GLS   -1.0193  0.8625  FALSE    1  262
+4 Ng-Perron            MZt   -1.0664  0.8445  FALSE    1  262
+5      KPSS        eta_tau    0.7008  0.0000   TRUE    5  264</code></pre>
+<p>All five point the same way for log GDP: the unit root is not
 rejected, and stationarity around a trend is rejected.</p>
 <h2 id="critical-values-and-p-values">Critical values and p-values</h2>
 <table>
@@ -547,26 +578,50 @@ MacKinnon (1996) without deterministic terms</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ϕ</mi><mn>1</mn></msub><mo>,</mo><msub><mi>ϕ</mi><mn>2</mn></msub><mo>,</mo><msub><mi>ϕ</mi><mn>3</mn></msub></mrow><annotation encoding="application/x-tex">\phi_1, \phi_2, \phi_3</annotation></semantics></math></td>
-<td style="text-align: left;">Dickey and Fuller (1981), Enders’ Table B:
-largest tabulated
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mo>≤</mo><mi>N</mi></mrow><annotation encoding="application/x-tex">T \le N</annotation></semantics></math></td>
-<td style="text-align: left;">none</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">DF-GLS</td>
 <td style="text-align: left;">Own response surfaces in
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mi>T</mi><mo>,</mo><mi>k</mi><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(T, k)</annotation></semantics></math>
-from a Monte Carlo simulation (code in <code>data-raw/</code>)</td>
+from a Monte Carlo simulation (code in <code>data-raw/</code>); they
+reproduce Dickey and Fuller’s (1981) tables without lags</td>
 <td style="text-align: left;">MacKinnon’s (1996) method on the same
 surfaces</td>
 </tr>
+<tr class="odd">
+<td style="text-align: left;"><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Z</mi><mi>α</mi></msub><annotation encoding="application/x-tex">Z_\alpha</annotation></semantics></math>
+(PP)</td>
+<td style="text-align: left;">Own response surface for the Dickey–Fuller
+normalized bias, which has the same limit</td>
+<td style="text-align: left;">same surface</td>
+</tr>
 <tr class="even">
+<td style="text-align: left;">DF-GLS</td>
+<td style="text-align: left;">Own response surfaces in
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mi>T</mi><mo>,</mo><mi>k</mi><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(T, k)</annotation></semantics></math>
+from a Monte Carlo simulation</td>
+<td style="text-align: left;">MacKinnon’s (1996) method on the same
+surfaces</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Ng–Perron M tests, ERS
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>P</mi><mi>T</mi></msub><annotation encoding="application/x-tex">P_T</annotation></semantics></math></td>
+<td style="text-align: left;">Own simulation, tabulated in
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mi>T</mi><mo>,</mo><mi>k</mi><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(T, k)</annotation></semantics></math>
+and interpolated in
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi>/</mi><mi>T</mi></mrow><annotation encoding="application/x-tex">1/T</annotation></semantics></math></td>
+<td style="text-align: left;">MacKinnon’s (1996) method on the same
+quantiles</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Bootstrap (<code>boot_ur()</code>)</td>
+<td style="text-align: left;">none</td>
+<td style="text-align: left;">bootUR’s bootstrap p-value</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">KPSS</td>
 <td style="text-align: left;">Exact limiting distribution (kernel
 eigenvalues, Imhof inversion)</td>
 <td style="text-align: left;">same distribution</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">Conditional and auxiliary t tests in
 strategies</td>
 <td style="text-align: left;">Student t</td>
@@ -628,24 +683,40 @@ decision, step by step</td>
 <td style="text-align: left;"><code>ur_test</code></td>
 </tr>
 <tr class="odd">
+<td style="text-align: left;"><code>ng_perron(y, trend, lags, max_lags, criterion, statistic, level, var)</code></td>
+<td style="text-align: left;">Ng–Perron M tests</td>
+<td style="text-align: left;"><code>ur_test</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>ers_pt(y, trend, lags, max_lags, criterion, level, var)</code></td>
+<td style="text-align: left;">ERS point-optimal test</td>
+<td style="text-align: left;"><code>ur_test</code></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>boot_ur(y, trend, bootstrap, B, union, detrend, lags, max_lags, criterion, criterion_scale, seed, level, var)</code></td>
+<td style="text-align: left;">Bootstrap ADF or union test through
+bootUR</td>
+<td style="text-align: left;"><code>ur_test</code></td>
+</tr>
+<tr class="even">
 <td style="text-align: left;"><code>simulate_df(T, R, trend, seed)</code></td>
 <td style="text-align: left;">Simulated Dickey–Fuller distribution, with
 <code>plot()</code></td>
 <td style="text-align: left;"><code>df_simulation</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;"><code>tidy(x)</code>,
 <code>glance(x)</code></td>
 <td style="text-align: left;">Results as data frames</td>
 <td style="text-align: left;">data frame</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;"><code>match_trend(trend)</code></td>
 <td style="text-align: left;">Canonical deterministic code from an
 alias</td>
 <td style="text-align: left;">string</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;"><code>new_ur_test()</code>,
 <code>validate_ur_test()</code></td>
 <td style="text-align: left;">Build and check a result object (for

@@ -151,16 +151,16 @@ Specification strategy: Original (Dolado-Jenkinson-Sosvilla-Rivero / Enders)
 
   Step Regr.  Test       Statistic Crit.val.  p-value  Decision    Next
   1    ct     tau3          -1.489    -3.427    0.831  not reject  test phi3
-  2    ct     phi3           2.966     6.340        -  not reject  go to stage C
+  2    ct     phi3           2.966     6.337    0.471  not reject  go to stage C
   3    c      tau2          -2.049    -2.873    0.266  not reject  test phi1
-  4    c      phi1          25.485     4.630        -  reject      test constant, b = 0 imposed
+  4    c      phi1          25.485     4.631  < 0.001  reject      test constant, b = 0 imposed
   5    aux_c  t(const)       6.797     1.969  < 0.001  reject      conditional t test of b
   6    c      t(b) cond.    -2.049    -1.651    0.021  reject      stop
 
   Specification: constant
   Conclusion:    no unit root: stationary around a non-zero mean
 
-  Note: p-values are for each step on its own (none for the phi tables);
+  Note: p-values are for each step on its own;
   no p-value or size is reported for the sequence as a whole.
 ```
 
@@ -172,10 +172,15 @@ The original procedure removes the trend and then rejects the unit root through 
 pp(lgdp, trend = "ct")       # Phillips-Perron Z_tau
 dfgls(lgdp, trend = "ct")    # Elliott-Rothenberg-Stock DF-GLS
 kpss(lgdp, trend = "ct")     # KPSS: H0 is stationarity
+ng_perron(lgdp, trend = "ct")  # Ng-Perron M tests (MZ_t reported; MZ_a, MSB, MP_T alongside)
+ers_pt(lgdp, trend = "ct")     # ERS point-optimal P_T
+boot_ur(lgdp, trend = "ct", B = 999, seed = 1)   # bootstrap ADF (needs bootUR)
 ```
 
-- **`pp()`** corrects the Dickey–Fuller t ratio for serial correlation with a kernel estimate of the long-run variance (Phillips and Perron 1988; Hamilton 1994, eq. 17.6.8). Critical values and p-value as for $\tau$; the normalized-bias statistic $Z_\alpha$ is reported alongside.
+- **`pp()`** corrects the Dickey–Fuller t ratio for serial correlation with a kernel estimate of the long-run variance (Phillips and Perron 1988; Hamilton 1994, eq. 17.6.8). Critical values and p-value as for $\tau$; the normalized-bias statistic $Z_\alpha$ is reported alongside, with its own critical values and p-value.
 - **`dfgls()`** detrends by GLS ($\bar c = -7$ or $-13.5$). Without `lags`, the number of lags is chosen as Perron and Qu (2007) recommend: MAIC on the OLS-detrended series. Critical values and p-value come from the package's own finite-sample simulation over the sample size and the number of lags (out-of-sample size at 5%: 4.8–5.3%).
+- **`ng_perron()`** and **`ers_pt()`** use the same GLS detrending and lag choice as `dfgls()`, with the autoregressive estimate of the spectral density at frequency zero (Ng and Perron 2001; Elliott, Rothenberg and Stock 1996). `statistic =` chooses which M statistic is the test (`"MZt"` by default); the others are reported alongside. All reject for small values. Critical values and p-values come from the package's own simulation, tabulated over $T$ and $k$ and interpolated in $1/T$ (out-of-sample size at 5%: 4.0–5.8%). With few observations and several lags they can be far from the asymptotic values, because the spectral estimate is unstable; with a trend, the limits differ slightly from Ng and Perron's Table 1 (see D15 in the specification).
+- **`boot_ur()`** runs the bootstrap ADF test or the union-of-rejections test of the bootUR package (Smeekes and Wilms), install it with `install.packages("bootUR")`. Six bootstrap schemes (`bootstrap = "AWB"` by default, `"BWB"`, `"DWB"`, `"MBB"`, `"SB"`, `"SWB"`), `union = TRUE` for the union test, `B` replications and a `seed`. The result has a bootstrap p-value and no critical values; the decision uses the p-value.
 - **`kpss()`** reverses the hypotheses: rejection is evidence *against* stationarity. Critical values and p-value from the exact limiting distribution (eigenvalues of the Brownian-bridge covariance kernel and Imhof's formula).
 - **Long-run variance** (`pp()` and `kpss()`): `kernel = "bartlett"` (default), `"parzen"` or `"qs"`; `bandwidth = "short"` (default) or `"long"` (Schwert's rules), a number of autocovariances, `"andrews"` (Andrews 1991) or `"newey-west"` (Newey and West 1994). For KPSS, Hobijn, Franses and Ooms (2004) recommend `kernel = "qs", bandwidth = "newey-west"`.
 
@@ -185,28 +190,33 @@ kpss(lgdp, trend = "ct")     # KPSS: H0 is stationarity
 
 ```r
 tests <- list(adf(lgdp, trend = "ct"), pp(lgdp, trend = "ct"),
-              dfgls(lgdp, trend = "ct"), kpss(lgdp, trend = "ct"))
+              dfgls(lgdp, trend = "ct"), ng_perron(lgdp, trend = "ct"),
+              kpss(lgdp, trend = "ct"))
 res <- do.call(rbind, lapply(tests, glance))
 res[, c("test", "statistic_name", "statistic", "p_value", "reject", "lags", "nobs")]
 ```
 
 ```
-    test statistic_name statistic p_value reject lags nobs
-1    ADF           tau3   -1.4891  0.8312  FALSE    1  262
-2     PP          Z_tau   -1.1105  0.9243  FALSE    5  263
-3 DF-GLS        tau_GLS   -1.0193  0.8625  FALSE    1  262
-4   KPSS        eta_tau    0.7008      NA   TRUE    5  264
+       test statistic_name statistic p_value reject lags nobs
+1       ADF           tau3   -1.4891  0.8312  FALSE    1  262
+2        PP          Z_tau   -1.1105  0.9243  FALSE    5  263
+3    DF-GLS        tau_GLS   -1.0193  0.8625  FALSE    1  262
+4 Ng-Perron            MZt   -1.0664  0.8445  FALSE    1  262
+5      KPSS        eta_tau    0.7008  0.0000   TRUE    5  264
 ```
 
-All four point the same way for log GDP: the unit root is not rejected, and stationarity around a trend is rejected.
+All five point the same way for log GDP: the unit root is not rejected, and stationarity around a trend is rejected.
 
 ## Critical values and p-values
 
 | Statistic | Critical values | p-value |
 |:--|:--|:--|
 | $\tau$ (ADF), $Z_\tau$ (PP) | MacKinnon (2010) response surfaces at the effective $N$; MacKinnon (1996) without deterministic terms | MacKinnon (1996), finite-sample, same $N$ |
-| $\phi_1, \phi_2, \phi_3$ | Dickey and Fuller (1981), Enders' Table B: largest tabulated $T \le N$ | none |
-| DF-GLS | Own response surfaces in $(T, k)$ from a Monte Carlo simulation (code in `data-raw/`) | MacKinnon's (1996) method on the same surfaces |
+| $\phi_1, \phi_2, \phi_3$ | Own response surfaces in $(T, k)$ from a Monte Carlo simulation (code in `data-raw/`); they reproduce Dickey and Fuller's (1981) tables without lags | MacKinnon's (1996) method on the same surfaces |
+| $Z_\alpha$ (PP) | Own response surface for the Dickey–Fuller normalized bias, which has the same limit | same surface |
+| DF-GLS | Own response surfaces in $(T, k)$ from a Monte Carlo simulation | MacKinnon's (1996) method on the same surfaces |
+| Ng–Perron M tests, ERS $P_T$ | Own simulation, tabulated in $(T, k)$ and interpolated in $1/T$ | MacKinnon's (1996) method on the same quantiles |
+| Bootstrap (`boot_ur()`) | none | bootUR's bootstrap p-value |
 | KPSS | Exact limiting distribution (kernel eigenvalues, Imhof inversion) | same distribution |
 | Conditional and auxiliary t tests in strategies | Student t | Student t |
 
@@ -222,6 +232,9 @@ Every result records its source in `$calibration`, and warns when the sample is 
 | `pp(y, trend, kernel, bandwidth, level, var)` | Phillips–Perron $Z_\tau$ (and $Z_\alpha$) | `ur_test` |
 | `dfgls(y, trend, lags, max_lags, criterion, level, var)` | DF-GLS test | `ur_test` |
 | `kpss(y, trend, kernel, bandwidth, level, var)` | KPSS test of stationarity | `ur_test` |
+| `ng_perron(y, trend, lags, max_lags, criterion, statistic, level, var)` | Ng–Perron M tests | `ur_test` |
+| `ers_pt(y, trend, lags, max_lags, criterion, level, var)` | ERS point-optimal test | `ur_test` |
+| `boot_ur(y, trend, bootstrap, B, union, detrend, lags, max_lags, criterion, criterion_scale, seed, level, var)` | Bootstrap ADF or union test through bootUR | `ur_test` |
 | `simulate_df(T, R, trend, seed)` | Simulated Dickey–Fuller distribution, with `plot()` | `df_simulation` |
 | `tidy(x)`, `glance(x)` | Results as data frames | data frame |
 | `match_trend(trend)` | Canonical deterministic code from an alias | string |
