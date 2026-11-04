@@ -1,0 +1,3 @@
+# Keep test fixtures byte-identical on every platform (their checksums are
+# tested): no line-ending conversion on checkout, e.g. on Windows.
+inst/fixtures/** -text

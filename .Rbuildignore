@@ -4,3 +4,4 @@
 ^refs$
 ^data-raw$
 ^docs$
+^\.gitattributes$
