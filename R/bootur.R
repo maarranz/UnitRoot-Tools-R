@@ -134,6 +134,10 @@ boot_ur <- function(y, trend = "c", bootstrap = c("AWB", "BWB", "DWB", "MBB", "S
                  ifelse(grepl("^QD", lab), "GLS", "OLS"))
     stats::setNames(as.numeric(s[1, ]), nm)
   } else numeric()
+  # Sample metadata (checked against bootUR 1.0.5's source, audit of 0.3.0):
+  # the final regression is adf_cpp(y, p_opt, dc, QD, trim = TRUE,
+  # trim_ic = 0) in src/bootURfunctions.cpp, which keeps rows p + 1, ..., n - 1
+  # (0-based), i.e. t = k + 2, ..., T, so N = T - k - 1, as reported below.
   new_ur_test(
     method = if (union) sprintf("Bootstrap union test (%s)", bootUR_name(bootstrap))
              else sprintf("Bootstrap ADF test (%s, %s detrending)", bootUR_name(bootstrap), detrend),

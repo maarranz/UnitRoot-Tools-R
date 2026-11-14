@@ -371,7 +371,7 @@ decimal)</td>
 automatically. Building the vignette needs <a href="https://pandoc.org">pandoc</a>, which comes with RStudio; without
 it, leave out <code>build_vignettes = TRUE</code> and read the vignette
 <a href="vignette.html">here</a>. To install a specific version, add the
-tag: <code>&quot;maarranz/UnitRoot-Tools-R@v0.3.0&quot;</code>.</p>
+tag: <code>&quot;maarranz/UnitRoot-Tools-R@v0.3.1&quot;</code>.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(unitroottools)</span></code></pre></div>
 <h3 id="example-used-below">Example used below</h3>
 <p>The logarithm of U.S. real GDP, 1947Q1–2012Q4 (264 observations), the
@@ -468,12 +468,14 @@ first sample
 observations) or on rolling windows (<code>window = &quot;rolling&quot;</code>,
 width
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>max</mo><mrow><mo stretchy="true" form="prefix">(</mo><mn>10</mn><mi>s</mi><mo>,</mo><mn>40</mn><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\max(10s, 40)</annotation></semantics></math>),
-with the lags selected once on the full sample and kept fixed
-(<code>reselect = TRUE</code> selects them in each window). Each
-statistic is compared with the critical value for its own sample size;
-these are <strong>pointwise</strong> critical values, not valid for the
-minimum over windows (Banerjee, Lumsdaine and Stock 1992). It returns a
-data frame (start, end,
+with the lags selected once on the full sample and kept fixed, which
+uses later observations to set the lag order of early windows
+(<code>reselect = TRUE</code> selects them in each window, capped by
+<code>max_lags</code> if given). Each statistic is compared with the
+critical value for its own sample size; these are <strong>nominal
+pointwise references</strong> (one date chosen in advance, fixed lag
+order), not valid for the minimum over windows (Banerjee, Lumsdaine and
+Stock 1992). It returns a data frame (start, end,
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math>,
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>,
 statistic, critical value, p-value, decision) with <code>print()</code>

@@ -74,7 +74,7 @@ Three conventions hold throughout:
 remotes::install_github("maarranz/UnitRoot-Tools-R", build_vignettes = TRUE)
 ```
 
-Dependencies (`urca`, `generics`) are installed automatically. Building the vignette needs [pandoc](https://pandoc.org), which comes with RStudio; without it, leave out `build_vignettes = TRUE` and read the vignette [here](vignette.html). To install a specific version, add the tag: `"maarranz/UnitRoot-Tools-R@v0.3.0"`.
+Dependencies (`urca`, `generics`) are installed automatically. Building the vignette needs [pandoc](https://pandoc.org), which comes with RStudio; without it, leave out `build_vignettes = TRUE` and read the vignette [here](vignette.html). To install a specific version, add the tag: `"maarranz/UnitRoot-Tools-R@v0.3.1"`.
 
 ```r
 library(unitroottools)
@@ -143,7 +143,7 @@ adf(lgdp, trend = "ct", lags = 0)$warnings       # with k = 0: autocorrelated
 
 ## Recursive and rolling tests
 
-`recursive_adf()` computes the ADF statistic on samples with a fixed start and a moving end (`window = "recursive"`, first sample $\max(5s, 30)$ observations) or on rolling windows (`window = "rolling"`, width $\max(10s, 40)$), with the lags selected once on the full sample and kept fixed (`reselect = TRUE` selects them in each window). Each statistic is compared with the critical value for its own sample size; these are **pointwise** critical values, not valid for the minimum over windows (Banerjee, Lumsdaine and Stock 1992). It returns a data frame (start, end, $N$, $k$, statistic, critical value, p-value, decision) with `print()` and `plot()`.
+`recursive_adf()` computes the ADF statistic on samples with a fixed start and a moving end (`window = "recursive"`, first sample $\max(5s, 30)$ observations) or on rolling windows (`window = "rolling"`, width $\max(10s, 40)$), with the lags selected once on the full sample and kept fixed, which uses later observations to set the lag order of early windows (`reselect = TRUE` selects them in each window, capped by `max_lags` if given). Each statistic is compared with the critical value for its own sample size; these are **nominal pointwise references** (one date chosen in advance, fixed lag order), not valid for the minimum over windows (Banerjee, Lumsdaine and Stock 1992). It returns a data frame (start, end, $N$, $k$, statistic, critical value, p-value, decision) with `print()` and `plot()`.
 
 ```r
 plot(recursive_adf(lgdp, trend = "ct"))

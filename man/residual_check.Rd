@@ -36,8 +36,10 @@ frequency (needed for a plain vector that is not annual).}
 An object of class \code{ur_residual_check} (for a strategy, a list of
 them, of class \code{ur_residual_checks}), with \code{print()} and \code{plot()}
 methods. Its components include \code{correlogram} (data frame: lag, ac, pac,
-q, df, p_value) and \code{breusch_godfrey} (data frame: order, f, df1, df2,
-p_value_f, lm, p_value_lm).
+q, df, p_value), \code{breusch_godfrey} (data frame: order, f, df1, df2,
+p_value_f, lm, p_value_lm) and \code{white_noise}: \code{TRUE} if no
+Breusch-Godfrey F test rejects at the test's level, \code{FALSE} if one does,
+and \code{NA} when no Breusch-Godfrey test could be computed.
 }
 \description{
 Do the lagged differences of an ADF-type test leave white-noise residuals?

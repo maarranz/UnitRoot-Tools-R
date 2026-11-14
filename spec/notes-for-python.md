@@ -105,3 +105,20 @@ w = max(10s, 40); lags selected once on the full sample and fixed (option to
 re-select per window); each window's statistic against the MacKinnon
 critical value and p-value for its own N (maximal sample within the window);
 critical values labelled pointwise (Banerjee, Lumsdaine and Stock 1992).
+
+## Update (R 0.3.1): fixes from the audit of 0.3.0
+
+Points the Python implementation should copy:
+- KPSS: compute on y / max|y| (the statistic is invariant to units); refuse a
+  series as degenerate only when max|residual| <= 1e3 * machine epsilon after
+  that rescaling (and when y is identically zero). An absolute floor wrongly
+  refuses series in small units.
+- Recursive ADF with re-selection: the user's max_lags caps every window
+  (min(max_lags, the window's largest feasible order)); the default kmax of
+  each window comes from its size. With full-sample selection (default), say
+  that the lag order uses later data (look-ahead); call the critical values
+  nominal pointwise references.
+- Residual check: report "white noise" as unknown (None / NA) when no
+  Breusch-Godfrey order can be computed.
+- Refuse whole-number arguments above 1e6 (lags, frequency, window sizes)
+  before any arithmetic.

@@ -77,8 +77,8 @@ kpss_critical_values <- function(trend) {
 #' plug-in) or `"newey-west"` (Newey and West, 1994). Hobijn, Franses and Ooms
 #' (2004) recommend `kernel = "qs", bandwidth = "newey-west"` for this test.
 #'
-#' **Critical values and p-value** come from the limiting distribution, computed numerically
-#' of the statistic, computed numerically (the eigenvalues of the covariance
+#' **Critical values and p-value** come from the limiting distribution of
+#' the statistic, computed numerically (the eigenvalues of the covariance
 #' kernel of the Brownian bridge, and Imhof's inversion formula). The values
 #' tabulated by Kwiatkowski et al. (1992) were simulated and differ from
 #' these in the third decimal (e.g. 0.146 instead of 0.148 at 5% with a
@@ -127,10 +127,17 @@ kpss <- function(y, trend = "c", kernel = "bartlett", bandwidth = "short",
   kernel <- check_kernel(kernel)
   n <- length(y)
   t <- seq_len(n)
+  # KPSS does not depend on the units of the series: compute it on the
+  # series divided by its largest absolute value, so that neither the
+  # degeneracy check nor the sums of squares depend on the scale (no
+  # underflow for tiny units, no false "constant" for small ones)
+  scale <- max(abs(y))
+  if (scale > 0) y <- y / scale
   Z <- if (trend == "c") cbind(const = rep(1, n)) else cbind(const = 1, trend = t)
   fit <- qr_fit(Z, y)
   e <- fit$residuals
-  if (sqrt(mean(e^2)) <= 1e-10 * max(1, sqrt(mean(y^2)))) {
+  # degenerate when the residuals are rounding error relative to the series
+  if (scale == 0 || max(abs(e)) <= 1e3 * .Machine$double.eps) {
     stop("The residuals of the regression on the deterministic terms are zero: ",
          "the series is constant", if (trend == "ct") " or an exact linear trend", ". ",
          "KPSS is not defined.", call. = FALSE)

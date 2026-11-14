@@ -17,16 +17,24 @@
 #'
 #' **Lags.** By default the number of lagged differences is selected once,
 #' on the full sample (as in [adf()]), and kept fixed in every window, so that
-#' the statistic moves only because the data change. With `reselect = TRUE`
-#' it is selected again in each window.
+#' the statistic moves only because the data change. Note that this uses the
+#' whole sample: the lag order of an early window depends on later
+#' observations (look-ahead). With `reselect = TRUE` it is selected again in
+#' each window, using only that window's data (`max_lags`, if given, caps
+#' every window).
 #'
-#' **Critical values.** Each window's statistic is compared with the
-#' MacKinnon critical value for its own sample size, as in [adf()]. These are
-#' *pointwise* critical values: valid for a test at a date chosen in
-#' advance, not for the question "does the statistic cross the line at some
-#' date?". The minimum of the sequence has a different distribution, with
-#' larger critical values in absolute value (Banerjee, Lumsdaine and Stock
-#' 1992), so a few crossings are expected even under a unit root.
+#' **Critical values are nominal, pointwise references.** Each window's
+#' statistic is compared with the MacKinnon critical value for its own sample
+#' size, as in [adf()]. This is a reference for a test at a single date chosen
+#' in advance, and only approximately even then: the critical values are for
+#' a fixed lag order, so they do not account for the full-sample lag choice
+#' (look-ahead) or for re-selection in each window. They are not valid for
+#' the question "does the statistic cross the line at some date?": the
+#' minimum of the sequence has a different distribution, with larger
+#' critical values in absolute value (Banerjee, Lumsdaine and Stock 1992), so
+#' a few crossings are expected even under a unit root. Read the plot as a
+#' description of how the evidence evolves, not as a test of when it
+#' changed.
 #'
 #' @inheritParams adf
 #' @param window `"recursive"` (default) or `"rolling"`.
@@ -110,7 +118,10 @@ recursive_adf <- function(y, trend = "c", lags = NULL, max_lags = NULL,
   } else {
     sel <- lag_table(y, trend, max_lags, criterion)
     k_full <- sel$lags
-    lag_choice <- if (reselect) sprintf("%s, selected in each window", criterion)
+    lag_choice <- if (reselect) sprintf("%s, selected in each window (kmax %s)", criterion,
+                                        if (is.null(max_lags)) "from the window size"
+                                        else sprintf("= %d or the window's largest feasible order",
+                                                     check_order(max_lags, "max_lags")))
                   else sprintf("%s on the full sample (kmax = %d), fixed", criterion, sel$kmax)
   }
   p_reg <- c(n = 0L, c = 1L, ct = 2L)[[trend]] + 1L
@@ -126,7 +137,13 @@ recursive_adf <- function(y, trend = "c", lags = NULL, max_lags = NULL,
   lv <- format_level(level)
   rows <- lapply(seq_along(ends), function(i) {
     yi <- y[starts[i]:ends[i]]
-    k <- if (reselect) lag_table(yi, trend, NULL, criterion)$lags else k_full
+    k <- if (!reselect) k_full else {
+      # the user's max_lags caps every window (audit of 0.3.0); without it,
+      # the default kmax of the window, as for adf() on that subsample
+      kmax_w <- if (is.null(max_lags)) NULL
+                else min(check_order(max_lags, "max_lags"), max(0L, kmax_cap(length(yi), trend)))
+      lag_table(yi, trend, kmax_w, criterion)$lags
+    }
     r <- adf_regression(yi, trend, k, k + 2L)
     stat <- unname(r$tau)
     cv <- tau_critical_values(trend, r$nobs)[[lv]]
@@ -179,8 +196,10 @@ print.ur_recursive <- function(x, ...) {
                         fmt_time(x$end[utils::tail(which(x$reject), 1)], st$series$frequency)))
   cat("\n")
   for (n in st$notes) cat("  Note:", n, "\n")
-  cat("\n  Note: pointwise critical values are valid for a date chosen in advance,\n",
-      "  not for the minimum over dates (Banerjee, Lumsdaine and Stock 1992).\n\n", sep = "")
+  cat("\n  Note: the critical values are nominal pointwise references (one date chosen\n",
+      "  in advance, fixed lag order); they are not valid for the minimum over dates\n",
+      "  (Banerjee, Lumsdaine and Stock 1992).", if (!grepl("each window", st$lag_choice))
+        " The lag order uses the full sample (look-ahead).", "\n\n", sep = "")
   invisible(x)
 }
 
@@ -197,9 +216,11 @@ plot.ur_recursive <- function(x, ...) {
                   trend_labels[[st$trend]],
                   if (st$window == "recursive") sprintf("first sample %d obs.", st$size)
                   else sprintf("window %d obs.", st$size))
-  graphics::plot(t, x$statistic, type = "l", ylim = rng + c(-0.05, 0.22) * diff(rng),
-                 xlab = "End of the sample", ylab = "ADF statistic", main = main,
-                 cex.main = 0.95, ...)
+  args <- utils::modifyList(
+    list(x = t, y = x$statistic, type = "l", ylim = rng + c(-0.05, 0.22) * diff(rng),
+         xlab = "End of the sample", ylab = "ADF statistic", main = main, cex.main = 0.95),
+    list(...))
+  do.call(graphics::plot, args)
   graphics::lines(t, x$critical_value, lty = 2, col = "firebrick")
   if (any(x$reject)) {
     graphics::points(t[x$reject], x$statistic[x$reject], pch = 16, cex = 0.5, col = "firebrick")

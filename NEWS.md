@@ -1,3 +1,31 @@
+# unitroottools 0.3.1
+
+Fixes from the audit of 0.3.0 (14 November 2026).
+
+* `recursive_adf(reselect = TRUE)` ignored `max_lags` in the windows (it was
+  only used for the full-sample choice), so windows could use more lags than
+  requested. `max_lags` now caps every window (or the window's largest
+  feasible order, if smaller).
+* `kpss()` is invariant to the units of the series, as it should be: a
+  series multiplied by 1e-12 was wrongly refused as "constant" (the check had
+  an absolute floor), and very small or very large units could underflow.
+  The statistic is now computed on the series divided by its largest
+  absolute value; constant series and exact linear trends are still refused.
+* `recursive_adf()` describes its critical values as nominal pointwise
+  references, and says when the lag order was chosen on the full sample
+  (look-ahead: the lag order of an early window depends on later data).
+* `residual_check()`: `white_noise` is `NA` (not `TRUE`) when no
+  Breusch-Godfrey test could be computed, and the printed result says the
+  check is unavailable.
+* Whole-number arguments (lags, `max_lags`, `frequency`, window sizes, `B`)
+  above 1,000,000 are refused with a clear message, instead of overflowing
+  later (e.g. `dfgls(y, lags = .Machine$integer.max)`).
+* `plot()` of `recursive_adf()` and `residual_check()` results accepts `main`,
+  `xlab`, `ylab`, `ylim`, `type` and other graphical arguments, which override
+  the defaults (they used to clash with them).
+* `boot_ur()`: the reported sample (t = k + 2, ..., T) was checked against
+  bootUR's source; KPSS help text repeated part of a sentence (fixed).
+
 # unitroottools 0.3.0
 
 Diagnostics (spec D19, D20), prepared for the unit-root Labs of the course.

@@ -8,7 +8,7 @@ every step of the decision. Developed for *Applied Time Series Econometrics*
 (ATSE) at Universidad Carlos III de Madrid; companion to the Python package
 UnitRoot-Tools.
 
-> **Status: teaching version (v0.3.0).** The functions listed
+> **Status: teaching version (v0.3.1).** The functions listed
 > under [What it does](#what-it-does) are implemented and validated. Interfaces
 > may still change before version 1.0.
 
@@ -39,7 +39,7 @@ pak::pak("maarranz/UnitRoot-Tools-R")
 
 To update to the latest version, run the same command again. To install a
 fixed release instead, add its tag, e.g.
-`remotes::install_github("maarranz/UnitRoot-Tools-R@v0.3.0", build_vignettes = TRUE)`
+`remotes::install_github("maarranz/UnitRoot-Tools-R@v0.3.1", build_vignettes = TRUE)`
 (releases are listed in [NEWS.md](NEWS.md)). The package needs
 R 4.1 or later; its non-base dependencies,
 [urca](https://CRAN.R-project.org/package=urca) and

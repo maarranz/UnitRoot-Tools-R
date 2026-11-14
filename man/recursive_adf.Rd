@@ -88,16 +88,24 @@ and annual data. The floors keep each regression reasonably sized.
 
 \strong{Lags.} By default the number of lagged differences is selected once,
 on the full sample (as in \code{\link[=adf]{adf()}}), and kept fixed in every window, so that
-the statistic moves only because the data change. With \code{reselect = TRUE}
-it is selected again in each window.
+the statistic moves only because the data change. Note that this uses the
+whole sample: the lag order of an early window depends on later
+observations (look-ahead). With \code{reselect = TRUE} it is selected again in
+each window, using only that window's data (\code{max_lags}, if given, caps
+every window).
 
-\strong{Critical values.} Each window's statistic is compared with the
-MacKinnon critical value for its own sample size, as in \code{\link[=adf]{adf()}}. These are
-\emph{pointwise} critical values: valid for a test at a date chosen in
-advance, not for the question "does the statistic cross the line at some
-date?". The minimum of the sequence has a different distribution, with
-larger critical values in absolute value (Banerjee, Lumsdaine and Stock
-1992), so a few crossings are expected even under a unit root.
+\strong{Critical values are nominal, pointwise references.} Each window's
+statistic is compared with the MacKinnon critical value for its own sample
+size, as in \code{\link[=adf]{adf()}}. This is a reference for a test at a single date chosen
+in advance, and only approximately even then: the critical values are for
+a fixed lag order, so they do not account for the full-sample lag choice
+(look-ahead) or for re-selection in each window. They are not valid for
+the question "does the statistic cross the line at some date?": the
+minimum of the sequence has a different distribution, with larger
+critical values in absolute value (Banerjee, Lumsdaine and Stock 1992), so
+a few crossings are expected even under a unit root. Read the plot as a
+description of how the evidence evolves, not as a test of when it
+changed.
 }
 \examples{
 set.seed(1)

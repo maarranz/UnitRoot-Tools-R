@@ -53,8 +53,10 @@
 #' @return An object of class `ur_residual_check` (for a strategy, a list of
 #'   them, of class `ur_residual_checks`), with `print()` and `plot()`
 #'   methods. Its components include `correlogram` (data frame: lag, ac, pac,
-#'   q, df, p_value) and `breusch_godfrey` (data frame: order, f, df1, df2,
-#'   p_value_f, lm, p_value_lm).
+#'   q, df, p_value), `breusch_godfrey` (data frame: order, f, df1, df2,
+#'   p_value_f, lm, p_value_lm) and `white_noise`: `TRUE` if no
+#'   Breusch-Godfrey F test rejects at the test's level, `FALSE` if one does,
+#'   and `NA` when no Breusch-Godfrey test could be computed.
 #' @references
 #' Breusch, T. S. (1978). Testing for autocorrelation in dynamic linear
 #' models. *Australian Economic Papers*, 17, 334-355.
@@ -160,7 +162,9 @@ check_residuals <- function(e, X, k, level, series, lags, bg_orders, frequency, 
                  lags = H, level = level, residuals = e, X = X, series = series,
                  correlogram = correlogram,
                  breusch_godfrey = bg, notes = notes,
-                 white_noise = !any(bg$p_value_f < level)),
+                 # TRUE / FALSE from the Breusch-Godfrey tests; NA when none
+                 # could be computed (no completed diagnostic: audit of 0.3.0)
+                 white_noise = if (nrow(bg)) !any(bg$p_value_f < level) else NA),
             class = "ur_residual_check")
 }
 
@@ -220,7 +224,8 @@ print.ur_residual_check <- function(x, max_lags = NULL, ...) {
 
 residual_conclusion <- function(x) {
   bg <- x$breusch_godfrey
-  if (!nrow(bg)) return("No Breusch-Godfrey test could be computed.")
+  if (!nrow(bg)) return(paste("Residual check unavailable: no Breusch-Godfrey test could be",
+                             "computed (orders too large for the number of observations)."))
   bad <- bg[bg$p_value_f < x$level, , drop = FALSE]
   if (!nrow(bad)) {
     sprintf("No evidence of residual autocorrelation at the %s level (Breusch-Godfrey F).",
@@ -245,11 +250,13 @@ plot.ur_residual_check <- function(x, y, ...) {
   lim <- max(abs(c(cg$ac, cg$pac)), band) * 1.1
   for (which in c("ac", "pac")) {
     v <- cg[[which]]
-    graphics::plot(cg$lag, v, type = "h", lwd = 3, ylim = c(-lim, lim),
-                   xlab = "Lag", ylab = if (which == "ac") "ACF" else "PACF",
-                   main = if (which == "ac") paste("Residuals:", x$label) else "",
-                   col = ifelse(abs(v) > band, "firebrick", "grey30"),
-                   cex.main = 0.9, ...)
+    defaults <- list(x = cg$lag, y = v, type = "h", lwd = 3, ylim = c(-lim, lim),
+                     xlab = "Lag", ylab = if (which == "ac") "ACF" else "PACF",
+                     main = if (which == "ac") paste("Residuals:", x$label) else "",
+                     col = ifelse(abs(v) > band, "firebrick", "grey30"), cex.main = 0.9)
+    user <- list(...)
+    if (which == "pac") user$main <- NULL   # a custom title goes on the top panel only
+    do.call(graphics::plot, utils::modifyList(defaults, user))
     graphics::abline(h = 0)
     graphics::abline(h = c(-band, band), lty = 2, col = "steelblue")
   }

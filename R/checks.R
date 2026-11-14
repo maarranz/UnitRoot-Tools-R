@@ -4,18 +4,27 @@
 # functions, so that a value is either accepted exactly as given or rejected
 # with a clear message. Nothing is rounded, truncated or coerced silently.
 
-# A non-negative whole number (lag order, maximum lag order, bandwidth).
-# Returns it as an integer.
+# A non-negative whole number (lag order, maximum lag order, bandwidth,
+# frequency, window size, number of replications). Returns it as an integer.
+# Values above 1e6 are rejected: no lag order, frequency or window can be
+# that large for a series that fits in memory, and the bound keeps later
+# integer arithmetic (k + 3, 3s + 3, 10s) far from overflow (audit of 0.3.0).
 check_order <- function(x, name) {
   ok <- (is.numeric(x) && !is.logical(x)) && length(x) == 1L &&
-    !is.na(x) && is.finite(x) && x >= 0 && x == round(x) &&
-    x <= .Machine$integer.max
+    !is.na(x) && is.finite(x) && x >= 0 && x == round(x)
   if (!ok) {
     stop("`", name, "` must be a single non-negative whole number ",
          "(e.g. 0, 1, 2); got ", describe_value(x), ".", call. = FALSE)
   }
+  if (x > max_order) {
+    stop("`", name, "` = ", format(x, big.mark = ",", scientific = FALSE),
+         " is too large (at most ", format(max_order, big.mark = ",", scientific = FALSE), ").",
+         call. = FALSE)
+  }
   as.integer(x)
 }
+
+max_order <- 1e6
 
 # A single TRUE or FALSE.
 check_flag <- function(x, name) {
