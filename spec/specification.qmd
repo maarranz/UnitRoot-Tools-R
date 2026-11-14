@@ -220,13 +220,49 @@ $\phi_1$, $\phi_2$, $\phi_3$: own response surfaces in $(T, k)$ of the form of D
 
 ::: {.callout-important}
 **Decision D17 (settled 3 November 2026): bootstrap tests through bootUR.**
-`boot_ur()` calls `bootUR::boot_adf()` or `bootUR::boot_union()` (Smeekes and Wilms) and returns a `ur_test` with the bootstrap p-value and no critical values; the decision is taken from the p-value. bootUR is in Suggests. Only `lags = NULL` (selection) or 0 is accepted, because bootUR 1.0.5 fails with a fixed positive lag order. The package's own bootstrap engine is planned for v0.3.
+`boot_ur()` calls `bootUR::boot_adf()` or `bootUR::boot_union()` (Smeekes and Wilms) and returns a `ur_test` with the bootstrap p-value and no critical values; the decision is taken from the p-value. bootUR is in Suggests. Only `lags = NULL` (selection) or 0 is accepted, because bootUR 1.0.5 fails with a fixed positive lag order. The package's own bootstrap engine is planned for v0.4.
 :::
 
-# Bootstrap engine (v0.3, planned) {#sec-bootstrap}
+# Residual diagnostics (0.3.0) {#sec-residuals}
 
 ::: {.callout-important}
-**Decision D18 (settled 4 November 2026; to be implemented in v0.3): the package's own bootstrap.**
+**Decision D19 (settled 14 November 2026): checking that the test regression leaves white-noise residuals.**
+The ADF-type tests assume that $k$ lagged differences absorb the serial correlation of $\Delta y_t$. `residual_check()` checks this on the residuals $\hat e_t$ of the test regression over its effective sample ($N$ values).
+:::
+
+*Which tests.* The ADF regression (`adf()`, and every regression step of `ur_strategy()`); the DF-GLS regression (`dfgls()`); the regression of $\Delta\tilde y_t$ on $\tilde y_{t-1}$ and $k$ lagged differences behind $s^2_{AR}$ (`ng_perron()`, `ers_pt()`). Not Phillips–Perron or KPSS, whose regressions leave autocorrelated residuals by design (the kernel correction accounts for it): `residual_check()` stops with that explanation.
+
+*Frequency and lag grid.* $s$ is the number of observations per year, taken from the input (`ts`, zoo, xts, tsibble); a plain vector is still an ordered series, but has no frequency: it is treated as annual ($s = 1$) with a note, and `frequency` sets it. The correlogram uses lags $h = 1, \dots, H$ with $H = 3s + 3$ (15 quarterly, 39 monthly, 6 annual: three years plus three lags, a rule of thumb), capped at $\lfloor N/4 \rfloor$ with a note; `lags` sets $H$ (no cap).
+
+*Correlogram.* Autocorrelations of the demeaned residuals, $r_h = \sum_{t=h+1}^{N}(\hat e_t - \bar e)(\hat e_{t-h} - \bar e) / \sum_{t=1}^{N}(\hat e_t - \bar e)^2$ (as `stats::acf`; the residuals of regressions with a constant have mean zero, those of the GLS regressions need not); partial autocorrelations by the Durbin–Levinson recursion (as `stats::pacf`); approximate bands $\pm 1.96/\sqrt N$. Ljung–Box $Q(h) = N(N+2)\sum_{j=1}^{h} r_j^2/(N-j)$, with p-values from $\chi^2(h-k)$ for $h > k$ (none for $h \le k$), marked approximate: the regression contains lagged dependent variables, for which $Q$ has no exact justification. It is reported because it is the familiar statistic (EViews' correlogram).
+
+*Breusch–Godfrey.* The main test, valid with lagged dependent variables. Auxiliary regression of $\hat e_t$ on the test regression's regressors $X_t$ and $\hat e_{t-1}, \dots, \hat e_{t-m}$, with residuals before the start of the sample set to zero (as `lmtest::bgtest()`), at orders $m = s$ and $m = 3s + 3$ (4 and 15 quarterly; 12 and 39 monthly; 1 and 6 annual), or `bg_orders`. With $p$ the number of columns of $X$: $F = \dfrac{(\sum \hat e_t^2 - \mathrm{RSS}_a)/m}{\mathrm{RSS}_a/(N - p - m)} \sim F(m, N - p - m)$ (the main form, better behaved in small samples) and $LM = N R^2_a \sim \chi^2(m)$ (reported for comparison with EViews' "Obs*R-squared"). An order needs $N - p - m \ge 2$; larger orders are dropped with a note.
+
+*Reporting.* `residual_check()` returns an object with `print()` (the correlogram table: lag, AC, PAC, $Q$, p-value; then the Breusch–Godfrey table) and `plot()` (ACF and PACF panels with the bands). `summary()` of a test adds one line with the Breusch–Godfrey F p-values; the history of `ur_strategy()` gains a column with the F p-value at order $s$ for each regression step. When a Breusch–Godfrey p-value is below the test's level, the result carries a warning suggesting a larger `lags`.
+
+*Not included.* Raising $k$ automatically until the residuals pass. It is a lag-selection rule of its own (the final $k$ depends on a sequence of pre-tests), whose effect on the size of the unit-root test is unknown; it may come with the Monte Carlo tools (v0.5).
+
+# Recursive and rolling tests (0.3.0) {#sec-recursive}
+
+::: {.callout-important}
+**Decision D20 (settled 14 November 2026): recursive and rolling ADF statistics.**
+`recursive_adf()` computes the ADF statistic on a sequence of subsamples and plots it against time with the critical value.
+:::
+
+*Windows.* Recursive: observations $1, \dots, e$ for $e = n_0, \dots, T$ (fixed start, moving end). Rolling: $e - w + 1, \dots, e$ for $e = w, \dots, T$. Defaults, in observations: $n_0 = \max(5s, 30)$ and $w = \max(10s, 40)$ (60 and 120 for monthly data, 30 and 40 for quarterly and annual), both adjustable; the floors keep each regression reasonably sized when the frequency is low. A window too small for the regression is an error.
+
+*Lags.* By default $k$ is selected once, on the full sample, with the conventions of `adf()` (criterion, $k_{\max}$, D3, D7), and kept fixed in every window, so that the statistic moves only because the data change. `reselect = TRUE` selects $k$ again in each window ($k_{\max}$ from the window size).
+
+*Each window.* The ADF regression with the maximal sample of that window (D1); statistic, $N$, critical value at `level` and p-value as in `adf()` (D4, D8), i.e. for the window's own sample size.
+
+*Interpretation.* The critical values are pointwise: valid for a test at a given date chosen in advance, not for the question "does the statistic cross the line at some date?". The extreme of the sequence has a different distribution, with larger critical values (Banerjee, Lumsdaine and Stock 1992). The plot and the help label the line "pointwise critical value" and say so.
+
+*Output.* A data frame (class `ur_recursive`) with, for each window: start and end (time points), $N$, $k$, statistic, critical value, p-value and decision; `print()` summarises it and `plot()` draws the statistic against the end date with the critical-value line.
+
+# Bootstrap engine (v0.4, planned) {#sec-bootstrap}
+
+::: {.callout-important}
+**Decision D18 (settled 4 November 2026; to be implemented in v0.4): the package's own bootstrap.**
 A bootstrap that can resample under the unit-root null and re-run *any* test of the package, with its own conventions, and a whole specification strategy. bootUR (D17) remains available for its own tests; this engine covers what it cannot do: the package's statistics and lag conventions (Perron–Qu MAIC, maximal sample), the GLS-based tests, PP, and strategies.
 :::
 
@@ -263,7 +299,7 @@ with "extreme" in the test's tail. Defaults: $B = 999$; `seed` for reproducibili
 
 ## Strategies
 
-For a strategy the outcome is not a statistic but a terminal branch and a conclusion, so the bootstrap estimates *how the procedure behaves under the unit root* rather than a p-value of a statistic. Bootstrap series are generated under two nulls: with drift ($\delta = \hat\mu$, the least favourable case for the Dolado–Enders path, whose $\phi$ steps concern the drift) and without ($\delta = 0$). On each series the whole `ur_strategy()` is run with the same arguments (every pre-test and branch, lags as above). Reported under each null: the frequency with which the procedure rejects the unit root (its bootstrap size at the nominal levels of its steps) and the frequency of each terminal branch. Two items follow in v0.4, both needing critical values at any level (not only 1, 5 and 10%): a *procedure p-value* for the observed series, defined as the bootstrap rejection probability of the procedure at $\hat\alpha$, the smallest common step level at which it rejects the unit root on the data (to be checked for branching: rejection at $\alpha$ need not imply rejection at every larger level); and calibrating the levels of the steps so that the procedure has a given size.
+For a strategy the outcome is not a statistic but a terminal branch and a conclusion, so the bootstrap estimates *how the procedure behaves under the unit root* rather than a p-value of a statistic. Bootstrap series are generated under two nulls: with drift ($\delta = \hat\mu$, the least favourable case for the Dolado–Enders path, whose $\phi$ steps concern the drift) and without ($\delta = 0$). On each series the whole `ur_strategy()` is run with the same arguments (every pre-test and branch, lags as above). Reported under each null: the frequency with which the procedure rejects the unit root (its bootstrap size at the nominal levels of its steps) and the frequency of each terminal branch. Two items follow in v0.5, both needing critical values at any level (not only 1, 5 and 10%): a *procedure p-value* for the observed series, defined as the bootstrap rejection probability of the procedure at $\hat\alpha$, the smallest common step level at which it rejects the unit root on the data (to be checked for branching: rejection at $\alpha$ need not imply rejection at every larger level); and calibrating the levels of the steps so that the procedure has a given size.
 
 ## Scope and validation
 
@@ -294,7 +330,8 @@ Every test returns an object of class `ur_test` (R) / `URTestResult` (Python) wi
 | `other_critical_values` | named list | Optional: critical values for entries of `other_statistics` (same format as `critical_values`), each with attributes `source`, `tail` (`"upper"` by default, or `"lower"`) and, when available, `p_value` |
 | `engine` | string | e.g. `"internal 0.1.0"`, `"urca 1.3-4"` |
 | `warnings` | strings | Small-sample and approximation warnings |
-| `regression` | record or null | Fitted regression (coefficients, standard errors, RSS, residuals); may be omitted for speed |
+| `regression` | record or null | Fitted test regression: coefficients with standard errors, RSS, degrees of freedom, and (since 0.3.0) the residuals and the regressor matrix over the effective sample (`sample`), so that the residuals can be checked (D19); may be omitted for speed |
+| `series` | record | Since 0.3.0: the series' name, its frequency $s$ (observations per year; missing for a plain vector) and the time point of each observation (dates, or $1, \dots, T$) |
 | `call` | language | The call (R only) |
 
 Methods (R): `print`, `summary`, `tidy` and `glance` (Decision D10). `tidy()` returns one row per statistic (the test statistic and every entry of `other_statistics`), with its critical value at `level`, p-value and decision; `glance()` returns one row describing the test (method, trend, lags, sample, calibration source, engine). The generics come from the lightweight `generics` package, so broom is not required but works when loaded. `print` states the null hypothesis, statistic, critical values and their source, and the decision in words; `summary` adds the calibration details, accompanying statistics, lag-selection table and test regression.
@@ -392,7 +429,7 @@ Rules:
 **Case 3 (optional, experimental):** regression `c` with a non-zero drift under the null, where the $t$ statistic on $b$ is asymptotically $N(0,1)$ (West 1988). Available only as `inference = "west_normal"`. The result reports the estimated drift relative to its standard error and warns when that ratio is small, since the normal approximation is then poor.
 
 ::: {.callout-important}
-**Decision D6 (settled):** Case 3 is deferred to the specification-uncertainty phase (v0.4), where it is introduced together with the Monte Carlo harness (which can show how the normal approximation degrades as the drift shrinks). The warning threshold is set then.
+**Decision D6 (settled):** Case 3 is deferred to the specification-uncertainty phase (v0.5), where it is introduced together with the Monte Carlo harness (which can show how the normal approximation degrades as the drift shrinks). The warning threshold is set then.
 :::
 
 # Validation standard {#sec-validation}
@@ -438,7 +475,7 @@ Checked against the urca 1.3-4 reference documentation. Each limitation is the d
 | D3 | Default $k_{\max}$ | $\min\{\lfloor 12(T/100)^{1/4}\rfloor, \lfloor (T-4-d)/2\rfloor\}$, warning when capped | Revised 3 Nov |
 | D4 | $\tau$ critical values | MacKinnon (2010) response surfaces | Settled |
 | D5 | Conditional tests in strategies | Student-$t$, lower tail for $b$ | Settled |
-| D6 | Hamilton Case 3 | Deferred to v0.4 (with the Monte Carlo harness) | Settled |
+| D6 | Hamilton Case 3 | Deferred to v0.5 (with the Monte Carlo harness) | Settled |
 | D7 | Regression behind plain AIC/BIC | The ADF regression with its deterministic terms; detrended version as documented alternative | Settled 3 Nov |
 | D8 | $\tau$ p-values | MacKinnon (1996) at the effective $N$; decision from critical values | Settled 3 Nov |
 | D9 | Lag selection for GLS-based tests | Perron–Qu (2007): MAIC on OLS-detrended series, final statistic GLS | Settled 3 Nov |
@@ -450,19 +487,25 @@ Checked against the urca 1.3-4 reference documentation. Each limitation is the d
 | D15 | Ng–Perron M tests and ERS $P_T$ | GLS detrending, Perron–Qu lags, AR spectral density; own simulation in $(T, k)$, tabulated and interpolated in $1/T$ | Settled 4 Nov |
 | D16 | $\phi$ statistics and PP's $Z_\alpha$ | Own response surfaces in $(T, k)$ for $\phi_1, \phi_2, \phi_3$ (replacing the Dickey–Fuller tables) and for the normalized bias $n\hat b$ | Settled 3 Nov |
 | D17 | Bootstrap tests | Adapter to bootUR (`boot_ur()`): ADF and union tests; p-value only | Settled 3 Nov |
-| D18 | Own bootstrap engine | Null imposed on $\Delta y$; sieve, wild sieve, stationary and moving block schemes; sieve order by AIC, fixed across replications; test lags re-selected (or fixed) as on the data; strategies under nulls with and without drift (rejection and branch frequencies); no KPSS | Settled 4 Nov; v0.3 |
+| D19 | Residual diagnostics | Correlogram (ACF, PACF, Ljung–Box with $h-k$ df) up to $3s+3$ lags (capped at $N/4$); Breusch–Godfrey F (main) and LM at orders $s$ and $3s+3$; reported in `summary()` and strategy histories; no automatic increase of $k$ | Settled 14 Nov; 0.3.0 |
+| D20 | Recursive and rolling ADF | $k$ selected once on the full sample and fixed (re-selection optional); windows of at least $\max(5s, 30)$ (recursive) or $\max(10s, 40)$ (rolling) observations; pointwise critical values, labelled as such | Settled 14 Nov; 0.3.0 |
+| D18 | Own bootstrap engine | Null imposed on $\Delta y$; sieve, wild sieve, stationary and moving block schemes; sieve order by AIC, fixed across replications; test lags re-selected (or fixed) as on the data; strategies under nulls with and without drift (rejection and branch frequencies); no KPSS | Settled 4 Nov; v0.4 |
 
 **Known divergences of the Python implementation (to be resolved there; details in `notes-for-python.md`):** DF-GLS critical values from ARCH depend only on $N = T-k-1$ and are conservative when lags are used (D11); asymptotic MacKinnon (1994) p-values (D8); default $k_{\max}$ uses the ceiling, and its cap allows one residual degree of freedom instead of two (D3); plain AIC/BIC from the detrended regression (D7, admissible as an alternative). The Python implementation has no Hamilton strategy yet.
 
 # References
 
+- Banerjee, A., Lumsdaine, R. L. and Stock, J. H. (1992). Recursive and sequential tests of the unit-root and trend-break hypotheses: theory and international evidence. *Journal of Business & Economic Statistics*, 10, 271–287.
+- Breusch, T. S. (1978). Testing for autocorrelation in dynamic linear models. *Australian Economic Papers*, 17, 334–355.
 - Chang, Y. and Park, J. Y. (2003). A sieve bootstrap for the test of a unit root. *Journal of Time Series Analysis*, 24, 379–400.
 - Dickey, D. A. and Fuller, W. A. (1981). Likelihood ratio statistics for autoregressive time series with a unit root. *Econometrica*, 49, 1057–1072.
 - Dolado, J. J., Jenkinson, T. and Sosvilla-Rivero, S. (1990). Cointegration and unit roots. *Journal of Economic Surveys*, 4, 249–273.
 - Elliott, G., Rothenberg, T. J. and Stock, J. H. (1996). Efficient tests for an autoregressive unit root. *Econometrica*, 64, 813–836.
 - Enders, W. *Supplementary Manual to accompany Applied Econometric Time Series*, 4th ed., Section 4.4 and Table B.
+- Godfrey, L. G. (1978). Testing against general autoregressive and moving average error models when the regressors include lagged dependent variables. *Econometrica*, 46, 1293–1301.
 - Hamilton, J. D. (1994). *Time Series Analysis*. Princeton University Press, ch. 17.
 - Künsch, H. R. (1989). The jackknife and the bootstrap for general stationary observations. *Annals of Statistics*, 17, 1217–1241.
+- Ljung, G. M. and Box, G. E. P. (1978). On a measure of lack of fit in time series models. *Biometrika*, 65, 297–303.
 - MacKinnon, J. G. (1996). Numerical distribution functions for unit root and cointegration tests. *Journal of Applied Econometrics*, 11, 601–618.
 - MacKinnon, J. G. (2010). Critical values for cointegration tests. Queen's Economics Department Working Paper 1227.
 - Ng, S. and Perron, P. (2001). Lag length selection and the construction of unit root tests with good size and power. *Econometrica*, 69, 1519–1554.

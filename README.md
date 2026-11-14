@@ -131,9 +131,10 @@ Details that matter in practice:
 
 | Phase | Content |
 |---|---|
-| v0.3: bootstrap | Own bootstrap engine (sieve, wild, block and dependent wild schemes), able to bootstrap any statistic, including a whole testing strategy |
-| v0.4: specification uncertainty | Monte Carlo tools (size, power, branch frequencies); union-of-rejections test; bootstrap-calibrated strategies; Hamilton's Case 3 (drift under the null), introduced with the Monte Carlo tools |
-| v0.5: robustness | Unit-root tests robust to additive outliers; tests allowing for structural breaks |
+| v0.3: diagnostics | Residual checks of the test regressions (correlogram, Ljung–Box, Breusch–Godfrey); recursive and rolling ADF statistics with plots |
+| v0.4: bootstrap | Own bootstrap engine (sieve, wild sieve, stationary and moving block schemes), able to bootstrap any statistic, including a whole testing strategy |
+| v0.5: specification uncertainty | Monte Carlo tools (size, power, branch frequencies); union-of-rejections test; bootstrap-calibrated strategies; Hamilton's Case 3 (drift under the null), introduced with the Monte Carlo tools |
+| v0.6: robustness | Unit-root tests robust to additive outliers; tests allowing for structural breaks |
 
 ## Specification
 
