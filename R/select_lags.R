@@ -61,10 +61,15 @@ kmax_cap <- function(n, trend) {
 select_lags <- function(y, trend = "c", max_lags = NULL,
                         criterion = c("MAIC", "AIC", "BIC", "MBIC"),
                         var = NULL) {
-  criterion <- match.arg(criterion)
+  criterion <- match_criterion(criterion)
+  series_nm <- series_name(substitute(y))
+  y_input <- y
   y <- check_series(y, var = var)
+  series <- series_info(y_input, var, length(y), series_nm)
   trend <- match_trend(trend)
-  lag_table(y, trend, max_lags, criterion)
+  out <- lag_table(y, trend, max_lags, criterion)
+  out$series <- series
+  out
 }
 
 # Internal version on a validated numeric series.
@@ -134,8 +139,8 @@ ols_detrend <- function(y, trend) {
 print.ur_lags <- function(x, ...) {
   cat(sprintf("Lag selection for the ADF regression (%s)\n\n", x$criterion))
   cat(sprintf("  Deterministics: %s\n", trend_labels[[x$trend]]))
-  cat(sprintf("  Common sample:  N = %d (t = %d, ..., %d), kmax = %d\n",
-              x$nobs, x$sample[1], x$sample[2], x$kmax))
+  cat(sprintf("  Common sample:  %s, kmax = %d\n",
+              sample_text(x$nobs, x$sample, x$series), x$kmax))
   cat(sprintf("  MAIC/MBIC detrending: %s\n\n", x$detrending))
   tab <- x$table
   mark <- ifelse(tab$k == x$lags, "  <-", "")

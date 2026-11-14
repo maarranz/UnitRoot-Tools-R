@@ -365,8 +365,7 @@ print.ur_test <- function(x, ...) {
   cat(sprintf("  Deterministics: %s\n", trend_labels[[x$trend]]))
   ll <- lags_line(x)
   if (!is.null(ll)) cat("  ", ll, "\n", sep = "")
-  cat(sprintf("  Effective sample: N = %d (t = %d, ..., %d)\n\n",
-              x$nobs, x$sample[1], x$sample[2]))
+  cat(sprintf("  Effective sample: %s\n\n", sample_text(x$nobs, x$sample, x$series)))
   cat(sprintf("  Statistic:        %s\n", fmt_num(x$statistic)))
   cat(sprintf("  Critical values:  %s\n",
               if (length(x$critical_values)) fmt_cvs(x$critical_values)

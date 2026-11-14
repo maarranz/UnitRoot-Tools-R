@@ -197,7 +197,7 @@ ng_perron <- function(y, trend = "c", lags = NULL, max_lags = NULL,
                       statistic = c("MZt", "MZa", "MSB", "MPT"),
                       level = 0.05, var = NULL) {
   call <- match.call()
-  criterion <- match.arg(criterion)
+  criterion <- match_criterion(criterion)
   statistic <- match.arg(statistic)
   check_level(level)
   series_nm <- series_name(substitute(y))
@@ -242,7 +242,7 @@ ers_pt <- function(y, trend = "c", lags = NULL, max_lags = NULL,
                    criterion = c("MAIC", "AIC", "BIC", "MBIC"),
                    level = 0.05, var = NULL) {
   call <- match.call()
-  criterion <- match.arg(criterion)
+  criterion <- match_criterion(criterion)
   check_level(level)
   series_nm <- series_name(substitute(y))
   y_input <- y
@@ -308,7 +308,7 @@ dfgls <- function(y, trend = "c", lags = NULL, max_lags = NULL,
                   criterion = c("MAIC", "AIC", "BIC", "MBIC"),
                   level = 0.05, var = NULL) {
   call <- match.call()
-  criterion <- match.arg(criterion)
+  criterion <- match_criterion(criterion)
   check_level(level)
   series_nm <- series_name(substitute(y))
   y_input <- y

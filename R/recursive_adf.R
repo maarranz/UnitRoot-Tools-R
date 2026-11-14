@@ -68,7 +68,7 @@ recursive_adf <- function(y, trend = "c", lags = NULL, max_lags = NULL,
                           min_size = NULL, width = NULL, reselect = FALSE,
                           frequency = NULL, level = 0.05, var = NULL) {
   call <- match.call()
-  criterion <- match.arg(criterion)
+  criterion <- match_criterion(criterion)
   window <- match.arg(window)
   check_level(level)
   check_flag(reselect, "reselect")
@@ -163,21 +163,66 @@ recursive_adf <- function(y, trend = "c", lags = NULL, max_lags = NULL,
 }
 
 # Time points for printing: dates as they are; ts times (decimal years) as
-# "2004-12" (monthly) or "2004 Q4" (quarterly).
+# "2004-12" (monthly) or "2004 Q4" (quarterly); annual ts times as years.
 fmt_time <- function(v, s = NA) {
-  if (inherits(v, c("Date", "POSIXt"))) return(format(v))
+  if (inherits(v, c("Date", "POSIXt"))) {
+    d <- as.Date(v)
+    if (isTRUE(s == 12)) return(format(d, "%Y-%m"))
+    if (isTRUE(s == 4)) return(paste0(format(d, "%Y"), " Q", (as.integer(format(d, "%m")) - 1L) %/% 3L + 1L))
+    if (isTRUE(s == 1)) return(format(d, "%Y"))
+    return(format(v))
+  }
   if (isTRUE(s %in% c(4, 12)) && is.numeric(v)) {
     yr <- floor(v + 1e-8)
     per <- round((v - yr) * s) + 1
     return(if (s == 12) sprintf("%d-%02d", as.integer(yr), as.integer(per))
            else sprintf("%d Q%d", as.integer(yr), as.integer(per)))
   }
+  if (isTRUE(s == 1) && is.numeric(v) && all(v == round(v))) return(format(as.integer(v)))
   format(v)
+}
+
+# "N = 780, 1961-01 to 2025-12 (t = 13, ..., 792)" when the series has time
+# points other than 1..T; "N = 780 (t = 13, ..., 792)" otherwise.
+sample_text <- function(nobs, sample, series) {
+  idx <- sprintf("t = %d, ..., %d", sample[1], sample[2])
+  tm <- series$time
+  dated <- !is.null(tm) && length(tm) >= sample[2] &&
+    !(is.numeric(tm) && !inherits(tm, c("Date", "POSIXt")) && identical(as.numeric(tm), as.numeric(seq_along(tm))))
+  if (!dated) return(sprintf("N = %d (%s)", nobs, idx))
+  sprintf("N = %d, %s to %s (%s)", nobs, fmt_time(tm[sample[1]], series$frequency),
+          fmt_time(tm[sample[2]], series$frequency), idx)
+}
+
+recursive_columns <- c("start", "end", "nobs", "lags", "statistic",
+                       "critical_value", "p_value", "reject")
+
+# Subsetting keeps the class and the settings when the result still has all
+# the columns (e.g. x[x$reject, ]), and returns a plain data frame otherwise
+# (e.g. x[, c("end", "statistic")]), so that print() and plot() always work.
+#' @export
+`[.ur_recursive` <- function(x, ...) {
+  st <- attr(x, "settings")
+  out <- NextMethod()
+  if (is.data.frame(out) && all(recursive_columns %in% names(out)) && !is.null(st)) {
+    attr(out, "settings") <- st
+    class(out) <- c("ur_recursive", "data.frame")
+  } else if (is.data.frame(out)) {
+    attr(out, "settings") <- NULL
+    class(out) <- "data.frame"
+  }
+  out
 }
 
 #' @export
 print.ur_recursive <- function(x, ...) {
   st <- attr(x, "settings")
+  # anything that lost its settings or columns (e.g. after other packages'
+  # verbs) prints as the data frame it is
+  if (is.null(st) || !all(recursive_columns %in% names(x)) || nrow(x) == 0L) {
+    print(as.data.frame(unclass_recursive(x)), ...)
+    return(invisible(x))
+  }
   cat(sprintf("\n%s ADF test (%s)\n", if (st$window == "recursive") "Recursive" else "Rolling",
               trend_labels[[st$trend]]))
   if (!is.null(st$series$name) && !is.na(st$series$name)) cat("  Series:", st$series$name, "\n")
@@ -203,12 +248,22 @@ print.ur_recursive <- function(x, ...) {
   invisible(x)
 }
 
+unclass_recursive <- function(x) {
+  attr(x, "settings") <- NULL
+  class(x) <- "data.frame"
+  x
+}
+
 #' @rdname recursive_adf
 #' @param x A result of `recursive_adf()`.
 #' @param ... Graphical parameters passed to [plot()].
 #' @export
 plot.ur_recursive <- function(x, ...) {
   st <- attr(x, "settings")
+  if (is.null(st) || !all(recursive_columns %in% names(x)) || nrow(x) == 0L) {
+    stop("This object no longer has the settings or columns of a recursive_adf() ",
+         "result; plot the columns directly.", call. = FALSE)
+  }
   t <- x$end
   rng <- range(c(x$statistic, x$critical_value))
   main <- sprintf("%s ADF statistic (%s), %s",

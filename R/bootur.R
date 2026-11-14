@@ -90,7 +90,7 @@ boot_ur <- function(y, trend = "c", bootstrap = c("AWB", "BWB", "DWB", "MBB", "S
   }
   bootstrap <- match.arg(bootstrap)
   detrend <- match.arg(detrend)
-  criterion <- match.arg(criterion)
+  criterion <- match_criterion(criterion)
   check_level(level)
   check_flag(union, "union")
   check_flag(criterion_scale, "criterion_scale")

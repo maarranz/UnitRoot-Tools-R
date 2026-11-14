@@ -54,3 +54,17 @@ describe_value <- function(x) {
   if (is.character(x)) return(sprintf("\"%s\"", x))
   format(x)
 }
+
+# Information criterion for lag selection, in any case ("aic", "Maic"...):
+# students type lower case. The default (the whole vector) gives "MAIC".
+criterion_choices <- c("MAIC", "AIC", "BIC", "MBIC")
+match_criterion <- function(criterion) {
+  if (is.character(criterion) && length(criterion) == 1L && !is.na(criterion)) {
+    up <- toupper(criterion)
+    if (up %in% criterion_choices) return(up)
+  } else if (identical(criterion, criterion_choices)) {
+    return("MAIC")
+  }
+  stop("`criterion` must be one of \"MAIC\", \"AIC\", \"BIC\", \"MBIC\" (any case); got ",
+       describe_value(criterion), ".", call. = FALSE)
+}

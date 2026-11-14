@@ -282,7 +282,7 @@ ur_strategy <- function(y, strategy = c("original", "conservative", "hamilton"),
                         level = 0.05, var = NULL) {
   call <- match.call()
   strategy <- match.arg(strategy)
-  criterion <- match.arg(criterion)
+  criterion <- match_criterion(criterion)
   final_sample <- match.arg(final_sample)
   check_level(level)
   check_flag(allow_no_constant, "allow_no_constant")
@@ -376,6 +376,7 @@ ur_strategy <- function(y, strategy = c("original", "conservative", "hamilton"),
     history = history,
     residual_checks = checks,
     warnings = warnings,
+    series = series,
     engine = engine_internal(),
     call = call
   ), class = "ur_strategy")
@@ -449,8 +450,8 @@ print.ur_strategy <- function(x, ...) {
                 x$lags, ls$method, as.integer(ls$kmax), ls$selected_under))
     for (note in ls$notes) cat("  Note: ", note, "\n", sep = "")
   }
-  cat(sprintf("  Sample (all regressions): N = %d (t = %d, ..., %d)   Level: %s\n\n",
-              x$nobs, x$sample[1], x$sample[2], fmt_level(x$settings$level)))
+  cat(sprintf("  Sample (all regressions): %s   Level: %s\n\n",
+              sample_text(x$nobs, x$sample, x$series), fmt_level(x$settings$level)))
   h <- x$history
   has_bg <- !is.null(h$bg_p_value)
   cat(sprintf("  %-4s %-6s %-10s %9s %9s %8s %8s  %-10s  %s\n", "Step", "Regr.",

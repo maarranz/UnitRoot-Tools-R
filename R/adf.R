@@ -70,7 +70,7 @@ adf <- function(y, trend = "c", lags = NULL, max_lags = NULL,
                 final_sample = c("maximal", "common"),
                 level = 0.05, var = NULL) {
   call <- match.call()
-  criterion <- match.arg(criterion)
+  criterion <- match_criterion(criterion)
   final_sample <- match.arg(final_sample)
   check_level(level)
   series_nm <- series_name(substitute(y))

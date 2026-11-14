@@ -57,7 +57,7 @@ test_that("MAIC and MBIC match an independent Ng-Perron computation", {
 test_that("criteria, input checks and printing", {
   y <- sim_ar_rw()
   expect_identical(select_lags(y, criterion = "BIC")$criterion, "BIC")
-  expect_error(select_lags(y, criterion = "HQ"), "should be one of")
+  expect_error(select_lags(y, criterion = "HQ"), "must be one of")
   expect_error(select_lags(y[1:10], max_lags = 8), "too large for T = 10")
   expect_error(select_lags(y[1:4], trend = "ct"), "too short")
   expect_error(select_lags(y, max_lags = -1), "non-negative")

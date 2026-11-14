@@ -370,7 +370,7 @@ The <code>trend</code> argument chooses the deterministic terms:
 <span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co">#&gt;   H1: stationary around a linear trend</span></span>
 <span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co">#&gt;   Deterministics: constant and linear trend</span></span>
 <span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="co">#&gt;   Lags: 1 (fixed)</span></span>
-<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co">#&gt;   Effective sample: N = 262 (t = 3, ..., 264)</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co">#&gt;   Effective sample: N = 262, 1947 Q3 to 2012 Q4 (t = 3, ..., 264)</span></span>
 <span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co">#&gt;   Statistic:        -1.489</span></span>
 <span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="co">#&gt;   Critical values:  1%: -3.994   5%: -3.427   10%: -3.137</span></span>
@@ -396,7 +396,7 @@ statistics, with their own critical values, and the test regression:</p>
 <span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt;   H1: stationary around a linear trend</span></span>
 <span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt;   Deterministics: constant and linear trend</span></span>
 <span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt;   Lags: 1 (fixed)</span></span>
-<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt;   Effective sample: N = 262 (t = 3, ..., 264)</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt;   Effective sample: N = 262, 1947 Q3 to 2012 Q4 (t = 3, ..., 264)</span></span>
 <span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt;   Statistic:        -1.489</span></span>
 <span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt;   Critical values:  1%: -3.994   5%: -3.427   10%: -3.137</span></span>
@@ -426,7 +426,7 @@ statistics, with their own critical values, and the test regression:</p>
 <span id="cb3-35"><a href="#cb3-35" tabindex="-1"></a><span class="co">#&gt; y_lag1  -0.0156305  1.050e-02  -1.489</span></span>
 <span id="cb3-36"><a href="#cb3-36" tabindex="-1"></a><span class="co">#&gt; dy_lag1  0.3662619  5.848e-02   6.263</span></span>
 <span id="cb3-37"><a href="#cb3-37" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb3-38"><a href="#cb3-38" tabindex="-1"></a><span class="co">#&gt; Engine: internal 0.3.1</span></span></code></pre></div>
+<span id="cb3-38"><a href="#cb3-38" tabindex="-1"></a><span class="co">#&gt; Engine: internal 0.3.2</span></span></code></pre></div>
 </div>
 <div id="choosing-the-number-of-lags" class="section level2">
 <h2>2. Choosing the number of lags</h2>
@@ -443,7 +443,7 @@ not only the winner:</p>
 <span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&gt; Lag selection for the ADF regression (MAIC)</span></span>
 <span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt;   Deterministics: constant and linear trend</span></span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt;   Common sample:  N = 248 (t = 17, ..., 264), kmax = 15</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt;   Common sample:  N = 248, 1951 Q1 to 2012 Q4 (t = 17, ..., 264), kmax = 15</span></span>
 <span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt;   MAIC/MBIC detrending: OLS</span></span>
 <span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt;   k     AIC     BIC    MAIC    MBIC     </span></span>
@@ -478,7 +478,7 @@ selection table instead.</p>
 <span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt;   H1: stationary around a linear trend</span></span>
 <span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt;   Deterministics: constant and linear trend</span></span>
 <span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt;   Lags: 1 (MAIC, kmax = 15)</span></span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt;   Effective sample: N = 262 (t = 3, ..., 264)</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt;   Effective sample: N = 262, 1947 Q3 to 2012 Q4 (t = 3, ..., 264)</span></span>
 <span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt;   Statistic:        -1.489</span></span>
 <span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt;   Critical values:  1%: -3.994   5%: -3.427   10%: -3.137</span></span>
@@ -580,7 +580,7 @@ and tests its way down:</p>
 <span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="co">#&gt; Specification strategy: Original (Dolado-Jenkinson-Sosvilla-Rivero / Enders)</span></span>
 <span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co">#&gt;   Lags: 1 (fixed)</span></span>
-<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co">#&gt;   Sample (all regressions): N = 262 (t = 3, ..., 264)   Level: 5%</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co">#&gt;   Sample (all regressions): N = 262, 1947 Q3 to 2012 Q4 (t = 3, ..., 264)   Level: 5%</span></span>
 <span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co">#&gt;   Step Regr.  Test       Statistic Crit.val.  p-value Resid. p  Decision    Next</span></span>
 <span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co">#&gt;   1    ct     tau3          -1.489    -3.427    0.831    0.235  not reject  test phi3</span></span>
@@ -607,7 +607,7 @@ does not reject, keeping the constant:</p>
 <span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="co">#&gt; Specification strategy: Conservative</span></span>
 <span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="co">#&gt;   Lags: 1 (fixed)</span></span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">#&gt;   Sample (all regressions): N = 262 (t = 3, ..., 264)   Level: 5%</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">#&gt;   Sample (all regressions): N = 262, 1947 Q3 to 2012 Q4 (t = 3, ..., 264)   Level: 5%</span></span>
 <span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt;   Step Regr.  Test       Statistic Crit.val.  p-value Resid. p  Decision    Next</span></span>
 <span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co">#&gt;   1    ct     tau3          -1.489    -3.427    0.831    0.235  not reject  test phi3</span></span>
@@ -627,7 +627,7 @@ economics, whether the series is trending. Log GDP clearly is:</p>
 <span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="co">#&gt; Specification strategy: Hamilton (rule-based)</span></span>
 <span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="co">#&gt;   Lags: 1 (fixed)</span></span>
-<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co">#&gt;   Sample (all regressions): N = 262 (t = 3, ..., 264)   Level: 5%</span></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co">#&gt;   Sample (all regressions): N = 262, 1947 Q3 to 2012 Q4 (t = 3, ..., 264)   Level: 5%</span></span>
 <span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co">#&gt;   Step Regr.  Test       Statistic Crit.val.  p-value Resid. p  Decision    Next</span></span>
 <span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt;   1    ct     tau3          -1.489    -3.427    0.831    0.235  not reject  stop</span></span>
@@ -664,7 +664,7 @@ null hypothesis</strong>: it tests stationarity against a unit root.</p>
 <span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="co">#&gt;   H1: stationary around a linear trend</span></span>
 <span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="co">#&gt;   Deterministics: constant and linear trend</span></span>
 <span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co">#&gt;   Long-run variance: Bartlett kernel, 5 autocovariances (short rule, trunc(4 ((T-1)/100)^(1/4)))</span></span>
-<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="co">#&gt;   Effective sample: N = 263 (t = 2, ..., 264)</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="co">#&gt;   Effective sample: N = 263, 1947 Q2 to 2012 Q4 (t = 2, ..., 264)</span></span>
 <span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co">#&gt;   Statistic:        -1.111</span></span>
 <span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="co">#&gt;   Critical values:  1%: -3.994   5%: -3.427   10%: -3.137</span></span>
@@ -679,7 +679,7 @@ null hypothesis</strong>: it tests stationarity against a unit root.</p>
 <span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a><span class="co">#&gt;   H1: stationary around a linear trend</span></span>
 <span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a><span class="co">#&gt;   Deterministics: constant and linear trend</span></span>
 <span id="cb13-22"><a href="#cb13-22" tabindex="-1"></a><span class="co">#&gt;   Lags: 1 (MAIC, kmax = 15)</span></span>
-<span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a><span class="co">#&gt;   Effective sample: N = 262 (t = 3, ..., 264)</span></span>
+<span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a><span class="co">#&gt;   Effective sample: N = 262, 1947 Q3 to 2012 Q4 (t = 3, ..., 264)</span></span>
 <span id="cb13-24"><a href="#cb13-24" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb13-25"><a href="#cb13-25" tabindex="-1"></a><span class="co">#&gt;   Statistic:        -1.019</span></span>
 <span id="cb13-26"><a href="#cb13-26" tabindex="-1"></a><span class="co">#&gt;   Critical values:  1%: -3.480   5%: -2.915   10%: -2.627</span></span>
@@ -694,7 +694,7 @@ null hypothesis</strong>: it tests stationarity against a unit root.</p>
 <span id="cb13-35"><a href="#cb13-35" tabindex="-1"></a><span class="co">#&gt;   H1: unit root</span></span>
 <span id="cb13-36"><a href="#cb13-36" tabindex="-1"></a><span class="co">#&gt;   Deterministics: constant and linear trend</span></span>
 <span id="cb13-37"><a href="#cb13-37" tabindex="-1"></a><span class="co">#&gt;   Long-run variance: Bartlett kernel, 5 autocovariances (short rule, trunc(4 (T/100)^(1/4)))</span></span>
-<span id="cb13-38"><a href="#cb13-38" tabindex="-1"></a><span class="co">#&gt;   Effective sample: N = 264 (t = 1, ..., 264)</span></span>
+<span id="cb13-38"><a href="#cb13-38" tabindex="-1"></a><span class="co">#&gt;   Effective sample: N = 264, 1947 Q1 to 2012 Q4 (t = 1, ..., 264)</span></span>
 <span id="cb13-39"><a href="#cb13-39" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb13-40"><a href="#cb13-40" tabindex="-1"></a><span class="co">#&gt;   Statistic:        0.701</span></span>
 <span id="cb13-41"><a href="#cb13-41" tabindex="-1"></a><span class="co">#&gt;   Critical values:  1%: 0.218   2.5%: 0.177   5%: 0.148   10%: 0.119</span></span>
@@ -724,7 +724,7 @@ as the test and the other M statistics alongside:</p>
 <span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a><span class="co">#&gt;   H1: stationary around a linear trend</span></span>
 <span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a><span class="co">#&gt;   Deterministics: constant and linear trend</span></span>
 <span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a><span class="co">#&gt;   Lags: 1 (MAIC, kmax = 15)</span></span>
-<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a><span class="co">#&gt;   Effective sample: N = 262 (t = 3, ..., 264)</span></span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a><span class="co">#&gt;   Effective sample: N = 262, 1947 Q3 to 2012 Q4 (t = 3, ..., 264)</span></span>
 <span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a><span class="co">#&gt;   Statistic:        -1.066</span></span>
 <span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a><span class="co">#&gt;   Critical values:  1%: -3.438   5%: -2.893   10%: -2.615</span></span>
@@ -742,7 +742,7 @@ bootstrap versions of the ADF test (and the union-of-rejections test,
 <span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a><span class="co">#&gt;   H1: stationary around a linear trend</span></span>
 <span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a><span class="co">#&gt;   Deterministics: constant and linear trend</span></span>
 <span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a><span class="co">#&gt;   Lags: 2 (MAIC (rescaled), kmax = 15)</span></span>
-<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a><span class="co">#&gt;   Effective sample: N = 261 (t = 4, ..., 264)</span></span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a><span class="co">#&gt;   Effective sample: N = 261, 1947 Q4 to 2012 Q4 (t = 4, ..., 264)</span></span>
 <span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a><span class="co">#&gt;   Statistic:        -1.920</span></span>
 <span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a><span class="co">#&gt;   Critical values:  none (the decision uses the bootstrap p-value)</span></span>

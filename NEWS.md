@@ -1,3 +1,21 @@
+# unitroottools 0.3.2
+
+Fixes found while writing the unit-root Labs (14 November 2026).
+
+* Subsetting a `recursive_adf()` result works with `print()`: keeping all the
+  columns (e.g. `rr[rr$reject, ]`) keeps the result and its settings;
+  selecting columns (e.g. `rr[, c("end", "statistic")]`) gives a plain data
+  frame. Before, the second case kept the class but lost the settings, and
+  `print()` failed ("argument is of length zero").
+* `criterion` is accepted in any case (`"aic"`, `"Maic"`...) in `adf()`,
+  `select_lags()`, `dfgls()`, `ng_perron()`, `ers_pt()`, `ur_strategy()`,
+  `recursive_adf()` and `boot_ur()`.
+* Printed samples show dates when the series has them:
+  "Effective sample: N = 780, 1961-01 to 2025-12 (t = 13, ..., 792)", in
+  tests, strategies and `select_lags()` (monthly "1961-01", quarterly
+  "1990 Q3", annual "1902"). Plain vectors show the indices, as before.
+  `select_lags()` and `ur_strategy()` results now keep the `series` record.
+
 # unitroottools 0.3.1
 
 Fixes from the audit of 0.3.0 (14 November 2026).
