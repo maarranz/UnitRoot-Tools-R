@@ -149,12 +149,13 @@ series_info <- function(y, var = NULL, n, name = NA_character_) {
   if (inherits(y, "tbl_ts") && requireNamespace("tsibble", quietly = TRUE)) {
     idx <- tsibble::index_var(y)
     v <- sort(as.data.frame(y)[[idx]])
-    time <- as_time(v)
-    if (inherits(time, c("Date", "POSIXt"))) {
-      freq <- frequency_from_dates(time)
-    } else if (is.numeric(v) && length(unique(diff(v))) == 1L && diff(v)[1] == 1) {
-      freq <- 1   # integer years
+    if (is.numeric(v) && !is.object(v)) {
+      # a plain number as index: years if it steps by one
       time <- as.numeric(v)
+      if (n > 1L && all(diff(time) == 1)) freq <- 1
+    } else {
+      time <- as_time(v)
+      if (inherits(time, c("Date", "POSIXt"))) freq <- frequency_from_dates(time)
     }
   } else if (inherits(y, "zoo") && requireNamespace("zoo", quietly = TRUE)) {
     v <- zoo::index(y)

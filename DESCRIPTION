@@ -28,6 +28,7 @@ Suggests:
     sandwich,
     testthat (>= 3.0.0),
     jsonlite,
+    lmtest,
     tibble,
     tsibble,
     xts,
