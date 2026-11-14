@@ -1,5 +1,17 @@
 # unitroottools (development version)
 
+* New `residual_check()`: do the lagged differences of a test leave white-noise
+  residuals (spec D19)? For `adf()`, `dfgls()`, `ng_perron()`, `ers_pt()` and
+  the terminal test of `ur_strategy()`, it reports the correlogram of the
+  test regression's residuals (AC, PAC, Ljung-Box Q with h - k degrees of
+  freedom, marked approximate) and Breusch-Godfrey tests (F form, the main
+  one, and LM = Obs*R-squared, as in EViews), with `print()` and `plot()`
+  (ACF and PACF with +/- 1.96/sqrt(N) bands). Lags follow the frequency of
+  the data: 3s + 3 (39 monthly, 15 quarterly, 6 annual), capped at N/4;
+  Breusch-Godfrey at orders s and 3s + 3. Agrees with `lmtest::bgtest()` and
+  `stats::Box.test()`. `pp()` and `kpss()` are not checked: their residuals
+  are autocorrelated by design.
+
 * Results keep what the residual checks need (spec D19): `regression` now
   holds the residuals and the regressor matrix of the test regression for
   `adf()`, `dfgls()`, `ng_perron()`, `ers_pt()` and the regression steps of
