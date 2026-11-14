@@ -416,6 +416,8 @@ print.summary.ur_test <- function(x, ...) {
       }
     }
   }
+  rl <- residual_summary_line(r)
+  if (!is.null(rl)) cat("\n", rl, "\n", sep = "")
   ls <- r$lag_selection
   if (!is.null(ls)) {
     cat(sprintf("\nLag selection: %s, kmax = %d", ls$method, as.integer(ls$kmax)))

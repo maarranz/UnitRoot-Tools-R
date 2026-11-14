@@ -342,9 +342,26 @@ ur_strategy <- function(y, strategy = c("original", "conservative", "hamilton"),
 
   history <- strategy_history(path$steps, st$tests, level)
   terminal <- terminal_test(path$terminal, st, selection, level, call, series)
+  # residual checks of the test regressions the procedure used (D19): one
+  # per regression (the auxiliary steps use the ADF regression's check)
+  used <- unique(sub("^aux_", "", history$regression))
+  checks <- lapply(stats::setNames(used, used), function(tr) {
+    rg <- st$regressions[[tr]]
+    check_residuals(rg$fit$residuals, rg$design$X, k = k, level = level,
+                    series = series, lags = NULL, bg_orders = NULL, frequency = NULL,
+                    label = sprintf("ADF regression (%s), k = %d", trend_labels[[tr]], k))
+  })
+  history$bg_p_value <- vapply(sub("^aux_", "", history$regression), function(tr) {
+    bg <- checks[[tr]]$breusch_godfrey
+    if (nrow(bg)) bg$p_value_f[1] else NA_real_
+  }, numeric(1), USE.NAMES = FALSE)
+  resid_warn <- unlist(lapply(checks, function(ch) {
+    if (isTRUE(ch$white_noise)) NULL else paste0(ch$label, ": ", residual_conclusion(ch))
+  }), use.names = FALSE)
   # warnings of every visited step, not only of the terminal test (audit A2)
   visited <- unlist(lapply(path$steps$test, function(nm) st$tests[[nm]]$warnings))
-  warnings <- unique(c(if (!is.null(selection)) selection$notes, visited, terminal$warnings))
+  warnings <- unique(c(if (!is.null(selection)) selection$notes, visited,
+                       terminal$warnings, resid_warn))
 
   structure(list(
     strategy = strategy,
@@ -357,6 +374,7 @@ ur_strategy <- function(y, strategy = c("original", "conservative", "hamilton"),
     lags = k, nobs = nobs, sample = c(first, length(y)),
     lag_selection = selection,
     history = history,
+    residual_checks = checks,
     warnings = warnings,
     engine = engine_internal(),
     call = call
@@ -434,14 +452,22 @@ print.ur_strategy <- function(x, ...) {
   cat(sprintf("  Sample (all regressions): N = %d (t = %d, ..., %d)   Level: %s\n\n",
               x$nobs, x$sample[1], x$sample[2], fmt_level(x$settings$level)))
   h <- x$history
-  cat(sprintf("  %-4s %-6s %-10s %9s %9s %8s  %-10s  %s\n", "Step", "Regr.",
-              "Test", "Statistic", "Crit.val.", "p-value", "Decision", "Next"))
+  has_bg <- !is.null(h$bg_p_value)
+  cat(sprintf("  %-4s %-6s %-10s %9s %9s %8s %8s  %-10s  %s\n", "Step", "Regr.",
+              "Test", "Statistic", "Crit.val.", "p-value", if (has_bg) "Resid. p" else "",
+              "Decision", "Next"))
   for (i in seq_len(nrow(h))) {
     pv <- if (is.na(h$p_value[i])) "-" else fmt_pvalue(h$p_value[i])
-    cat(sprintf("  %-4d %-6s %-10s %9s %9s %8s  %-10s  %s\n", h$step[i],
+    bp <- if (!has_bg || is.na(h$bg_p_value[i])) "" else fmt_pvalue(h$bg_p_value[i])
+    cat(sprintf("  %-4d %-6s %-10s %9s %9s %8s %8s  %-10s  %s\n", h$step[i],
                 h$regression[i], test_labels[[h$test[i]]],
-                fmt_num(h$statistic[i]), fmt_num(h$critical_value[i]), pv,
+                fmt_num(h$statistic[i]), fmt_num(h$critical_value[i]), pv, bp,
                 if (h$reject[i]) "reject" else "not reject", h$next_action[i]))
+  }
+  if (has_bg) {
+    s_used <- x$residual_checks[[1]]$frequency
+    cat(sprintf("  Resid. p: Breusch-Godfrey F test of order %d on the residuals of the step's regression.\n",
+                s_used))
   }
   cat(sprintf("\n  Specification: %s\n", trend_labels[[x$specification]]))
   cat(sprintf("  Conclusion:    %s\n", x$conclusion))

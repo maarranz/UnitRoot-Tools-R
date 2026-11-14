@@ -157,7 +157,8 @@ check_residuals <- function(e, X, k, level, series, lags, bg_orders, frequency, 
                                     lm = numeric(), p_value_lm = numeric())
 
   structure(list(label = label, nobs = N, lags_test = k, frequency = s,
-                 lags = H, level = level, correlogram = correlogram,
+                 lags = H, level = level, residuals = e, X = X, series = series,
+                 correlogram = correlogram,
                  breusch_godfrey = bg, notes = notes,
                  white_noise = !any(bg$p_value_f < level)),
             class = "ur_residual_check")
@@ -253,4 +254,75 @@ plot.ur_residual_check <- function(x, y, ...) {
     graphics::abline(h = c(-band, band), lty = 2, col = "steelblue")
   }
   invisible(x)
+}
+
+#' @rdname residual_check
+#' @export
+residual_check.ur_strategy <- function(x, lags = NULL, bg_orders = NULL,
+                                       frequency = NULL, ...) {
+  checks <- x$residual_checks
+  if (is.null(checks)) {
+    stop("This strategy result does not contain residual checks ",
+         "(results of unitroottools 0.3.0 or later do).", call. = FALSE)
+  }
+  if (!is.null(lags) || !is.null(bg_orders) || !is.null(frequency)) {
+    # recompute with the requested settings from the terminal test's data:
+    # the stored checks hold the residuals' summaries only, so use the
+    # regressions kept in each check
+    checks <- lapply(checks, function(ch) {
+      check_residuals(ch$residuals, ch$X, k = ch$lags_test, level = ch$level,
+                      series = ch$series, lags = lags, bg_orders = bg_orders,
+                      frequency = frequency, label = ch$label)
+    })
+  }
+  structure(checks, class = "ur_residual_checks")
+}
+
+#' @export
+print.ur_residual_checks <- function(x, ...) {
+  cat("\nResidual checks of the test regressions used by the strategy\n")
+  for (ch in x) print(ch, ...)
+  invisible(x)
+}
+
+#' @export
+plot.ur_residual_checks <- function(x, y, ...) {
+  for (ch in x) plot(ch, ...)
+  invisible(x)
+}
+
+# Warning for a test result whose regression leaves autocorrelated residuals
+# (default settings of residual_check(); D19). Empty when they pass or when
+# the check does not apply.
+residual_warning <- function(r) {
+  g <- r$regression
+  if (is.null(g$residuals) || is.null(g$X)) return(character())
+  ch <- check_residuals(g$residuals, g$X, k = r$lags, level = r$level, series = r$series,
+                        lags = NULL, bg_orders = NULL, frequency = NULL, label = "")
+  if (isTRUE(ch$white_noise)) character()
+  else paste(residual_conclusion(ch), "See residual_check().")
+}
+
+# Adds the residual warning to a result (public test functions only).
+with_residual_warning <- function(r) {
+  w <- residual_warning(r)
+  if (length(w)) r$warnings <- c(r$warnings, w)
+  r
+}
+
+# One line for summary(): Breusch-Godfrey F p-values at the default orders.
+residual_summary_line <- function(r) {
+  g <- r$regression
+  if (r$test %in% c("PP", "KPSS") || is.null(g$residuals) || is.null(g$X)) return(NULL)
+  ch <- check_residuals(g$residuals, g$X, k = r$lags, level = r$level, series = r$series,
+                        lags = NULL, bg_orders = NULL, frequency = NULL, label = "")
+  bg <- ch$breusch_godfrey
+  if (!nrow(bg)) return(NULL)
+  sprintf("Residual autocorrelation (Breusch-Godfrey F): %s%s [details: residual_check()]",
+          paste(sprintf("order %d p %s", bg$order,
+                        vapply(bg$p_value_f, function(pv) {
+                          v <- fmt_pvalue(pv); if (grepl("^[<>]", v)) v else paste("=", v)
+                        }, "")),
+                collapse = ", "),
+          if (any(grepl("frequency unknown", ch$notes))) " (frequency unknown: annual assumed)" else "")
 }

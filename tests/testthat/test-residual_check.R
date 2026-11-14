@@ -97,3 +97,41 @@ test_that("plot draws without error", {
   expect_invisible(plot(rc))
   grDevices::dev.off()
 })
+
+test_that("results warn when the residuals fail, and summary() reports Breusch-Godfrey", {
+  y <- ar1_rw(phi = 0.7)
+  bad <- adf(y, "c", lags = 0)
+  expect_match(bad$warnings, "Residual autocorrelation at the 5% level", all = FALSE)
+  expect_false(any(grepl("Residual autocorrelation", adf(y, "c", lags = 1)$warnings)))
+  expect_match(dfgls(y, "c", lags = 0)$warnings, "Residual autocorrelation", all = FALSE)
+  expect_match(ng_perron(y, "c", lags = 0)$warnings, "Residual autocorrelation", all = FALSE)
+  out <- capture.output(summary(adf(y, "c", lags = 1)))
+  expect_match(out, "Breusch-Godfrey F\\): order 12 p .*order 39 p", all = FALSE)
+  expect_false(any(grepl("Breusch-Godfrey", capture.output(summary(pp(y))))))
+})
+
+test_that("strategies check every regression they used", {
+  y <- stats::ts(cumsum(0.2 + stats::arima.sim(list(ar = 0.6), n = 240)), start = 2000, frequency = 12)
+  s0 <- ur_strategy(y, lags = 0)
+  regs <- unique(sub("^aux_", "", s0$history$regression))
+  expect_setequal(names(s0$residual_checks), regs)
+  expect_true(all(s0$history$bg_p_value < 0.05))
+  expect_match(s0$warnings, "ADF regression \\(constant\\), k = 0: Residual autocorrelation", all = FALSE)
+  expect_match(capture.output(print(s0)), "Resid. p", all = FALSE)
+  s1 <- ur_strategy(y, lags = 1)
+  expect_true(all(s1$history$bg_p_value > 0.05))
+  expect_false(any(grepl("Residual autocorrelation", s1$warnings)))
+  # the history column is the F p-value at order s of the step's regression
+  ch <- residual_check(s1)
+  expect_s3_class(ch, "ur_residual_checks")
+  i <- match("ct", s1$history$regression)
+  expect_equal(s1$history$bg_p_value[i], ch$ct$breusch_godfrey$p_value_f[1])
+  # same as checking the ADF regression directly
+  direct <- residual_check(adf(y, "ct", lags = 1))
+  expect_equal(ch$ct$breusch_godfrey, direct$breusch_godfrey)
+  # settings can be changed
+  ch2 <- residual_check(s1, lags = 24, bg_orders = 4)
+  expect_identical(ch2$ct$breusch_godfrey$order, 4L)
+  expect_identical(ch2$ct$lags, 24L)
+  expect_true("bg_p_value" %in% names(tidy(s1)))
+})

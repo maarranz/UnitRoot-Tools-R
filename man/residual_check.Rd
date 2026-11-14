@@ -4,6 +4,7 @@
 \alias{residual_check}
 \alias{residual_check.ur_test}
 \alias{plot.ur_residual_check}
+\alias{residual_check.ur_strategy}
 \title{Check the residuals of a unit-root test regression}
 \usage{
 residual_check(x, lags = NULL, bg_orders = NULL, frequency = NULL, ...)
@@ -11,6 +12,8 @@ residual_check(x, lags = NULL, bg_orders = NULL, frequency = NULL, ...)
 \method{residual_check}{ur_test}(x, lags = NULL, bg_orders = NULL, frequency = NULL, ...)
 
 \method{plot}{ur_residual_check}(x, y, ...)
+
+\method{residual_check}{ur_strategy}(x, lags = NULL, bg_orders = NULL, frequency = NULL, ...)
 }
 \arguments{
 \item{x}{A result of \code{\link[=adf]{adf()}}, \code{\link[=dfgls]{dfgls()}}, \code{\link[=ng_perron]{ng_perron()}}, \code{\link[=ers_pt]{ers_pt()}} or

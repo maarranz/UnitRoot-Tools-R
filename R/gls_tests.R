@@ -99,7 +99,7 @@ gls_test_result <- function(stat_name, value, others, trend, lo, level, call,
   k <- lo$k
   cv <- rs_critical_values(rs, T, k)
   pv <- rs_p_value(rs, unname(value), T, k)
-  new_ur_test(
+  res <- new_ur_test(
     method = method, test = test,
     statistic_name = stat_name, statistic = unname(value),
     null = "unit root", alternative = adf_alternatives[[trend]], trend = trend,
@@ -118,6 +118,7 @@ gls_test_result <- function(stat_name, value, others, trend, lo, level, call,
     regression = if (is.null(y)) NULL else gls_test_regression(y, trend, k),
     series = series,
     call = call)
+  with_residual_warning(res)
 }
 
 # The GLS tests share the autoregressive spectral density s2_AR, which is
@@ -326,7 +327,7 @@ dfgls <- function(y, trend = "c", lags = NULL, max_lags = NULL,
     source = "unitroottools DF-GLS response surfaces (own simulation)",
     note = paste(c(sprintf("finite-sample quantiles for T = %d and k = %d lagged differences", n, k),
                    p_value_note(pv)), collapse = "; "))
-  new_ur_test(
+  res <- new_ur_test(
     method = "DF-GLS test", test = "DF-GLS",
     statistic_name = "tau_GLS", statistic = stat,
     null = "unit root", alternative = adf_alternatives[[trend]], trend = trend,
@@ -337,6 +338,7 @@ dfgls <- function(y, trend = "c", lags = NULL, max_lags = NULL,
     warnings = c(lo$notes, dfgls_design_warnings(trend, n, k)),
     regression = reg, series = series,
     call = call)
+  with_residual_warning(res)
 }
 
 # DF-GLS t statistic: t ratio of yd_{t-1} in the regression of diff(yd)_t on

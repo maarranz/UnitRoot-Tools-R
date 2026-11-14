@@ -1,5 +1,14 @@
 # unitroottools (development version)
 
+* The residual check is also reported where students look (spec D19):
+  `summary()` of a test gives the Breusch-Godfrey F p-values; a result whose
+  residuals fail carries a warning suggesting a larger `lags`; the history of
+  `ur_strategy()` has a `bg_p_value` column (printed as "Resid. p") for each
+  step's regression, the strategy warns about any regression that fails, and
+  `residual_check()` on a strategy gives the full check of each regression.
+  The number of lags is never raised automatically: that would be a
+  lag-selection rule with unknown consequences for the size of the test.
+
 * New `residual_check()`: do the lagged differences of a test leave white-noise
   residuals (spec D19)? For `adf()`, `dfgls()`, `ng_perron()`, `ers_pt()` and
   the terminal test of `ur_strategy()`, it reports the correlogram of the

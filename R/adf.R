@@ -97,7 +97,7 @@ adf <- function(y, trend = "c", lags = NULL, max_lags = NULL,
   }
 
   r <- adf_regression(y, trend, k, first)
-  adf_result(r, selection, level, call, series)
+  with_residual_warning(adf_result(r, selection, level, call, series))
 }
 
 # Builds the ur_test for an ADF regression (used by adf() and the strategies).
