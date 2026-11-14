@@ -67,3 +67,41 @@ quantiles at the statistic (`np.interp`), and beyond the extreme quantiles
 report the bound 0.001 or 0.999. `data-raw/read_dfgls_surfaces.py` does
 this and reproduces R's reference p-values to 5e-15. Any Python code that
 copied the cubic rule should switch.
+
+## Update (R 0.3.0): residual diagnostics and recursive tests
+
+Two new decisions in the shared spec, D19 and D20, settled with Miguel on
+14 November 2026 for the unit-root Labs. The Python package should follow the
+same conventions, so that both give the same numbers.
+
+**Result contract.** `regression` now also holds the residuals and the
+regressor matrix of the test regression (effective sample), and a new
+`series` record holds the name, the frequency s (observations per year;
+missing for a plain array) and the time point of each observation. In
+pandas, s comes from the index frequency (`M`/`MS` → 12, `Q`/`QS` → 4,
+`A`/`Y` → 1, `W` → 52); a plain array is treated as annual with a note.
+
+**D19, residual check** (R: `residual_check()`), for ADF, DF-GLS and the
+Ng-Perron/ERS AR regression (not PP or KPSS):
+- correlogram lags H = 3s + 3 (15 quarterly, 39 monthly, 6 annual), capped
+  at floor(N/4) with a note unless given;
+- AC of the demeaned residuals and PAC by Durbin-Levinson
+  (`statsmodels.tsa.stattools.acf/pacf` with `adjusted=False`);
+- Ljung-Box Q(h) with p-values from chi2(h - k) for h > k (none for h <= k),
+  flagged approximate (`acorr_ljungbox(..., model_df=k)`);
+- Breusch-Godfrey at orders s and 3s + 3 (each at most H): auxiliary
+  regression of the residuals on X and m lagged residuals, with residuals
+  before the sample set to 0; F = ((Σe² - RSS_a)/m)/(RSS_a/(N - p - m)) as
+  the main form, LM = N(1 - RSS_a/Σe²) (uncentred R²) for comparison. In R
+  this agrees with `lmtest::bgtest()` to 1e-8; statsmodels'
+  `acorr_breusch_godfrey` should agree if given the same X;
+- a test result whose BG F p-value is below its level carries a warning;
+  strategies add a `bg_p_value` column (F, order s) per step and warn per
+  regression. Lags are never raised automatically.
+
+**D20, recursive and rolling ADF** (R: `recursive_adf()`): recursive windows
+1..e for e = n0..T with n0 = max(5s, 30); rolling windows of width
+w = max(10s, 40); lags selected once on the full sample and fixed (option to
+re-select per window); each window's statistic against the MacKinnon
+critical value and p-value for its own N (maximal sample within the window);
+critical values labelled pointwise (Banerjee, Lumsdaine and Stock 1992).

@@ -74,7 +74,7 @@ Three conventions hold throughout:
 remotes::install_github("maarranz/UnitRoot-Tools-R", build_vignettes = TRUE)
 ```
 
-Dependencies (`urca`, `generics`) are installed automatically. Building the vignette needs [pandoc](https://pandoc.org), which comes with RStudio; without it, leave out `build_vignettes = TRUE` and read the vignette [here](vignette.html). To install a specific version, add the tag: `"maarranz/UnitRoot-Tools-R@v0.2.1"`.
+Dependencies (`urca`, `generics`) are installed automatically. Building the vignette needs [pandoc](https://pandoc.org), which comes with RStudio; without it, leave out `build_vignettes = TRUE` and read the vignette [here](vignette.html). To install a specific version, add the tag: `"maarranz/UnitRoot-Tools-R@v0.3.0"`.
 
 ```r
 library(unitroottools)
@@ -129,6 +129,25 @@ Augmented Dickey-Fuller test (tau3)
 
 ```r
 select_lags(lgdp, trend = "ct")    # MAIC selects k = 1 out of 0, ..., 15
+```
+
+### Checking the residuals
+
+The lagged differences must leave white-noise residuals. `residual_check()` reports the correlogram of the test regression's residuals (AC, PAC and Ljung–Box $Q$, whose p-values use $h - k$ degrees of freedom and are approximate in a regression with lagged dependent variables) and the Breusch–Godfrey test (F form, the main one, and $N R^2$), valid with lagged dependent variables. The number of lags follows the frequency $s$ of the data: $3s + 3$ (15 quarterly, 39 monthly, 6 annual), capped at $N/4$, with Breusch–Godfrey at orders $s$ and $3s + 3$; a plain vector is treated as annual unless `frequency` is given. `plot()` draws the ACF and PACF with $\pm 1.96/\sqrt N$ bands. It applies to `adf()`, `dfgls()`, `ng_perron()`, `ers_pt()` and strategies, not to `pp()` or `kpss()`, whose residuals are autocorrelated by design. `summary()` shows the Breusch–Godfrey p-values, results whose residuals fail carry a warning, and the strategy history has a column `bg_p_value`. Lags are never raised automatically.
+
+```r
+rc <- residual_check(adf(lgdp, trend = "ct"))   # no autocorrelation with k = 1
+plot(rc)
+adf(lgdp, trend = "ct", lags = 0)$warnings       # with k = 0: autocorrelated
+```
+
+## Recursive and rolling tests
+
+`recursive_adf()` computes the ADF statistic on samples with a fixed start and a moving end (`window = "recursive"`, first sample $\max(5s, 30)$ observations) or on rolling windows (`window = "rolling"`, width $\max(10s, 40)$), with the lags selected once on the full sample and kept fixed (`reselect = TRUE` selects them in each window). Each statistic is compared with the critical value for its own sample size; these are **pointwise** critical values, not valid for the minimum over windows (Banerjee, Lumsdaine and Stock 1992). It returns a data frame (start, end, $N$, $k$, statistic, critical value, p-value, decision) with `print()` and `plot()`.
+
+```r
+plot(recursive_adf(lgdp, trend = "ct"))
+plot(recursive_adf(lgdp, trend = "ct", window = "rolling"))
 ```
 
 ## Which deterministic terms? Specification strategies
@@ -235,12 +254,14 @@ Every result records its source in `$calibration`, and warns when the sample is 
 | `ng_perron(y, trend, lags, max_lags, criterion, statistic, level, var)` | Ng–Perron M tests | `ur_test` |
 | `ers_pt(y, trend, lags, max_lags, criterion, level, var)` | ERS point-optimal test | `ur_test` |
 | `boot_ur(y, trend, bootstrap, B, union, detrend, lags, max_lags, criterion, criterion_scale, seed, level, var)` | Bootstrap ADF or union test through bootUR | `ur_test` |
+| `residual_check(x, lags, bg_orders, frequency)` | Correlogram and Breusch–Godfrey test of the test regression's residuals, with `plot()` | `ur_residual_check` |
+| `recursive_adf(y, trend, lags, max_lags, criterion, window, min_size, width, reselect, frequency, level, var)` | Recursive or rolling ADF statistics, with `plot()` | `ur_recursive` (data frame) |
 | `simulate_df(T, R, trend, seed)` | Simulated Dickey–Fuller distribution, with `plot()` | `df_simulation` |
 | `tidy(x)`, `glance(x)` | Results as data frames | data frame |
 | `match_trend(trend)` | Canonical deterministic code from an alias | string |
 | `new_ur_test()`, `validate_ur_test()` | Build and check a result object (for developers) | `ur_test` |
 
-A `ur_test` is a list: `statistic`, `statistic_name`, `critical_values`, `p_value`, `reject`, `level`, `tail`, `trend`, `lags`, `lag_selection`, `nobs`, `sample`, `calibration`, `other_statistics` (e.g. the φ statistics), `engine`, `warnings`, `regression`, `call`. Accepted inputs: numeric vectors, `ts`, `zoo`, `xts`, data frames, tibbles and tsibbles (choose a column with `var`).
+A `ur_test` is a list: `statistic`, `statistic_name`, `critical_values`, `p_value`, `reject`, `level`, `tail`, `trend`, `lags`, `lag_selection`, `nobs`, `sample`, `calibration`, `other_statistics` (e.g. the φ statistics), `engine`, `warnings`, `regression` (including the residuals and regressors of the test regression), `series` (name, frequency, time points), `call`. Accepted inputs: numeric vectors, `ts`, `zoo`, `xts`, data frames, tibbles and tsibbles (choose a column with `var`).
 
 ### Agreement with the Python version
 

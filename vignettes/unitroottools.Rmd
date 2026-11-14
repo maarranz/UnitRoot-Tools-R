@@ -78,7 +78,56 @@ order (here, the first two are lost instead of $k_{\max} + 1 = 16$); use
 adf(lgdp, trend = "ct")
 ```
 
-## 3. Which deterministic terms? Specification strategies
+## 3. Are the residuals white noise?
+
+The lagged differences are there to absorb the serial correlation of
+$\Delta y_t$. Whatever the criterion chose, check that the residuals of the
+test regression are white noise. `residual_check()` gives the correlogram
+(autocorrelations, partial autocorrelations and the Ljung-Box $Q$, as in
+EViews) and the Breusch-Godfrey test, which remains valid with lagged
+dependent variables. With quarterly data it looks at $3s + 3 = 15$ lags, and
+runs Breusch-Godfrey at orders 4 (one year) and 15:
+
+```{r}
+rc <- residual_check(adf(lgdp, trend = "ct"))
+print(rc, max_lags = 8)
+plot(rc)
+```
+
+With the lag chosen by MAIC there is no evidence of autocorrelation. Without
+lagged differences there is, and the result warns about it:
+
+```{r}
+adf(lgdp, trend = "ct", lags = 0)$warnings
+```
+
+`summary()` of a test reports the Breusch-Godfrey p-values in one line, and
+the history of `ur_strategy()` has a column with the p-value for each step's
+regression. The number of lags is never increased automatically: if the
+residuals fail, try a larger `lags` yourself and compare.
+
+## 4. Does the evidence change over time? Recursive and rolling tests
+
+`recursive_adf()` computes the ADF statistic on samples that end later and
+later (fixed start), or on rolling windows of fixed width, with the lags
+chosen once on the full sample:
+
+```{r}
+plot(recursive_adf(lgdp, trend = "ct"))
+rr <- recursive_adf(lgdp, trend = "ct", window = "rolling")
+rr
+plot(rr)
+```
+
+The dashed line is the 5% critical value for each window on its own
+(*pointwise*). Looking at many windows and asking whether the statistic
+crosses the line *somewhere* is a different test, with larger critical values
+(Banerjee, Lumsdaine and Stock 1992): here the rolling statistic crosses in
+about 6% of the windows, which is what one would expect by chance. Recursive
+and rolling statistics are a description of the data, not a test of when the
+series stopped having a unit root.
+
+## 5. Which deterministic terms? Specification strategies
 
 The ADF test depends on the deterministic terms, but we rarely know which
 ones belong in the regression. `ur_strategy()` implements three answers, and
@@ -123,7 +172,7 @@ own. The procedure as a whole has no known size: it is a sequence of tests,
 each conditional on the results of the previous ones, so no p-value is given
 for it.
 
-## 4. Other tests
+## 6. Other tests
 
 The Phillips-Perron test corrects for serial correlation non-parametrically
 instead of adding lagged differences; DF-GLS detrends by GLS, which improves
@@ -165,7 +214,7 @@ boot_ur(lgdp, trend = "ct", B = 499, seed = 1)
 A non-rejection is not evidence for the null. Using tests with both nulls is
 one way to see how strong the evidence is in each direction.
 
-## 5. Collecting results in a table
+## 7. Collecting results in a table
 
 `glance()` turns a test into one row of a data frame and `tidy()` gives one
 row per statistic, so results are easy to compare or to save. For example,
@@ -188,7 +237,7 @@ tidy(adf(lgdp, trend = "ct"))[, c("statistic_name", "statistic", "critical_value
 The same functions work on a strategy: `glance()` gives its outcome in one
 row and `tidy()` its history.
 
-## 6. Why special critical values?
+## 8. Why special critical values?
 
 Under the unit-root null, the t ratio of $b$ does **not** have a normal or
 Student t distribution. `simulate_df()` shows this by simulation:
@@ -203,7 +252,7 @@ The simulated quantiles agree with MacKinnon's critical values, which are far
 to the left of the normal ones. Using the normal 5% value would reject a true
 unit root much more often than 5% of the time.
 
-## 7. Data formats
+## 9. Data formats
 
 The functions accept numeric vectors, `ts`, `zoo` and `xts` series, data
 frames, tibbles and tsibbles. When there are several numeric columns, name

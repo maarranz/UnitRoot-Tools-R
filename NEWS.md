@@ -1,4 +1,18 @@
-# unitroottools (development version)
+# unitroottools 0.3.0
+
+Diagnostics (spec D19, D20), prepared for the unit-root Labs of the course.
+The roadmap is renumbered: the bootstrap engine (D18) becomes v0.4, the
+Monte Carlo tools v0.5 and the robust tests v0.6.
+
+* New `recursive_adf()`: ADF statistics on samples with a fixed start and a
+  moving end (`window = "recursive"`) or on rolling windows
+  (`window = "rolling"`), against the critical value for each window's sample
+  size, with `print()` and `plot()`. Default sizes depend on the frequency:
+  first sample max(5s, 30) and width max(10s, 40) observations. Lags are
+  selected once on the full sample and kept fixed (`reselect = TRUE` selects
+  them in each window). The critical values are pointwise, and the output
+  says so: the minimum over windows has a different distribution
+  (Banerjee, Lumsdaine and Stock 1992).
 
 * The residual check is also reported where students look (spec D19):
   `summary()` of a test gives the Breusch-Godfrey F p-values; a result whose
