@@ -37,6 +37,19 @@ ar_spectral_density <- function(yd, k) {
        nobs = length(d$response))
 }
 
+# The test regression of the GLS-based tests (DF-GLS, and the regression
+# behind s2_AR): diff(yd)_t on yd_{t-1} and k lagged differences, t = k+2..T,
+# without deterministic terms. Stored in the results for residual checks (D19).
+gls_test_regression <- function(y, trend, k) {
+  yd <- gls_detrend(y, trend)$yd
+  d <- adf_design(yd, "n", k, k + 2L)
+  f <- qr_fit(d$X, d$response)
+  list(coefficients = cbind(Estimate = f$coefficients, `Std. Error` = f$se,
+                            `t value` = f$t_values),
+       rss = f$rss, df = f$df, sigma2 = f$sigma2,
+       residuals = f$residuals, X = d$X)
+}
+
 # All GLS-based statistics for a given lag order k.
 gls_statistics <- function(y, trend, k) {
   T <- length(y)
@@ -80,7 +93,8 @@ gls_lag_order <- function(y, trend, lags, max_lags, criterion) {
 }
 
 gls_test_result <- function(stat_name, value, others, trend, lo, level, call,
-                            method, test, rs, extra_note = NULL) {
+                            method, test, rs, extra_note = NULL, y = NULL,
+                            series = NULL) {
   T <- lo$T
   k <- lo$k
   cv <- rs_critical_values(rs, T, k)
@@ -101,6 +115,8 @@ gls_test_result <- function(stat_name, value, others, trend, lo, level, call,
     level = level, other_statistics = others,
     engine = engine_internal(),
     warnings = c(lo$notes, rs_design_warnings(rs, T, k), gls_heavy_tail_warning(trend, T, k)),
+    regression = if (is.null(y)) NULL else gls_test_regression(y, trend, k),
+    series = series,
     call = call)
 }
 
@@ -183,7 +199,10 @@ ng_perron <- function(y, trend = "c", lags = NULL, max_lags = NULL,
   criterion <- match.arg(criterion)
   statistic <- match.arg(statistic)
   check_level(level)
+  series_nm <- series_name(substitute(y))
+  y_input <- y
   y <- check_series(y, var = var)
+  series <- series_info(y_input, var, length(y), series_nm)
   trend <- match_trend(trend, allowed = c("c", "ct"))
   lo <- gls_lag_order(y, trend, lags, max_lags, criterion)
   lo$T <- length(y)
@@ -192,7 +211,7 @@ ng_perron <- function(y, trend = "c", lags = NULL, max_lags = NULL,
   gls_test_result(statistic, g[[statistic]], g[c(setdiff(m, statistic), "s2_AR")],
                   trend, lo, level, call,
                   method = sprintf("Ng-Perron %s test", statistic), test = "Ng-Perron",
-                  rs = gls_rs[[statistic]][[trend]])
+                  rs = gls_rs[[statistic]][[trend]], y = y, series = series)
 }
 
 #' ERS point-optimal test
@@ -224,14 +243,17 @@ ers_pt <- function(y, trend = "c", lags = NULL, max_lags = NULL,
   call <- match.call()
   criterion <- match.arg(criterion)
   check_level(level)
+  series_nm <- series_name(substitute(y))
+  y_input <- y
   y <- check_series(y, var = var)
+  series <- series_info(y_input, var, length(y), series_nm)
   trend <- match_trend(trend, allowed = c("c", "ct"))
   lo <- gls_lag_order(y, trend, lags, max_lags, criterion)
   lo$T <- length(y)
   g <- gls_statistics(y, trend, lo$k)
   gls_test_result("PT", g[["PT"]], g["s2_AR"], trend, lo, level, call,
                   method = "ERS point-optimal test", test = "ERS-PT",
-                  rs = gls_rs[["PT"]][[trend]])
+                  rs = gls_rs[["PT"]][[trend]], y = y, series = series)
 }
 
 #' DF-GLS test
@@ -287,12 +309,16 @@ dfgls <- function(y, trend = "c", lags = NULL, max_lags = NULL,
   call <- match.call()
   criterion <- match.arg(criterion)
   check_level(level)
+  series_nm <- series_name(substitute(y))
+  y_input <- y
   y <- check_series(y, var = var)
+  series <- series_info(y_input, var, length(y), series_nm)
   trend <- match_trend(trend, allowed = c("c", "ct"))
   lo <- gls_lag_order(y, trend, lags, max_lags, criterion)
   k <- lo$k
   n <- length(y)
-  stat <- dfgls_statistic(y, trend, k)
+  reg <- gls_test_regression(y, trend, k)
+  stat <- unname(reg$coefficients["y_lag1", "t value"])
   cv <- dfgls_critical_values(trend, n, k)
   pv <- dfgls_p_value(stat, trend, n, k)
   calibration <- list(
@@ -309,6 +335,7 @@ dfgls <- function(y, trend = "c", lags = NULL, max_lags = NULL,
     p_value = pv,
     calibration = calibration, level = level, engine = engine_internal(),
     warnings = c(lo$notes, dfgls_design_warnings(trend, n, k)),
+    regression = reg, series = series,
     call = call)
 }
 

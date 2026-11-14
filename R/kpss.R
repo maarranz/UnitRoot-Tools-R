@@ -119,7 +119,10 @@ kpss <- function(y, trend = "c", kernel = "bartlett", bandwidth = "short",
                  level = 0.05, var = NULL) {
   call <- match.call()
   check_level(level, c(0.01, 0.025, 0.05, 0.10))
+  series_nm <- series_name(substitute(y))
+  y_input <- y
   y <- check_series(y, var = var)
+  series <- series_info(y_input, var, length(y), series_nm)
   trend <- match_trend(trend, allowed = c("c", "ct"))
   kernel <- check_kernel(kernel)
   n <- length(y)
@@ -165,5 +168,5 @@ kpss <- function(y, trend = "c", kernel = "bartlett", bandwidth = "short",
     level = level,
     other_statistics = c(gamma0 = unname(v$gamma0), long_run_variance = unname(v$lrv),
                          bandwidth = unname(v$b)),
-    engine = engine_internal(), call = call)
+    engine = engine_internal(), series = series, call = call)
 }

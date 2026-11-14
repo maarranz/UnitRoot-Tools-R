@@ -28,6 +28,7 @@ new_ur_test(
   engine,
   warnings = character(),
   regression = NULL,
+  series = NULL,
   call = NULL
 )
 
@@ -98,7 +99,14 @@ or \code{"urca 1.3-4"}.}
 \item{warnings}{Character vector of warnings (small samples,
 approximations).}
 
-\item{regression}{Optional fitted regression (list); may be \code{NULL}.}
+\item{regression}{Optional fitted regression (list); may be \code{NULL}. For
+the residual checks of \code{\link[=residual_check]{residual_check()}} it holds \code{residuals} and the
+regressor matrix \code{X} over the effective sample.}
+
+\item{series}{Optional list with the series' \code{name}, \code{frequency}
+(observations per year, \code{NA} if unknown) and \code{time} (the time point of
+each observation). By default the name and frequency are unknown and the
+time points are \verb{1, ..., T}.}
 
 \item{call}{The call that produced the result.}
 

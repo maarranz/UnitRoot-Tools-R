@@ -286,7 +286,10 @@ ur_strategy <- function(y, strategy = c("original", "conservative", "hamilton"),
   final_sample <- match.arg(final_sample)
   check_level(level)
   check_flag(allow_no_constant, "allow_no_constant")
+  series_nm <- series_name(substitute(y))
+  y_input <- y
   y <- check_series(y, var = var)
+  series <- series_info(y_input, var, length(y), series_nm)
 
   if (strategy == "hamilton") {
     if (is.null(trending) || !is.logical(trending) || length(trending) != 1L ||
@@ -338,7 +341,7 @@ ur_strategy <- function(y, strategy = c("original", "conservative", "hamilton"),
   path <- strategy_path(reject, strategy, allow_no_constant, trending)
 
   history <- strategy_history(path$steps, st$tests, level)
-  terminal <- terminal_test(path$terminal, st, selection, level, call)
+  terminal <- terminal_test(path$terminal, st, selection, level, call, series)
   # warnings of every visited step, not only of the terminal test (audit A2)
   visited <- unlist(lapply(path$steps$test, function(nm) st$tests[[nm]]$warnings))
   warnings <- unique(c(if (!is.null(selection)) selection$notes, visited, terminal$warnings))
@@ -379,10 +382,10 @@ strategy_history <- function(steps, tests, level) {
   do.call(rbind, rows)
 }
 
-terminal_test <- function(name, st, selection, level, call) {
+terminal_test <- function(name, st, selection, level, call, series = NULL) {
   tau_trend <- c(tau3 = "ct", tau2 = "c", tau1 = "n")
   if (name %in% names(tau_trend)) {
-    return(adf_result(st$regressions[[tau_trend[[name]]]], selection, level, call))
+    return(adf_result(st$regressions[[tau_trend[[name]]]], selection, level, call, series))
   }
   trend <- if (name == "cond_ct") "ct" else "c"
   r <- st$regressions[[trend]]
@@ -406,7 +409,8 @@ terminal_test <- function(name, st, selection, level, call) {
                    "(Enders, Rule 2); conditional on the earlier steps")),
     level = level, engine = engine_internal(),
     regression = list(coefficients = coef_table, rss = f$rss, df = f$df,
-                      sigma2 = f$sigma2),
+                      sigma2 = f$sigma2, residuals = f$residuals, X = r$design$X),
+    series = series,
     call = call)
 }
 

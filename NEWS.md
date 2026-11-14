@@ -1,5 +1,12 @@
 # unitroottools (development version)
 
+* Results keep what the residual checks need (spec D19): `regression` now
+  holds the residuals and the regressor matrix of the test regression for
+  `adf()`, `dfgls()`, `ng_perron()`, `ers_pt()` and the regression steps of
+  `ur_strategy()`; and a new `series` field records the series' name, its
+  frequency (observations per year, from `ts`, zoo/xts, tsibble or a data
+  frame with a date column; `NA` for a plain vector) and the time point of
+  each observation.
 * `dfgls()` is computed by the package instead of `urca::ur.ers()`, with the
   same GLS detrending and lag handling as `ng_perron()` and `ers_pt()`. The
   statistic is unchanged (it agrees with urca to 1e-12 and with an

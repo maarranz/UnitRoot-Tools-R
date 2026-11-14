@@ -59,7 +59,13 @@ required_levels <- c(0.01, 0.05, 0.10)
 #'   or `"urca 1.3-4"`.
 #' @param warnings Character vector of warnings (small samples,
 #'   approximations).
-#' @param regression Optional fitted regression (list); may be `NULL`.
+#' @param regression Optional fitted regression (list); may be `NULL`. For
+#'   the residual checks of [residual_check()] it holds `residuals` and the
+#'   regressor matrix `X` over the effective sample.
+#' @param series Optional list with the series' `name`, `frequency`
+#'   (observations per year, `NA` if unknown) and `time` (the time point of
+#'   each observation). By default the name and frequency are unknown and the
+#'   time points are `1, ..., T`.
 #' @param call The call that produced the result.
 #'
 #' @return An object of class `ur_test`.
@@ -75,7 +81,7 @@ new_ur_test <- function(method, test, statistic_name, statistic,
                         other_statistics = numeric(),
                         other_critical_values = list(),
                         engine, warnings = character(),
-                        regression = NULL, call = NULL) {
+                        regression = NULL, series = NULL, call = NULL) {
   tail <- match.arg(tail)
   x <- list(
     method = method,
@@ -101,6 +107,9 @@ new_ur_test <- function(method, test, statistic_name, statistic,
     engine = engine,
     warnings = as.character(warnings),
     regression = regression,
+    series = if (is.null(series)) list(name = NA_character_, frequency = NA_real_,
+                                       time = seq_len(as_whole(sample, "sample", length = 2L)[2]))
+             else series,
     call = call
   )
   class(x) <- "ur_test"
@@ -134,6 +143,14 @@ as_whole <- function(v, name, allow_na = FALSE, length = 1L) {
 #' @export
 validate_ur_test <- function(x) {
   validate_fields(x)
+  if (!is.null(x$series)) {
+    se <- x$series
+    if (!is.list(se) || !all(c("name", "frequency", "time") %in% names(se)) ||
+        length(se$frequency) != 1L || length(se$time) < x$sample[2]) {
+      stop("Invalid ur_test: `series` must be a list with `name`, `frequency` ",
+           "and `time` (one time point per observation).", call. = FALSE)
+    }
+  }
   if (!is.logical(x$reject) || length(x$reject) != 1L || is.na(x$reject)) {
     stop("Invalid ur_test: `reject` must be TRUE or FALSE.", call. = FALSE)
   }

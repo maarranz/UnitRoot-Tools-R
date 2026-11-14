@@ -1,0 +1,61 @@
+# Series metadata and stored residuals (spec: result contract; D19, D20)
+
+test_that("frequency and time points come from the input", {
+  set.seed(1)
+  v <- cumsum(stats::rnorm(120))
+  m <- stats::ts(v, start = c(1990, 1), frequency = 12)
+  q <- stats::ts(v, start = c(1990, 1), frequency = 4)
+  r <- adf(m, lags = 1)
+  expect_identical(r$series$frequency, 12)
+  expect_equal(r$series$time[1:2], c(1990, 1990 + 1 / 12))
+  expect_identical(r$series$name, "m")
+  expect_identical(adf(q, lags = 1)$series$frequency, 4)
+  p <- adf(v, lags = 1)
+  expect_true(is.na(p$series$frequency))
+  expect_identical(p$series$time, seq_len(120))
+  d <- data.frame(date = seq(as.Date("1990-01-01"), by = "month", length.out = 120), x = v)
+  expect_identical(adf(d, lags = 1)$series$frequency, 12)
+  expect_s3_class(adf(d, lags = 1)$series$time, "Date")
+  dq <- data.frame(date = seq(as.Date("1990-01-01"), by = "quarter", length.out = 120), x = v)
+  expect_identical(adf(dq, lags = 1)$series$frequency, 4)
+  da <- data.frame(date = seq(as.Date("1900-01-01"), by = "year", length.out = 120), x = v)
+  expect_identical(adf(da, lags = 1)$series$frequency, 1)
+  skip_if_not_installed("zoo")
+  z <- zoo::zoo(v, zoo::as.yearmon(1990 + (0:119) / 12))
+  rz <- adf(z, lags = 1)
+  expect_identical(rz$series$frequency, 12)
+  expect_s3_class(rz$series$time, "Date")
+})
+
+test_that("every regression-based test stores residuals and regressors", {
+  set.seed(2)
+  y <- stats::ts(cumsum(stats::rnorm(150)), frequency = 4)
+  for (r in list(adf(y, "ct", lags = 2), dfgls(y, "c", lags = 2), ng_perron(y, "ct", lags = 2),
+                 ers_pt(y, "c", lags = 2), ur_strategy(y, lags = 2)$terminal)) {
+    g <- r$regression
+    expect_length(g$residuals, r$nobs)
+    expect_identical(nrow(g$X), r$nobs)
+    expect_equal(sum(g$residuals^2), g$rss, tolerance = 1e-10)
+    expect_identical(r$series$frequency, 4)
+    # residuals are orthogonal to the regressors
+    expect_lt(max(abs(crossprod(g$X, g$residuals))), 1e-8)
+  }
+  # DF-GLS statistic unchanged (it is the t ratio of the stored regression)
+  d <- dfgls(y, "c", lags = 2)
+  expect_equal(d$statistic, unname(d$regression$coefficients["y_lag1", "t value"]))
+  expect_equal(d$statistic, dfgls_statistic(as.numeric(y), "c", 2L))
+})
+
+test_that("tsibbles give their frequency and dates", {
+  skip_if_not_installed("tsibble")
+  set.seed(3)
+  v <- cumsum(stats::rnorm(80))
+  tm <- tsibble::tsibble(month = tsibble::yearmonth("2000 Jan") + 0:79, x = v, index = month)
+  rm <- adf(tm, lags = 1)
+  expect_identical(rm$series$frequency, 12)
+  expect_s3_class(rm$series$time, "Date")
+  tq <- tsibble::tsibble(q = tsibble::yearquarter("2000 Q1") + 0:79, x = v, index = q)
+  expect_identical(adf(tq, lags = 1)$series$frequency, 4)
+  ty <- tsibble::tsibble(year = 1901:1980, x = v, index = year)
+  expect_identical(adf(ty, lags = 1)$series$frequency, 1)
+})

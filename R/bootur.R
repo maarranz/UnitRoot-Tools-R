@@ -96,7 +96,10 @@ boot_ur <- function(y, trend = "c", bootstrap = c("AWB", "BWB", "DWB", "MBB", "S
   check_flag(criterion_scale, "criterion_scale")
   B <- check_order(B, "B")
   if (B < 99L) stop("`B` must be at least 99.", call. = FALSE)
+  series_nm <- series_name(substitute(y))
+  y_input <- y
   y <- check_series(y, var = var)
+  series <- series_info(y_input, var, length(y), series_nm)
   trend <- match_trend(trend, allowed = c("c", "ct"))
   n <- length(y)
   min_lag <- 0L
@@ -157,6 +160,7 @@ boot_ur <- function(y, trend = "c", bootstrap = c("AWB", "BWB", "DWB", "MBB", "S
                                         "selected by %s (kmax = %d) for each test: %s"),
                                   criterion, max_lag, paste(as.integer(sel[1, ]), collapse = ", "))
                else character(),
+    series = series,
     call = call)
 }
 

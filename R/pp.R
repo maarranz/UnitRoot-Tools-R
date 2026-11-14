@@ -59,7 +59,10 @@ pp <- function(y, trend = "c", kernel = "bartlett", bandwidth = "short",
                level = 0.05, var = NULL) {
   call <- match.call()
   check_level(level)
+  series_nm <- series_name(substitute(y))
+  y_input <- y
   y <- check_series(y, var = var)
+  series <- series_info(y_input, var, length(y), series_nm)
   trend <- match_trend(trend, allowed = c("c", "ct"))
   kernel <- check_kernel(kernel)
   n <- length(y) - 1L
@@ -106,6 +109,7 @@ pp <- function(y, trend = "c", kernel = "bartlett", bandwidth = "short",
     warnings = if (r$nobs < 25L) "N is below 25." else character(),
     regression = list(coefficients = coef_table, rss = f$rss, df = f$df,
                       sigma2 = f$sigma2),
+    series = series,
     call = call)
 }
 

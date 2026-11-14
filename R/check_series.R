@@ -132,3 +132,71 @@ tsibble_series <- function(x, var, arg) {
   measured <- setdiff(names(x), c(idx, keys))
   pick_column(x[, measured, drop = FALSE], var, arg)
 }
+
+# Series metadata for the result (spec: result contract, `series`; D19, D20):
+# name, frequency s (observations per year; NA when unknown) and the time
+# point of each observation (numeric times for ts, dates for zoo/xts/tsibble
+# and data frames with a date column, 1..T otherwise). `y` is the input as
+# given (after check_series() has accepted it), n its length.
+series_info <- function(y, var = NULL, n, name = NA_character_) {
+  freq <- NA_real_
+  time <- seq_len(n)
+  as_time <- function(v) {
+    if (inherits(v, c("Date", "POSIXt"))) return(v)
+    d <- tryCatch(as.Date(v), error = function(e) NULL)
+    if (!is.null(d) && length(d) == n && !anyNA(d)) d else seq_len(n)
+  }
+  if (inherits(y, "tbl_ts") && requireNamespace("tsibble", quietly = TRUE)) {
+    idx <- tsibble::index_var(y)
+    v <- sort(as.data.frame(y)[[idx]])
+    time <- as_time(v)
+    if (inherits(time, c("Date", "POSIXt"))) {
+      freq <- frequency_from_dates(time)
+    } else if (is.numeric(v) && length(unique(diff(v))) == 1L && diff(v)[1] == 1) {
+      freq <- 1   # integer years
+      time <- as.numeric(v)
+    }
+  } else if (inherits(y, "zoo") && requireNamespace("zoo", quietly = TRUE)) {
+    v <- zoo::index(y)
+    if (inherits(v, c("yearmon", "yearqtr"))) {
+      freq <- if (inherits(v, "yearmon")) 12 else 4
+      time <- zoo::as.Date(v)
+    } else if (inherits(v, c("Date", "POSIXt"))) {
+      freq <- frequency_from_dates(v)
+      time <- v
+    } else {
+      f <- stats::frequency(y)
+      if (is.finite(f) && f > 0) freq <- f
+      time <- as.numeric(v)
+    }
+  } else if (stats::is.ts(y)) {
+    freq <- stats::frequency(y)
+    time <- as.numeric(stats::time(y))
+  } else if (is.data.frame(y)) {
+    is_time <- vapply(y, function(v) inherits(v, c("Date", "POSIXt")), logical(1))
+    if (sum(is_time) == 1L) {
+      time <- y[[which(is_time)]]
+      freq <- frequency_from_dates(time)
+    }
+  }
+  if (length(time) != n) time <- seq_len(n)
+  list(name = if (!is.null(var)) var else name, frequency = freq, time = time)
+}
+
+# Observations per year from a regular sequence of dates: annual, quarterly,
+# monthly or weekly; NA otherwise (e.g. daily).
+frequency_from_dates <- function(d) {
+  if (length(d) < 2L) return(NA_real_)
+  days <- stats::median(diff(as.numeric(as.Date(d))))
+  if (days >= 360 && days <= 370) 1
+  else if (days >= 88 && days <= 93) 4
+  else if (days >= 28 && days <= 31) 12
+  else if (days == 7) 52
+  else NA_real_
+}
+
+# Name of the series argument in the user's call, for the result.
+series_name <- function(expr) {
+  nm <- paste(deparse(expr, width.cutoff = 60L), collapse = " ")
+  if (nchar(nm) > 60L) NA_character_ else nm
+}

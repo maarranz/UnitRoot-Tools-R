@@ -73,7 +73,10 @@ adf <- function(y, trend = "c", lags = NULL, max_lags = NULL,
   criterion <- match.arg(criterion)
   final_sample <- match.arg(final_sample)
   check_level(level)
+  series_nm <- series_name(substitute(y))
+  y_input <- y
   y <- check_series(y, var = var)
+  series <- series_info(y_input, var, length(y), series_nm)
   trend <- match_trend(trend)
 
   if (!is.null(lags)) {
@@ -94,11 +97,11 @@ adf <- function(y, trend = "c", lags = NULL, max_lags = NULL,
   }
 
   r <- adf_regression(y, trend, k, first)
-  adf_result(r, selection, level, call)
+  adf_result(r, selection, level, call, series)
 }
 
 # Builds the ur_test for an ADF regression (used by adf() and the strategies).
-adf_result <- function(r, selection, level, call) {
+adf_result <- function(r, selection, level, call, series = NULL) {
   trend <- r$trend
   warn <- if (is.null(selection$notes)) character() else selection$notes
   if (r$nobs < 25L) {
@@ -158,7 +161,9 @@ adf_result <- function(r, selection, level, call) {
     engine = engine_internal(),
     warnings = warn,
     regression = list(coefficients = coef_table, rss = fit$rss,
-                      df = fit$df, sigma2 = fit$sigma2),
+                      df = fit$df, sigma2 = fit$sigma2,
+                      residuals = fit$residuals, X = r$design$X),
+    series = series,
     call = call
   )
 }
