@@ -56,8 +56,9 @@ for \code{trend = "c"}.
 }
 \details{
 The statistic is the t ratio of \eqn{b} (\eqn{\tau_1}, \eqn{\tau_2} or
-\eqn{\tau_3}). Its critical values come from MacKinnon's response surfaces
-evaluated at the effective sample size. The joint statistics
+\eqn{\tau_3}). Its critical values and p-value come from the package's own
+finite-sample response surfaces in the sample size and the number of lags
+(without lags they agree with MacKinnon's, 2010, to about 0.005). The joint statistics
 \eqn{\phi_1} (\code{"c"}) or \eqn{\phi_2} and \eqn{\phi_3} (\code{"ct"}) are
 reported alongside; they are computed from restricted regressions on the
 same sample. Their critical values and p-values come from the package's
@@ -74,10 +75,11 @@ the default), or kept on the common sample used for selection
 (\code{final_sample = "common"}), so that it is exactly the selected row of the
 selection table.
 
-\strong{p-value.} MacKinnon's (1996) finite-sample p-value at the effective
-sample size, computed by \code{\link[urca:punitroot]{urca::punitroot()}}. The decision is taken from
-the critical value; the two sources agree to four decimals at the
-tabulated levels.
+\strong{p-value.} From the same response surfaces as the critical values, so the
+p-value equals 0.01, 0.05 or 0.10 exactly at them; it is reported as
+0.001 or 0.999 beyond the simulated range. The decision is taken from the
+critical value. MacKinnon's (2010) critical values for the effective
+sample size (no lags) are given in the calibration note for comparison.
 }
 \examples{
 set.seed(1)

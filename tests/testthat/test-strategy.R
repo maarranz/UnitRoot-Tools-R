@@ -221,7 +221,8 @@ test_that("history reports a p-value for each step", {
   for (i in seq_len(nrow(h))) {
     tr <- c(tau3 = "ct", tau2 = "c", tau1 = "n")
     switch(h$test[i],
-      tau3 = , tau2 = , tau1 = expect_equal(h$p_value[i], tau_p_value(h$statistic[i], tr[[h$test[i]]], N)),
+      tau3 = , tau2 = , tau1 = expect_equal(h$p_value[i],
+                                           tau_calibration(tr[[h$test[i]]], h$statistic[i], N, s$lags)$p_value),
       phi3 = , phi1 = {
         expect_true(h$p_value[i] >= 0 && h$p_value[i] <= 1)
         expect_equal(h$p_value[i] < h$level[i], h$reject[i])
@@ -253,5 +254,8 @@ test_that("strategies report substituted calibrations and warnings of every step
   # inside the design: no warnings, calibration names the settings used
   s0 <- ur_strategy(cumsum(stats::rnorm(200)), lags = 2)
   expect_length(s0$warnings, 0L)
-  expect_true(all(h$warnings[!phi_rows] == ""))
+  # tau steps carry the same design warnings (own surfaces, D21), once each
+  expect_true(all(grepl("k = 25 exceeds", h$warnings[h$test %in% c("tau3", "tau2", "tau1")])))
+  expect_false(any(duplicated(sub("^(tau[123]|phi[13]): ", "", s$warnings)) &
+                   !grepl("^(tau[123]|phi[13]): ", s$warnings)))
 })

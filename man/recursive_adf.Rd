@@ -95,8 +95,8 @@ each window, using only that window's data (\code{max_lags}, if given, caps
 every window).
 
 \strong{Critical values are nominal, pointwise references.} Each window's
-statistic is compared with the MacKinnon critical value for its own sample
-size, as in \code{\link[=adf]{adf()}}. This is a reference for a test at a single date chosen
+statistic is compared with the finite-sample critical value for its own
+sample size and lag order, as in \code{\link[=adf]{adf()}}. This is a reference for a test at a single date chosen
 in advance, and only approximately even then: the critical values are for
 a fixed lag order, so they do not account for the full-sample lag choice
 (look-ahead) or for re-selection in each window. They are not valid for

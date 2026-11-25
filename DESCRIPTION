@@ -1,6 +1,6 @@
 Package: unitroottools
 Title: Transparent Unit-Root Testing and Deterministic-Specification Strategies
-Version: 0.3.2.9000
+Version: 0.3.3
 Authors@R:
     person("Miguel A.", "Arranz", email = "maarranz@eco.uc3m.es",
            role = c("aut", "cre"))
@@ -19,7 +19,6 @@ Imports:
     generics,
     graphics,
     stats,
-    urca,
     utils
 Suggests:
     bootUR,
@@ -31,6 +30,7 @@ Suggests:
     lmtest,
     tibble,
     tsibble,
+    urca,
     xts,
     zoo
 Config/testthat/edition: 3

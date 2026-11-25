@@ -30,8 +30,9 @@ terms given by \code{trend}, and records the t ratio of \eqn{b}
 (\eqn{\tau}) and the normalized coefficient \eqn{N \hat b}.
 }
 \details{
-The empirical quantiles of \eqn{\tau} are compared with MacKinnon's
-response-surface critical values (as used by \code{\link[=adf]{adf()}}) and with the
+The empirical quantiles of \eqn{\tau} are compared with MacKinnon's (2010)
+response-surface critical values (no lags; \code{\link[=adf]{adf()}} uses the package's own
+surfaces, which agree with them) and with the
 quantiles of the standard normal distribution: under the unit-root null
 the t ratio does not have a normal (or Student t) distribution.
 }

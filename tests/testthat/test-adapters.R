@@ -5,7 +5,7 @@ sim_rw <- function(n = 150, seed = 8) {
   cumsum(stats::rnorm(n))
 }
 
-test_that("pp(): internal Z_tau, bandwidth as urca, MacKinnon calibration (D12)", {
+test_that("pp(): internal Z_tau, bandwidth as urca, tau calibration (D12, D21)", {
   y <- sim_rw()
   for (trend in c("c", "ct")) for (bw in list("short", "long", 3L)) {
     r <- pp(y, trend = trend, bandwidth = bw)
@@ -18,8 +18,9 @@ test_that("pp(): internal Z_tau, bandwidth as urca, MacKinnon calibration (D12)"
     expect_equal(r$statistic, unname(u@teststat), tolerance = 0.05)  # O(1/T) apart
     expect_identical(r$nobs, length(y) - 1L)
     expect_identical(r$sample, c(2L, length(y)))
-    expect_equal(r$critical_values, tau_critical_values(trend, r$nobs))
-    expect_equal(r$p_value, tau_p_value(r$statistic, trend, r$nobs))
+    tc <- tau_calibration(trend, r$statistic, r$nobs, 0L)
+    expect_equal(r$critical_values, tc$critical_values)
+    expect_equal(r$p_value, tc$p_value)
     expect_match(r$engine, "^internal ")
   }
   expect_match(pp(y)$bandwidth_rule, "short rule, trunc\\(4 \\(\\(T-1\\)/100\\)", fixed = FALSE)

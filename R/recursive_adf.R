@@ -24,8 +24,8 @@
 #' every window).
 #'
 #' **Critical values are nominal, pointwise references.** Each window's
-#' statistic is compared with the MacKinnon critical value for its own sample
-#' size, as in [adf()]. This is a reference for a test at a single date chosen
+#' statistic is compared with the finite-sample critical value for its own
+#' sample size and lag order, as in [adf()]. This is a reference for a test at a single date chosen
 #' in advance, and only approximately even then: the critical values are for
 #' a fixed lag order, so they do not account for the full-sample lag choice
 #' (look-ahead) or for re-selection in each window. They are not valid for
@@ -144,9 +144,9 @@ recursive_adf <- function(y, trend = "c", lags = NULL, max_lags = NULL,
     }
     r <- adf_regression(yi, trend, k, k + 2L)
     stat <- unname(r$tau)
-    cv <- tau_critical_values(trend, r$nobs)[[lv]]
-    c(nobs = r$nobs, lags = k, statistic = stat, critical_value = cv,
-      p_value = tau_p_value(stat, trend, r$nobs))
+    tc <- tau_calibration(trend, stat, r$nobs, k, levels = level)
+    c(nobs = r$nobs, lags = k, statistic = stat, critical_value = unname(tc$critical_values[[1]]),
+      p_value = tc$p_value)
   })
   m <- do.call(rbind, rows)
   out <- data.frame(start = series$time[starts], end = series$time[ends],

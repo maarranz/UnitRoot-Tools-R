@@ -1,16 +1,20 @@
-"""Minimal reader for inst/fixtures/dfgls_response_surfaces.json (Decision D11).
+"""Minimal reader for inst/fixtures/dfgls_response_surfaces.json (Decision D11)
+and, in the same format, tau_response_surfaces.json (D21; trends n, c, ct).
 
 A reference for other implementations (e.g. the Python package UnitRoot-Tools):
 evaluates DF-GLS critical values and p-values exactly as R's unitroottools
 does, and checks the reference values stored in the file.
 Run from the repository root:  python3 data-raw/read_dfgls_surfaces.py
+(or, for tau:  python3 data-raw/read_dfgls_surfaces.py inst/fixtures/tau_response_surfaces.json)
 """
 import json
+import sys
 from statistics import NormalDist
 
 import numpy as np
 
-SURFACES = json.load(open("inst/fixtures/dfgls_response_surfaces.json"))
+SURFACES = json.load(open(sys.argv[1] if len(sys.argv) > 1
+                          else "inst/fixtures/dfgls_response_surfaces.json"))
 _N = NormalDist()
 
 

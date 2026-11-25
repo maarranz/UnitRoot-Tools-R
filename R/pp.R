@@ -19,8 +19,8 @@
 #' \eqn{\hat u_t} (Phillips and Perron, 1988; Hamilton, 1994, eq. 17.6.8).
 #'
 #' Critical values and the p-value are those of the Dickey-Fuller
-#' \eqn{\tau} (MacKinnon's response surfaces and MacKinnon, 1996, at the
-#' effective sample size, as in [adf()]): \eqn{Z_\tau} has the same limiting
+#' \eqn{\tau} without lags at the effective sample size (the package's own
+#' response surfaces, as in [adf()]): \eqn{Z_\tau} has the same limiting
 #' distribution. Its finite-sample distribution differs, especially with
 #' strong negative moving-average components.
 #'
@@ -87,18 +87,18 @@ pp <- function(y, trend = "c", kernel = "bartlett", bandwidth = "short",
 
   coef_table <- cbind(Estimate = f$coefficients, `Std. Error` = f$se,
                       `t value` = f$t_values)
+  tc <- tau_calibration(trend, stat, r$nobs, 0L)
   new_ur_test(
     method = "Phillips-Perron test", test = "PP", statistic_name = "Z_tau",
     statistic = unname(stat), null = "unit root",
     alternative = adf_alternatives[[trend]], trend = trend,
     lags = v$lags_used, bandwidth_rule = bandwidth_text(kernel, bw),
     nobs = r$nobs, sample = unname(r$sample),
-    critical_values = tau_critical_values(trend, r$nobs), tail = "lower",
-    p_value = tau_p_value(stat, trend, r$nobs),
+    critical_values = tc$critical_values, tail = "lower",
+    p_value = tc$p_value,
     calibration = list(
-      method = "response_surface", source = mackinnon_source[[trend]],
-      note = sprintf("evaluated at N = %d; Z_tau has the Dickey-Fuller tau limit distribution", r$nobs),
-      p_value_source = "MacKinnon (1996) finite-sample p-value for tau (urca::punitroot)"),
+      method = "response_surface", source = tau_source,
+      note = paste0(tc$note, "; Z_tau has the Dickey-Fuller tau limit distribution (no lags)")),
     level = level,
     other_critical_values = list(Z_alpha = z_alpha_calibration(z_alpha, trend, n + 1L)),
     other_statistics = c(Z_alpha = unname(z_alpha),

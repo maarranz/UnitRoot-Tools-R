@@ -1,6 +1,31 @@
-# unitroottools (development version)
+# unitroottools 0.3.3
 
-Corrections from the final pre-release audit of 0.3.2 (18 November 2026).
+## Own τ critical values and p-values; urca no longer needed (D21)
+
+* `adf()`, `pp()`, `ur_strategy()` and `recursive_adf()` take the critical
+  values and p-values of τ1, τ2 and τ3 (and Z_τ) from the package's own
+  finite-sample response surfaces in the sample size and the number of lags,
+  estimated by Monte Carlo like those of DF-GLS and φ (400,000 replications
+  per sample size, k = 0, ..., 21). Before, critical values were MacKinnon's
+  (2010) and p-values MacKinnon's (1996) through `urca::punitroot()`, both
+  computed without lags.
+* Critical values and p-value now come from one surface, so the p-value is
+  exactly 0.05 at the 5% critical value. Without lags the critical values
+  agree with MacKinnon's to 0.001-0.005 (0.008 with a trend at N = 24), and
+  the calibration note of every result shows MacKinnon's values for
+  comparison. Out of sample the empirical size at 5% is between 4.7% and 5.4%
+  (`data-raw/tau_validate.R`).
+* As for the other surfaces, outside the simulated design (k > 21, or a
+  sample too short for k) the boundary is used with a warning; in strategies
+  these warnings name the step (`tau3: ...`), once.
+* urca moves from Imports to Suggests (used only by tests comparing with it);
+  the package's only non-base dependency is generics.
+* The surfaces are shared with other implementations in
+  `inst/fixtures/tau_response_surfaces.json`.
+* The simulation kernel (`data-raw/tau_kernel.cpp`) also computes
+  Engle-Granger residual-based statistics, for the cointegration package.
+
+## Corrections from the final pre-release audit of 0.3.2 (18 November 2026)
 
 * `kpss()`: the variance fields (`gamma0`, `long_run_variance` in
   `other_statistics`) are in the units of the series again. Since 0.3.1 they

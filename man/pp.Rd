@@ -48,8 +48,8 @@ where \eqn{n = T - 1}, \eqn{\hat\gamma_0 = n^{-1} \sum \hat u_t^2},
 }
 \details{
 Critical values and the p-value are those of the Dickey-Fuller
-\eqn{\tau} (MacKinnon's response surfaces and MacKinnon, 1996, at the
-effective sample size, as in \code{\link[=adf]{adf()}}): \eqn{Z_\tau} has the same limiting
+\eqn{\tau} without lags at the effective sample size (the package's own
+response surfaces, as in \code{\link[=adf]{adf()}}): \eqn{Z_\tau} has the same limiting
 distribution. Its finite-sample distribution differs, especially with
 strong negative moving-average components.
 

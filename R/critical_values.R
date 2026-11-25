@@ -26,18 +26,43 @@ mackinnon_source <- c(
   ct = "MacKinnon (2010) response surface"
 )
 
-tau_critical_values <- function(trend, nobs) {
+# MacKinnon's critical values at the effective sample size N (no lags in his
+# design). Since 0.3.3 they are shown for comparison and used by
+# simulate_df(); the tests use the package's own surfaces (below).
+mackinnon_critical_values <- function(trend, nobs) {
   b <- mackinnon_tau[[trend]]
   powers <- c(1, 1 / nobs, 1 / nobs^2, 1 / nobs^3)
   drop(b %*% powers)
 }
 
-# MacKinnon (1996) finite-sample p-value of a tau statistic at effective
-# sample size nobs (spec, Decision D8), via MacKinnon's own routine in urca.
-tau_p_value <- function(stat, trend, nobs) {
-  code <- c(n = "nc", c = "c", ct = "ct")[[trend]]
-  p <- urca::punitroot(unname(stat), N = nobs, trend = code, statistic = "t")
-  min(max(as.numeric(p), 0), 1)
+# ---- tau: the package's own response surfaces (Decision D21) ------------------
+#
+# Finite-sample quantiles of tau1, tau2, tau3 in the sample size T and the
+# number of lagged differences k (data-raw/tau_simulate.R, kernel
+# tau_kernel.cpp; fitted by data-raw/new_response_surfaces.R), as for DF-GLS
+# and phi. At k = 0 they agree with MacKinnon (2010) to 0.001-0.004 (0.008 at
+# T = 25 with a trend). Critical values and p-value come from the same
+# surface, so they always agree. T is the length of the series behind the
+# regression, N + k + 1 for N effective observations.
+tau_source <- "unitroottools tau response surfaces (own simulation)"
+
+tau_calibration <- function(trend, stat, nobs, k, levels = c(0.01, 0.05, 0.10)) {
+  T <- nobs + k + 1L
+  rs <- tau_rs[[trend]]
+  cv <- rs_critical_values(rs, T, k, tail = "lower", levels = levels)
+  p <- rs_p_value(rs, unname(stat), T, k)
+  w <- rs_design_warnings(rs, T, k)
+  # the surfaces are accurate to about 1% except at T <= 30 with 7 or more
+  # lags, where the error reaches about 4% in the 1% tail
+  if (T <= 30L && k >= 7L) {
+    w <- c(w, sprintf("with %d lags at T = %d the critical values and p-value are accurate only to about 5%%.",
+                      k, T))
+  }
+  mk <- mackinnon_critical_values(trend, nobs)
+  list(critical_values = cv, p_value = p, warnings = w, T = T,
+       note = paste(c(sprintf("finite-sample quantiles for T = %d and k = %d lagged differences; MacKinnon (2010), no lags, N = %d: %s",
+                              T, k, nobs, paste(sprintf("%s %s", c("1%", "5%", "10%"), fmt_num(unname(mk))), collapse = ", ")),
+                      p_value_note(p)), collapse = "; "))
 }
 
 # ---- phi: Dickey and Fuller (1981) tables -------------------------------------

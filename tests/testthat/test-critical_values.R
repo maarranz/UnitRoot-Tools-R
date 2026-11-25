@@ -1,15 +1,15 @@
 test_that("tau critical values reproduce MacKinnon's response surfaces", {
   # Reference values from statsmodels 0.15 (adfvalues.mackinnoncrit, nobs = 100)
-  expect_equal(unname(tau_critical_values("c", 100)),
+  expect_equal(unname(mackinnon_critical_values("c", 100)),
                c(-3.49750103, -2.89090644, -2.5824349), tolerance = 1e-8)
-  expect_equal(unname(tau_critical_values("ct", 100)),
+  expect_equal(unname(mackinnon_critical_values("ct", 100)),
                c(-4.05227796, -3.45534297, -3.15332088), tolerance = 1e-8)
-  expect_equal(unname(tau_critical_values("n", 100)),
+  expect_equal(unname(mackinnon_critical_values("n", 100)),
                c(-2.5884607, -1.94399128, -1.61441004), tolerance = 1e-8)
   # Asymptotic limits are the leading coefficients
-  expect_equal(unname(tau_critical_values("c", 1e12)),
+  expect_equal(unname(mackinnon_critical_values("c", 1e12)),
                c(-3.43035, -2.86154, -2.56677), tolerance = 1e-8)
-  expect_named(tau_critical_values("c", 50), c("0.01", "0.05", "0.1"))
+  expect_named(mackinnon_critical_values("c", 50), c("0.01", "0.05", "0.1"))
 })
 
 test_that("phi table rows: largest tabulated size not exceeding N, capped at 500", {

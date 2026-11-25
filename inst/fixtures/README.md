@@ -29,3 +29,9 @@ Each file contains:
   and p-values computed by R at 66 points, which an implementation reading
   the file should reproduce to 1e-12). Numbers are written with 17
   significant digits, so they reproduce R's coefficients exactly.
+- `tau_response_surfaces.json`: the ADF τ surfaces (Decision D21), same
+  format, with `trends$n`, `trends$c` and `trends$ct` (τ1, τ2, τ3) and 336
+  reference values. T is the length of the series, T = N + k + 1;
+  Phillips-Perron's Z_τ uses k = 0. `data-raw/read_dfgls_surfaces.py
+  inst/fixtures/tau_response_surfaces.json` reproduces the reference values
+  to 4e-16.

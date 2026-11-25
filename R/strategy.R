@@ -40,6 +40,8 @@ rejection_types <- c(
 
 # ---- statistics ----------------------------------------------------------------
 
+trend_tau_name <- c(n = "tau1", c = "tau2", ct = "tau3")
+
 strategy_statistics <- function(y, k, first, level) {
   lv <- format_level(level)
   r <- list(ct = adf_regression(y, "ct", k, first),
@@ -48,11 +50,14 @@ strategy_statistics <- function(y, k, first, level) {
   nobs <- r$ct$nobs
 
   tau_entry <- function(trend) {
-    cv <- tau_critical_values(trend, nobs)[[lv]]
     stat <- unname(r[[trend]]$tau)
+    tc <- tau_calibration(trend, stat, nobs, k, levels = level)
+    cv <- unname(tc$critical_values[[1]])
     list(statistic = stat, critical_value = cv, reject = stat < cv,
-         p_value = tau_p_value(stat, trend, nobs),
-         calibration = sprintf("%s, N = %d", mackinnon_source[[trend]], nobs))
+         p_value = tc$p_value,
+         calibration = sprintf("%s, T = %d, k = %d", tau_source, tc$T, k),
+         warnings = if (length(tc$warnings)) paste(paste0(trend_tau_name[[trend]], ":"), tc$warnings)
+                    else character())
   }
   phi_entry <- function(trend, name) {
     stat <- r[[trend]]$phi[[name]]
@@ -360,8 +365,10 @@ ur_strategy <- function(y, strategy = c("original", "conservative", "hamilton"),
   }), use.names = FALSE)
   # warnings of every visited step, not only of the terminal test (audit A2)
   visited <- unlist(lapply(path$steps$test, function(nm) st$tests[[nm]]$warnings))
+  # the terminal test repeats its design warnings without the step prefix
+  term_warn <- setdiff(terminal$warnings, sub("^(tau[123]|phi[13]): ", "", visited))
   warnings <- unique(c(if (!is.null(selection)) selection$notes, visited,
-                       terminal$warnings, resid_warn))
+                       term_warn, resid_warn))
 
   structure(list(
     strategy = strategy,

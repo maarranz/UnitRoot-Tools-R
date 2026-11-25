@@ -25,14 +25,15 @@ test_that("tau and its critical values follow the specification", {
   expect_s3_class(r, "ur_test")
   expect_identical(r$statistic_name, "tau3")
   expect_identical(r$tail, "lower")
-  expect_equal(r$critical_values, tau_critical_values("ct", r$nobs))
-  expect_identical(r$calibration$source, "MacKinnon (2010) response surface")
-  expect_equal(r$p_value, urca::punitroot(r$statistic, r$nobs, "ct"))
-  expect_match(r$calibration$p_value_source, "MacKinnon \\(1996\\)")
+  tc <- tau_calibration("ct", r$statistic, r$nobs, 2L)
+  expect_equal(r$critical_values, tc$critical_values)
+  expect_equal(r$p_value, tc$p_value)
+  expect_identical(r$calibration$source, tau_source)
+  expect_match(r$calibration$note, "T = 150 and k = 2 lagged differences")
+  expect_match(r$calibration$note, "MacKinnon \\(2010\\), no lags, N = 147")
   expect_named(r$other_statistics, c("phi2", "phi3"))
   expect_named(r$other_critical_values, c("phi2", "phi3"))
-  expect_identical(adf(y, trend = "n", lags = 0)$calibration$source,
-                   "MacKinnon (1996) response surface")
+  expect_identical(adf(y, trend = "n", lags = 0)$calibration$source, tau_source)
   expect_identical(r$reject, r$statistic < r$critical_values[["0.05"]])
 })
 
@@ -53,16 +54,33 @@ test_that("lag selection: maximal sample by default, common on request (D1)", {
   expect_identical(r2$sample, sel$sample)
 })
 
-test_that("p-values: MacKinnon (1996), consistent with the 2010 critical values (D8)", {
-  for (tr in c("n", "c", "ct")) {
+test_that("tau: critical values and p-values from the same surfaces (D21)", {
+  for (tr in c("n", "c", "ct")) for (k in c(0L, 3L)) {
     for (N in c(25L, 50L, 100L, 262L)) {
-      cv <- tau_critical_values(tr, N)
-      p <- vapply(cv, tau_p_value, numeric(1), trend = tr, nobs = N)
-      expect_equal(unname(p), c(0.01, 0.05, 0.10), tolerance = 1e-3)
+      cv <- tau_calibration(tr, 0, N, k)$critical_values
+      p <- vapply(cv, function(s) tau_calibration(tr, s, N, k)$p_value, numeric(1))
+      expect_equal(unname(p), c(0.01, 0.05, 0.10), tolerance = 1e-10)
     }
   }
-  expect_true(tau_p_value(-10, "c", 100) >= 0)
-  expect_true(tau_p_value(5, "c", 100) <= 1)
+  expect_equal(tau_calibration("c", -10, 100, 0)$p_value, 0.001)
+  expect_equal(tau_calibration("c", 5, 100, 0)$p_value, 0.999)
+})
+
+test_that("tau surfaces agree with MacKinnon at k = 0", {
+  for (tr in c("n", "c", "ct")) for (N in c(24L, 49L, 99L, 249L, 999L)) {
+    own <- tau_calibration(tr, 0, N, 0L)$critical_values
+    expect_equal(unname(own), unname(mackinnon_critical_values(tr, N)), tolerance = 0.01,
+                 label = paste(tr, N))
+  }
+  skip_if_not_installed("urca")
+  for (tr in c("n", "c", "ct")) for (N in c(50L, 100L, 500L)) for (s in c(-3.6, -3, -2.5, -2, -1.5)) {
+    code <- c(n = "nc", c = "c", ct = "ct")[[tr]]
+    mk <- urca::punitroot(s, N = N, trend = code, statistic = "t")
+    if (mk > 0.002 && mk < 0.998) {
+      expect_equal(tau_calibration(tr, s, N, 0L)$p_value, mk, tolerance = 0.006,
+                   label = paste(tr, N, s))
+    }
+  }
 })
 
 test_that("argument checks", {
@@ -76,7 +94,7 @@ test_that("argument checks", {
 test_that("small samples are flagged", {
   set.seed(2)
   r <- adf(cumsum(rnorm(22)), trend = "c", lags = 0)
-  expect_match(r$warnings, "below 25", all = FALSE)
+  expect_match(r$warnings, "^T = 22 is below the smallest sample size", all = FALSE)
   expect_match(r$warnings, "phi statistics: T = 22 is below the smallest sample size", all = FALSE)
 })
 
@@ -108,4 +126,24 @@ test_that("phi accuracy is flagged at T <= 30 with 7 or more lags", {
   y <- cumsum(rnorm(30))
   expect_match(adf(y, trend = "ct", lags = 7)$warnings, "accurate only to about 5%", all = FALSE)
   expect_false(any(grepl("accurate only", adf(y, trend = "ct", lags = 3)$warnings)))
+})
+
+test_that("the shared tau surfaces (JSON) are the package's, to the last digit (D21)", {
+  skip_if_not_installed("jsonlite")
+  j <- jsonlite::read_json(system.file("fixtures", "tau_response_surfaces.json",
+                                       package = "unitroottools"))
+  for (tr in c("n", "c", "ct")) {
+    r <- tau_rs[[tr]]
+    jt <- j$trends[[tr]]
+    expect_identical(unlist(jt$intercept), r$intercept)
+    expect_identical(unlist(jt$probs), r$probs)
+    for (a in seq_along(r$ks)) for (b in c(1L, 50L, length(r$probs))) {
+      expect_identical(unlist(jt$slopes[[a]][[b]]), unname(r$slopes[a, b, ]))
+    }
+  }
+  for (row in j$reference_values$rows) {
+    tc <- tau_calibration(row$trend, row$stat, row$T - row$k - 1L, row$k)
+    expect_equal(unname(tc$critical_values), c(row$cv01, row$cv05, row$cv10), tolerance = 1e-12)
+    expect_equal(tc$p_value, row$p, tolerance = 1e-12)
+  }
 })

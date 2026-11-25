@@ -157,19 +157,16 @@ Each result records its **calibration**: the method, the source and any approxim
 | Method | Use |
 |---|---|
 | `table` | Tabulated finite-sample critical values (no longer used by the package's own tests) |
-| `response_surface` | Critical values and p-values from response surfaces: MacKinnon's ($\tau$, $Z_\tau$) and the package's own (DF-GLS, $\phi$, $Z_\alpha$; Ng–Perron and ERS from interpolated simulation tables, D15) |
+| `response_surface` | Critical values and p-values from response surfaces: the package's own ($\tau$, $Z_\tau$, DF-GLS, $\phi$, $Z_\alpha$; Ng–Perron and ERS from interpolated simulation tables, D15) |
 | `limit_distribution` | Exact limiting distribution computed numerically (KPSS, D14) |
 | `conventional_t` | Student-$t$ reference distribution (conditional tests in strategies) |
 | `bootstrap` | Bootstrap p-values (bootUR adapter, D17; own engine planned) |
 
 ::: {.callout-important}
-**Decision D4 (settled): source of $\tau$ critical values.**
-Convention: MacKinnon (2010) finite-sample response surfaces at the 1%, 5% and 10% levels, evaluated at the effective $N$. For `"n"`, which MacKinnon (2010) did not update, the MacKinnon (1996) surface is used; the result records which. Each implementation conforms, since decisions near the boundary depend on the source.
-:::
+**Decision D21 (settled 25 November 2026; replaces D4 and D8): critical values and p-values of $\tau$.**
+Own response surfaces for $\tau_1$ (`"n"`), $\tau_2$ (`"c"`) and $\tau_3$ (`"ct"`), in the length of the series $T = N + k + 1$ and the number of lagged differences $k$, estimated as for DF-GLS and $\phi$ (D11, D16): Monte Carlo under the null (driftless Gaussian random walk; $T = 20, \dots, 1000$; $k = 0, \dots, \min(12, k_{\max})$, plus $k = 13, \dots, 21$ for $T \ge 150$; maximal sample; 400,000 replications per $T$, all lag orders on the same paths), the same cubic in $1/T$ for each $k$ with a common limit, fitted by weighted least squares on $T \ge 25$. Critical values and p-values come from the same surface (p-values by monotone interpolation of $\Phi^{-1}(F)$, bounded at 0.001/0.999), so the p-value is exactly the level at the critical value; outside the design the surface is evaluated at the boundary with a warning (as D11). Phillips–Perron's $Z_\tau$ uses the $k = 0$ surface. Checks: without lags the critical values agree with MacKinnon (2010; 1996 for `"n"`) to 0.001–0.005 (0.008 at `"ct"`, $N = 24$), and the p-values with `urca::punitroot()` to about 0.005; out of sample (fresh seeds, $T$ between grid points, up to $k = 20$) the empirical size at 5% is between 4.7% and 5.4% (simulation s.e. 0.15%). MacKinnon's values for the effective $N$ are reported in the calibration note for comparison. With lags the surfaces account for the dependence of the quantiles on $k$, which MacKinnon's (computed without lags) do not. urca is no longer needed (it is in Suggests for the comparison test only). The simulation code, its output and the validation script are in `data-raw/`.
 
-::: {.callout-important}
-**Decision D8 (settled 3 November 2026): p-values of $\tau$ statistics.**
-Convention: MacKinnon (1996) finite-sample p-values evaluated at the effective $N$ (in R through `urca::punitroot()`, which implements MacKinnon's own routine). The decision is always taken from the critical value (D4); the p-value is reported with its own source. The two sources are consistent: at the MacKinnon (2010) critical values the MacKinnon (1996) p-values equal 0.0100, 0.0500 and 0.1000 to four decimals for $N = 25, 50, 100, 262$ and every deterministic specification (0.0499 and 0.0999 at $N = 1000$ with a trend). The Python implementation currently reports asymptotic MacKinnon (1994) p-values, which can differ noticeably at $N = 25$; it is to move to MacKinnon (1996).
+*Superseded:* D4 (MacKinnon 2010 critical values at the effective $N$) and D8 (MacKinnon 1996 p-values through `urca::punitroot()`), in force from 0.1.0 to 0.3.2. At $k = 0$ the change moves critical values by less than 0.01.
 :::
 
 **$\phi$ critical values (v0.1; replaced by own response surfaces in v0.2, Decision D16):** Dickey–Fuller (1981), as reproduced in Enders' Table B. Lookup rule (as in Python): use the largest tabulated sample size not exceeding $N$, capped at 500. This is a documented approximation, recorded as such in the result (with the table row used), and is scheduled for replacement by response surfaces in Phase 2. For $N < 25$ the $T = 25$ row is used and flagged as an extrapolation.
@@ -191,7 +188,7 @@ Regression $\Delta y_t = a + \gamma t + b\,y_{t-1} + u_t$, $t = 2,\dots,T$, $n =
 $$
 Z_\tau = \sqrt{\hat\gamma_0/\hat\lambda^2}\; t_b - \frac{\hat\lambda^2 - \hat\gamma_0}{2\hat\lambda}\,\frac{n\,\widehat{se}(\hat b)}{s}
 $$
-(Phillips and Perron 1988; Hamilton 1994, eq. 17.6.8). Bandwidth: Schwert's rules $\lfloor 4(n/100)^{1/4}\rfloor$ ("short") or $\lfloor 12(n/100)^{1/4}\rfloor$ ("long"), or fixed. Critical values and p-value as for $\tau$ (D4, D8) at $N = n$. With $\ell = 0$, $Z_\tau = t_b$ exactly. Computed internally; urca's `ur.pp` is not used (see the backend table).
+(Phillips and Perron 1988; Hamilton 1994, eq. 17.6.8). Bandwidth: Schwert's rules $\lfloor 4(n/100)^{1/4}\rfloor$ ("short") or $\lfloor 12(n/100)^{1/4}\rfloor$ ("long"), or fixed. Critical values and p-value as for $\tau$ without lags (D21) at $N = n$. With $\ell = 0$, $Z_\tau = t_b$ exactly. Computed internally; urca's `ur.pp` is not used (see the backend table).
 :::
 
 ::: {.callout-important}
@@ -253,7 +250,7 @@ The ADF-type tests assume that $k$ lagged differences absorb the serial correlat
 
 *Lags.* By default $k$ is selected once, on the full sample, with the conventions of `adf()` (criterion, $k_{\max}$, D3, D7), and kept fixed in every window, so that the statistic moves only because the data change; this uses the whole sample, so the lag order of an early window depends on later observations (look-ahead), and the output says so. `reselect = TRUE` selects $k$ again in each window from that window's data only, with $k_{\max}$ from the window size or, when `max_lags` is given, $\min(\texttt{max\_lags}, \text{the window's largest feasible order})$.
 
-*Each window.* The ADF regression with the maximal sample of that window (D1); statistic, $N$, critical value at `level` and p-value as in `adf()` (D4, D8), i.e. for the window's own sample size.
+*Each window.* The ADF regression with the maximal sample of that window (D1); statistic, $N$, critical value at `level` and p-value as in `adf()` (D21), i.e. for the window's own sample size and lag order.
 
 *Interpretation.* The critical values are nominal pointwise references: for a test at a single date chosen in advance, and only approximately even then, because they are for a fixed lag order and ignore the full-sample lag choice (look-ahead) or the re-selection in each window. They are not valid for the question "does the statistic cross the line at some date?": the extreme of the sequence has a different distribution, with larger critical values (Banerjee, Lumsdaine and Stock 1992). The plot labels the line "pointwise critical value", and the printed result and the help say all this.
 
@@ -473,11 +470,11 @@ Checked against the urca 1.3-4 reference documentation. Each limitation is the d
 | D1 | Final-regression sample after lag selection | Maximal sample by default; common as option | Revised 3 Nov |
 | D2 | Detrending inside MAIC/MBIC | OLS detrending | Settled |
 | D3 | Default $k_{\max}$ | $\min\{\lfloor 12(T/100)^{1/4}\rfloor, \lfloor (T-4-d)/2\rfloor\}$, warning when capped | Revised 3 Nov |
-| D4 | $\tau$ critical values | MacKinnon (2010) response surfaces | Settled |
+| D4 | $\tau$ critical values | MacKinnon (2010) response surfaces | Superseded by D21 (0.3.3) |
 | D5 | Conditional tests in strategies | Student-$t$, lower tail for $b$ | Settled |
 | D6 | Hamilton Case 3 | Deferred to v0.5 (with the Monte Carlo harness) | Settled |
 | D7 | Regression behind plain AIC/BIC | The ADF regression with its deterministic terms; detrended version as documented alternative | Settled 3 Nov |
-| D8 | $\tau$ p-values | MacKinnon (1996) at the effective $N$; decision from critical values | Settled 3 Nov |
+| D8 | $\tau$ p-values | MacKinnon (1996) at the effective $N$; decision from critical values | Superseded by D21 (0.3.3) |
 | D9 | Lag selection for GLS-based tests | Perron–Qu (2007): MAIC on OLS-detrended series, final statistic GLS | Settled 3 Nov |
 | D10 | `tidy`/`glance`; shared high-precision fixtures | Via `generics`; Python's `scaled_references.json` used by both | Settled 3 Nov |
 | D11 | DF-GLS critical values and p-values | Own finite-sample response surfaces in $(T, k)$ from the package's simulation; p-values by monotone interpolation, bounded at 0.001/0.999 | Settled 3 Nov |
@@ -489,9 +486,10 @@ Checked against the urca 1.3-4 reference documentation. Each limitation is the d
 | D17 | Bootstrap tests | Adapter to bootUR (`boot_ur()`): ADF and union tests; p-value only | Settled 3 Nov |
 | D19 | Residual diagnostics | Correlogram (ACF, PACF, Ljung–Box with $h-k$ df) up to $3s+3$ lags (capped at $N/4$); Breusch–Godfrey F (main) and LM at orders $s$ and $3s+3$; reported in `summary()` and strategy histories; no automatic increase of $k$ | Settled 14 Nov; 0.3.0 |
 | D20 | Recursive and rolling ADF | $k$ selected once on the full sample and fixed (re-selection optional); windows of at least $\max(5s, 30)$ (recursive) or $\max(10s, 40)$ (rolling) observations; pointwise critical values, labelled as such | Settled 14 Nov; 0.3.0 |
+| D21 | $\tau$ critical values and p-values | Own finite-sample response surfaces in $(T, k)$ for $\tau_1, \tau_2, \tau_3$ (also $Z_\tau$ at $k = 0$); MacKinnon shown for comparison; urca not needed | Settled 25 Nov; 0.3.3 |
 | D18 | Own bootstrap engine | Null imposed on $\Delta y$; sieve, wild sieve, stationary and moving block schemes; sieve order by AIC, fixed across replications; test lags re-selected (or fixed) as on the data; strategies under nulls with and without drift (rejection and branch frequencies); no KPSS | Settled 4 Nov; v0.4 |
 
-**Known divergences of the Python implementation (to be resolved there; details in `notes-for-python.md`):** DF-GLS critical values from ARCH depend only on $N = T-k-1$ and are conservative when lags are used (D11); asymptotic MacKinnon (1994) p-values (D8); default $k_{\max}$ uses the ceiling, and its cap allows one residual degree of freedom instead of two (D3); plain AIC/BIC from the detrended regression (D7, admissible as an alternative). The Python implementation has no Hamilton strategy yet.
+**Known divergences of the Python implementation (to be resolved there; details in `notes-for-python.md`):** DF-GLS critical values from ARCH depend only on $N = T-k-1$ and are conservative when lags are used (D11); $\tau$ critical values and p-values from MacKinnon (2010 / asymptotic 1994) rather than the shared surfaces (D21); default $k_{\max}$ uses the ceiling, and its cap allows one residual degree of freedom instead of two (D3); plain AIC/BIC from the detrended regression (D7, admissible as an alternative). The Python implementation has no Hamilton strategy yet.
 
 # References
 

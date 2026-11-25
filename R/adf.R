@@ -16,8 +16,9 @@ adf_alternatives <- c(
 #' for `trend = "c"`.
 #'
 #' The statistic is the t ratio of \eqn{b} (\eqn{\tau_1}, \eqn{\tau_2} or
-#' \eqn{\tau_3}). Its critical values come from MacKinnon's response surfaces
-#' evaluated at the effective sample size. The joint statistics
+#' \eqn{\tau_3}). Its critical values and p-value come from the package's own
+#' finite-sample response surfaces in the sample size and the number of lags
+#' (without lags they agree with MacKinnon's, 2010, to about 0.005). The joint statistics
 #' \eqn{\phi_1} (`"c"`) or \eqn{\phi_2} and \eqn{\phi_3} (`"ct"`) are
 #' reported alongside; they are computed from restricted regressions on the
 #' same sample. Their critical values and p-values come from the package's
@@ -34,10 +35,11 @@ adf_alternatives <- c(
 #' (`final_sample = "common"`), so that it is exactly the selected row of the
 #' selection table.
 #'
-#' **p-value.** MacKinnon's (1996) finite-sample p-value at the effective
-#' sample size, computed by [urca::punitroot()]. The decision is taken from
-#' the critical value; the two sources agree to four decimals at the
-#' tabulated levels.
+#' **p-value.** From the same response surfaces as the critical values, so the
+#' p-value equals 0.01, 0.05 or 0.10 exactly at them; it is reported as
+#' 0.001 or 0.999 beyond the simulated range. The decision is taken from the
+#' critical value. MacKinnon's (2010) critical values for the effective
+#' sample size (no lags) are given in the calibration note for comparison.
 #'
 #' @inheritParams select_lags
 #' @param lags Fixed number of lagged differences. If `NULL` (default), the
@@ -104,11 +106,10 @@ adf <- function(y, trend = "c", lags = NULL, max_lags = NULL,
 adf_result <- function(r, selection, level, call, series = NULL) {
   trend <- r$trend
   warn <- if (is.null(selection$notes)) character() else selection$notes
-  if (r$nobs < 25L) {
-    warn <- c(warn, sprintf(
-      "N = %d is below 25, the smallest sample size in the critical-value tables.",
-      r$nobs))
-  }
+  # tau: own response surfaces (D21); their design warnings replace the old
+  # "N below 25" note (outside the design the boundary is used and said)
+  tc <- tau_calibration(trend, r$tau, r$nobs, r$k)
+  warn <- c(warn, tc$warnings)
 
   # phi statistics: own response surfaces (D16), indexed by the length of a
   # series whose maximal sample is the effective sample, T = N + k + 1
@@ -146,14 +147,13 @@ adf_result <- function(r, selection, level, call, series = NULL) {
     lag_selection = selection,
     nobs = r$nobs,
     sample = unname(r$sample),
-    critical_values = tau_critical_values(trend, r$nobs),
+    critical_values = tc$critical_values,
     tail = "lower",
-    p_value = tau_p_value(r$tau, trend, r$nobs),
+    p_value = tc$p_value,
     calibration = list(
       method = "response_surface",
-      source = mackinnon_source[[trend]],
-      note = sprintf("evaluated at N = %d", r$nobs),
-      p_value_source = "MacKinnon (1996) finite-sample p-value (urca::punitroot)"
+      source = tau_source,
+      note = tc$note
     ),
     level = level,
     other_statistics = r$phi,

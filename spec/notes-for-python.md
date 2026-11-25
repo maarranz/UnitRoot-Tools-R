@@ -27,9 +27,11 @@ Found on the way: in small samples the quantiles for k = 2j and k = 2j + 1 are n
 
 *Reproduction:* ARCH 8.0.0 `DFGLS(y, trend, lags=k).critical_values["5%"]` gives the critical value Python uses for each (T, k); the null distribution was simulated with `data-raw/dfgls_kernel.cpp` (seed 4242), and the size is the share of simulated statistics below ARCH's value.
 
-## 2. τ p-values: asymptotic (MacKinnon 1994) against finite-sample critical values
+## 2. τ critical values and p-values: own surfaces (D21, R 0.3.3)
 
-Python reports asymptotic p-values with finite-sample (MacKinnon 2010) critical values, so the two disagree near the boundary. A statistic exactly at the 5% critical value gets p = 0.030 (ct, N = 25), 0.036 (c, N = 25), 0.044 (ct, N = 100). Specification D8: MacKinnon (1996) finite-sample p-values at the effective N. These agree with the 2010 critical values to four decimals (p = 0.0100, 0.0500, 0.1000 at the critical values for N = 25, …, 262).
+Python reports asymptotic p-values with finite-sample (MacKinnon 2010) critical values, so the two disagree near the boundary. A statistic exactly at the 5% critical value gets p = 0.030 (ct, N = 25), 0.036 (c, N = 25), 0.044 (ct, N = 100).
+
+Since 0.3.3 the R package no longer uses MacKinnon for τ (D21, replacing D4 and D8): critical values and p-values both come from its own response surfaces in (T, k), so p = 0.05 exactly at the 5% critical value, and the dependence on the lag order is accounted for. Without lags they agree with MacKinnon (2010) to 0.001–0.005 (0.008 at ct, N = 24). The surfaces are in `inst/fixtures/tau_response_surfaces.json` (same format as the DF-GLS file; trends n, c, ct; T = N + k + 1; Z_τ uses k = 0), and `data-raw/read_dfgls_surfaces.py inst/fixtures/tau_response_surfaces.json` is a NumPy reader that reproduces R's 336 reference values to 4e-16. Python can adopt the file as is; both its critical values and p-values would then match R's.
 
 ## 3. Default kmax (D3)
 

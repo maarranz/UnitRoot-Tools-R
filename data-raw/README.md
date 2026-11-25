@@ -59,12 +59,23 @@ fixed (L'Ecuyer-CMRG streams), so the files are reproducible.
    (5% size between 4.0 and 5.8%) was run interactively; its script was not
    kept.
 
-## ADF τ statistics (in progress, 0.4.0): `tau_rs`
+## ADF τ statistics (0.3.3, D21): `tau_rs`
 
 - `tau_simulate.R` (kernel `tau_kernel.cpp`) — τ1, τ2, τ3 under the null,
-  same (T, k) design; 40 x 10,000 replications. Output
-  `tau_quantiles.csv.gz`. The kernel also computes Engle-Granger
-  residual-based statistics (`nvars > 1`), for cointegrationtools.
+  same (T, k) design as φ; 40 x 10,000 replications per T, seed 20261125
+  (34 minutes on 2 cores). Output `tau_quantiles.csv.gz`. The kernel also
+  computes Engle-Granger residual-based statistics (`nvars > 1`), for
+  cointegrationtools; it was checked against `adf()` (1e-14) and against
+  `lm()` followed by an ADF regression (exact).
+- Fitted in `new_response_surfaces.R` (τ section) → `tau_rs.rds`. The τ2/τ3
+  quantiles of `phi_quantiles.csv.gz` (independent seeds) agree with this run
+  (sd of the standardised differences 1.005).
+- `tau_validate.R` — out-of-sample size check on fresh seeds, at T = 33,
+  60, 137, 290, 610 (between grid points) with up to k = 20, 20,000
+  replications per cell, using both the critical values and p ≤ level:
+  5% size between 4.72% and 5.42% (simulation s.e. 0.15%; 39 cells), the two
+  rules agreeing exactly. It also compares the k = 0 values with MacKinnon
+  (2010): differences at most 0.008 (ct, N = 24), otherwise below 0.005.
 
 ## Assembly
 

@@ -8,8 +8,9 @@
 #' terms given by `trend`, and records the t ratio of \eqn{b}
 #' (\eqn{\tau}) and the normalized coefficient \eqn{N \hat b}.
 #'
-#' The empirical quantiles of \eqn{\tau} are compared with MacKinnon's
-#' response-surface critical values (as used by [adf()]) and with the
+#' The empirical quantiles of \eqn{\tau} are compared with MacKinnon's (2010)
+#' response-surface critical values (no lags; [adf()] uses the package's own
+#' surfaces, which agree with them) and with the
 #' quantiles of the standard normal distribution: under the unit-root null
 #' the t ratio does not have a normal (or Student t) distribution.
 #'
@@ -60,7 +61,7 @@ simulate_df <- function(T = 100, R = 10000, trend = "c", seed = NULL) {
   q <- data.frame(
     level = levels,
     simulated = unname(stats::quantile(tau, levels, type = 8)),
-    mackinnon = unname(tau_critical_values(trend, nobs)),
+    mackinnon = unname(mackinnon_critical_values(trend, nobs)),
     normal = stats::qnorm(levels)
   )
   structure(list(tau = tau, normalized_b = nb, T = T, R = R, trend = trend,
