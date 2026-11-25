@@ -32,9 +32,11 @@ test_that("KPSS is invariant to the units of the series (H2)", {
 test_that("recursive_adf() states the look-ahead and nominal pointwise references (M1)", {
   set.seed(1)
   y <- cumsum(stats::rnorm(100))
-  out <- capture.output(recursive_adf(y, lags = 1))
+  out <- capture.output(recursive_adf(y))     # lags selected on the full sample
   expect_match(out, "nominal pointwise references", all = FALSE)
   expect_match(out, "look-ahead", all = FALSE)
+  # fixed lags chosen by the user are not a look-ahead (audit of 0.3.2, F5)
+  expect_false(any(grepl("look-ahead", capture.output(recursive_adf(y, lags = 1)))))
   expect_false(any(grepl("look-ahead", capture.output(recursive_adf(y, reselect = TRUE)))))
 })
 

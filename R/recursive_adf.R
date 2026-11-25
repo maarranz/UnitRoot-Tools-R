@@ -81,12 +81,8 @@ recursive_adf <- function(y, trend = "c", lags = NULL, max_lags = NULL,
   notes <- character()
 
   # frequency
-  if (!is.null(frequency)) {
-    s <- check_order(frequency, "frequency")
-    if (s < 1L) stop("`frequency` must be at least 1.", call. = FALSE)
-  } else if (is.finite(series$frequency) && series$frequency >= 1) {
-    s <- as.integer(round(series$frequency))
-  } else {
+  s <- series_frequency(frequency, series)
+  if (is.na(s)) {
     s <- 1L
     if (is.null(min_size) && is.null(width)) {
       notes <- c(notes, paste("frequency unknown: window sizes for annual data",
@@ -96,9 +92,9 @@ recursive_adf <- function(y, trend = "c", lags = NULL, max_lags = NULL,
 
   # window sizes
   size <- if (window == "recursive") {
-    if (is.null(min_size)) max(5L * s, 30L) else check_order(min_size, "min_size")
+    if (is.null(min_size)) as.integer(max(5 * s, 30)) else check_order(min_size, "min_size")
   } else {
-    if (is.null(width)) max(10L * s, 40L) else check_order(width, "width")
+    if (is.null(width)) as.integer(max(10 * s, 40)) else check_order(width, "width")
   }
   if (size > n) {
     stop(sprintf("The %s (%d observations) is longer than the series (T = %d).",
@@ -115,9 +111,11 @@ recursive_adf <- function(y, trend = "c", lags = NULL, max_lags = NULL,
     k_full <- check_order(lags, "lags")
     if (reselect) stop("`reselect = TRUE` needs lag selection: drop `lags`.", call. = FALSE)
     lag_choice <- "fixed"
+    lag_mode <- "fixed"
   } else {
     sel <- lag_table(y, trend, max_lags, criterion)
     k_full <- sel$lags
+    lag_mode <- if (reselect) "window" else "full_sample"
     lag_choice <- if (reselect) sprintf("%s, selected in each window (kmax %s)", criterion,
                                         if (is.null(max_lags)) "from the window size"
                                         else sprintf("= %d or the window's largest feasible order",
@@ -158,7 +156,7 @@ recursive_adf <- function(y, trend = "c", lags = NULL, max_lags = NULL,
   out$reject <- out$statistic < out$critical_value
   structure(out, class = c("ur_recursive", "data.frame"),
             settings = list(trend = trend, window = window, size = size, frequency = s,
-                            lag_choice = lag_choice, level = level, series = series,
+                            lag_choice = lag_choice, lag_mode = lag_mode, level = level, series = series,
                             notes = notes, call = call))
 }
 
@@ -243,7 +241,7 @@ print.ur_recursive <- function(x, ...) {
   for (n in st$notes) cat("  Note:", n, "\n")
   cat("\n  Note: the critical values are nominal pointwise references (one date chosen\n",
       "  in advance, fixed lag order); they are not valid for the minimum over dates\n",
-      "  (Banerjee, Lumsdaine and Stock 1992).", if (!grepl("each window", st$lag_choice))
+      "  (Banerjee, Lumsdaine and Stock 1992).", if (identical(st$lag_mode, "full_sample"))
         " The lag order uses the full sample (look-ahead).", "\n\n", sep = "")
   invisible(x)
 }

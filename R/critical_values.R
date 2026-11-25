@@ -83,7 +83,7 @@ phi_critical_values <- function(name, nobs) {
 #
 # Upper-tail critical values at 1, 5 and 10% and the p-value of a phi
 # statistic, from the surfaces `phi_rs` (R/sysdata.rda, estimated in
-# data-raw/phi_response_surfaces.R), for a series of length T with k lagged
+# data-raw/new_response_surfaces.R), for a series of length T with k lagged
 # differences. The Dickey-Fuller (1981) tables above are kept for reference
 # and for tests.
 

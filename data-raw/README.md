@@ -31,6 +31,52 @@ fixed (L'Ecuyer-CMRG streams), so the files are reproducible.
   simulation (T = 2000, 1,000,000 replications); agrees with the exact
   quantiles to simulation error.
 
+## φ statistics and the normalized bias (Decision D16): `phi_rs`, `rho_rs`
+
+1. `phi_simulate.R` (kernel `phi_kernel.cpp`) — φ1, φ2, φ3 (and τ2, τ3 as a
+   check) of the ADF regression under the null, same design as DF-GLS
+   (T = 20, ..., 1000; k = 0, ..., min(12, kmax), plus 13, ..., 21 for
+   T >= 150); 40 x 10,000 replications. Output `phi_quantiles.csv.gz`.
+   About 50 minutes on 2 cores.
+2. `rho_simulate.R` (kernel `rho_kernel.cpp`) — the Dickey-Fuller normalized
+   bias T(rho - 1) without lags (k = 0), used for the critical values of
+   Phillips-Perron's Z_alpha; 40 x 25,000 replications. Output
+   `rho_quantiles.csv.gz`.
+3. `Rscript new_response_surfaces.R` — fits both with `fit_surface()`
+   (`surface_fit.R`, as for DF-GLS) and writes `phi_rs.rds`, `rho_rs.rds`
+   (and `gls_rs.rds`, below).
+
+## Ng-Perron and ERS statistics (Decision D15): `gls_rs`
+
+1. `gls_simulate.R` (kernel `gls_kernel.cpp`) — MZa, MZt, MSB, MPT and PT
+   under the null, trends c and ct, same (T, k) design; 20 x 10,000
+   replications. Output `gls_quantiles.csv.gz`.
+2. `Rscript new_response_surfaces.R` — these are *tabulated*, not fitted:
+   their tails explode at small T with many lags (the AR spectral estimate),
+   so `table_calibration()` stores the simulated quantiles by (k, T) and the
+   package interpolates them in 1/T, with a limit fitted on the large-T cells.
+   Writes `gls_rs.rds`. The out-of-sample size check of the 0.2.0 release
+   (5% size between 4.0 and 5.8%) was run interactively; its script was not
+   kept.
+
+## ADF τ statistics (in progress, 0.4.0): `tau_rs`
+
+- `tau_simulate.R` (kernel `tau_kernel.cpp`) — τ1, τ2, τ3 under the null,
+  same (T, k) design; 40 x 10,000 replications. Output
+  `tau_quantiles.csv.gz`. The kernel also computes Engle-Granger
+  residual-based statistics (`nvars > 1`), for cointegrationtools.
+
 ## Assembly
 
 `Rscript make_sysdata.R` writes `../R/sysdata.rda` with every object above.
+
+## Platform and requirements
+
+- Regeneration only: R with Rcpp and a C++ compiler (Xcode command-line
+  tools on macOS, Rtools on Windows). Installing or using the package needs
+  neither.
+- The simulation scripts parallelise with `parallel::mclapply()`, which forks
+  processes; on Windows it runs on one core only (set `mc.cores = 1`, or run
+  on macOS or Linux). Each job has its own L'Ecuyer-CMRG stream, so results
+  do not depend on the number of cores.
+- The files in this folder were produced on Linux (R 4.3, 2 cores).

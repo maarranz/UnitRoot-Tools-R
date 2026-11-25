@@ -108,12 +108,8 @@ check_residuals <- function(e, X, k, level, series, lags, bg_orders, frequency, 
   notes <- character()
 
   # frequency
-  if (!is.null(frequency)) {
-    s <- check_order(frequency, "frequency")
-    if (s < 1L) stop("`frequency` must be at least 1.", call. = FALSE)
-  } else if (!is.null(series) && is.finite(series$frequency) && series$frequency >= 1) {
-    s <- as.integer(round(series$frequency))
-  } else {
+  s <- series_frequency(frequency, series)
+  if (is.na(s)) {
     s <- 1L
     notes <- c(notes, paste("frequency unknown: assumed annual (s = 1); pass",
                             "`frequency =` or a ts object"))
@@ -304,8 +300,10 @@ plot.ur_residual_checks <- function(x, y, ...) {
 residual_warning <- function(r) {
   g <- r$regression
   if (is.null(g$residuals) || is.null(g$X)) return(character())
-  ch <- check_residuals(g$residuals, g$X, k = r$lags, level = r$level, series = r$series,
-                        lags = NULL, bg_orders = NULL, frequency = NULL, label = "")
+  ch <- tryCatch(check_residuals(g$residuals, g$X, k = r$lags, level = r$level, series = r$series,
+                                 lags = NULL, bg_orders = NULL, frequency = NULL, label = ""),
+                 error = function(e) NULL)
+  if (is.null(ch)) return("Residual check not done: see residual_check().")
   if (isTRUE(ch$white_noise)) character()
   else paste(residual_conclusion(ch), "See residual_check().")
 }
@@ -321,8 +319,10 @@ with_residual_warning <- function(r) {
 residual_summary_line <- function(r) {
   g <- r$regression
   if (r$test %in% c("PP", "KPSS") || is.null(g$residuals) || is.null(g$X)) return(NULL)
-  ch <- check_residuals(g$residuals, g$X, k = r$lags, level = r$level, series = r$series,
-                        lags = NULL, bg_orders = NULL, frequency = NULL, label = "")
+  ch <- tryCatch(check_residuals(g$residuals, g$X, k = r$lags, level = r$level, series = r$series,
+                                 lags = NULL, bg_orders = NULL, frequency = NULL, label = ""),
+                 error = function(e) NULL)
+  if (is.null(ch)) return(NULL)
   bg <- ch$breusch_godfrey
   if (!nrow(bg)) return(NULL)
   sprintf("Residual autocorrelation (Breusch-Godfrey F): %s%s [details: residual_check()]",

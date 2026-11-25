@@ -106,10 +106,20 @@ bandwidth_text <- function(kernel, bw) {
 # autocovariances with non-zero weight.
 long_run_variance <- function(u, kernel = "bartlett", b) {
   n <- length(u)
+  # bandwidth zero (e.g. Andrews' rule when the AR(1) plug-in is exactly 0):
+  # every kernel weight w(j / b), j >= 1, tends to 0, so the estimate is gamma0
+  if (b <= 0) {
+    g0 <- sum(u^2) / n
+    return(list(gamma0 = g0, lrv = g0, b = b, lags_used = 0L))
+  }
   maxlag <- if (kernel == "qs") n - 1L else min(n - 1L, max(0L, ceiling(b) - 1L))
   g <- autocovariances(u, maxlag)
   w <- if (maxlag > 0) kernel_weight(seq_len(maxlag) / b, kernel) else numeric()
   lrv <- g[1] + 2 * sum(w * g[-1])
+  if (!is.finite(lrv)) {
+    stop("The long-run variance could not be computed (bandwidth ", format(b),
+         ", kernel ", kernel, ").", call. = FALSE)
+  }
   list(gamma0 = g[1], lrv = lrv, b = b, lags_used = as.integer(sum(w != 0)))
 }
 

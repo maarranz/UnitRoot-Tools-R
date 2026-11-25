@@ -13,6 +13,25 @@ Corrections from the final pre-release audit of 0.3.2 (18 November 2026).
   the residuals are within 4 rounding steps of zero (constant series and
   exact trends leave at most 1.2; series with noise of 8 rounding steps leave
   at least 13).
+* `boot_ur()` and `simulate_df()` accept any seed that `set.seed()` accepts
+  (e.g. `seed = 20261118`); 0.3.1's bound of 1,000,000 was meant for lag
+  orders and frequencies, not seeds.
+* A `ts` with an absurd frequency (e.g. `.Machine$integer.max`) no longer
+  makes `adf()` fail through its residual check: `recursive_adf()` and
+  `residual_check()` stop with a clear message (pass `frequency =`), and test
+  results say the residual check was not done.
+* `recursive_adf()` with fixed `lags` no longer claims a look-ahead: only lags
+  selected on the full sample use later observations.
+* `plot()` of `simulate_df()` results accepts graphical arguments (`main`,
+  `breaks`, ...) like the other plots.
+* Long-run variances with a zero bandwidth (e.g. Andrews' rule when the AR(1)
+  plug-in is exactly zero) are the zero-bandwidth limit, gamma0, for every
+  kernel; the QS kernel used to divide by zero.
+* `criterion` accepts unambiguous abbreviations again (`"AI"` is AIC), now in
+  any case; 0.3.2 had dropped them when it made the matching case-insensitive.
+* `data-raw/README.md` documents every calibration pipeline (φ, normalized
+  bias, Ng-Perron/ERS tables, τ) and the platform requirements for
+  regenerating them.
 
 # unitroottools 0.3.2
 

@@ -43,7 +43,7 @@ simulate_df <- function(T = 100, R = 10000, trend = "c", seed = NULL) {
     } else {
       on.exit(rm(".Random.seed", envir = globalenv()), add = TRUE)
     }
-    set.seed(seed)
+    set.seed(check_seed(seed))
   }
 
   tau <- numeric(R)
@@ -95,11 +95,14 @@ plot.df_simulation <- function(x, ...) {
   h <- graphics::hist(x$tau, breaks = 60, plot = FALSE)
   peak <- max(dens$y, h$density, stats::dnorm(0))
   top <- 1.35 * peak                                     # room for the legend
-  graphics::hist(x$tau, breaks = 60, freq = FALSE, xlim = rng, ylim = c(0, top),
-                 col = "grey85", border = "white",
-                 main = sprintf("%s under the unit-root null", x$statistic_name),
-                 sub = sprintf("T = %d, R = %d replications", x$T, x$R),
-                 xlab = x$statistic_name, ...)
+  args <- utils::modifyList(
+    list(x = x$tau, breaks = 60, freq = FALSE, xlim = rng, ylim = c(0, top),
+         col = "grey85", border = "white",
+         main = sprintf("%s under the unit-root null", x$statistic_name),
+         sub = sprintf("T = %d, R = %d replications", x$T, x$R),
+         xlab = x$statistic_name),
+    list(...))
+  do.call(graphics::hist, args)
   graphics::lines(dens, lwd = 2)
   graphics::curve(stats::dnorm(x), add = TRUE, lty = 2, lwd = 2)
   q5 <- x$quantiles$simulated[x$quantiles$level == 0.05]

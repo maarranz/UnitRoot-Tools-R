@@ -59,12 +59,47 @@ describe_value <- function(x) {
 # students type lower case. The default (the whole vector) gives "MAIC".
 criterion_choices <- c("MAIC", "AIC", "BIC", "MBIC")
 match_criterion <- function(criterion) {
-  if (is.character(criterion) && length(criterion) == 1L && !is.na(criterion)) {
-    up <- toupper(criterion)
-    if (up %in% criterion_choices) return(up)
+  if (is.character(criterion) && length(criterion) == 1L && !is.na(criterion) &&
+      nzchar(criterion)) {
+    # full names or unambiguous prefixes, in any case (as match.arg allowed
+    # before 0.3.2: "AI" is AIC; "M" is ambiguous)
+    i <- pmatch(toupper(criterion), criterion_choices)
+    if (!is.na(i)) return(criterion_choices[i])
   } else if (identical(criterion, criterion_choices)) {
     return("MAIC")
   }
-  stop("`criterion` must be one of \"MAIC\", \"AIC\", \"BIC\", \"MBIC\" (any case); got ",
+  stop("`criterion` must be one of \"MAIC\", \"AIC\", \"BIC\", \"MBIC\" (any case, or an ",
+       "unambiguous abbreviation); got ",
        describe_value(criterion), ".", call. = FALSE)
+}
+
+# A seed for set.seed(): a whole number within R's integer range (it takes no
+# part in any arithmetic, so the 1e6 bound of check_order() does not apply).
+check_seed <- function(seed) {
+  ok <- is.numeric(seed) && !is.logical(seed) && length(seed) == 1L && !is.na(seed) &&
+    is.finite(seed) && seed == round(seed) && abs(seed) <= .Machine$integer.max
+  if (!ok) {
+    stop("`seed` must be a single whole number between -", .Machine$integer.max,
+         " and ", .Machine$integer.max, "; got ", describe_value(seed), ".", call. = FALSE)
+  }
+  as.integer(seed)
+}
+
+# Frequency of a series for the lag grids (residual checks, window sizes):
+# an explicit `frequency` argument, else the series' own (validated like the
+# argument, so a ts with an absurd frequency fails cleanly), else NA.
+series_frequency <- function(frequency, series) {
+  if (!is.null(frequency)) {
+    s <- check_order(frequency, "frequency")
+    if (s < 1L) stop("`frequency` must be at least 1.", call. = FALSE)
+    return(s)
+  }
+  f <- if (is.null(series)) NA_real_ else series$frequency
+  if (!is.finite(f) || f < 1) return(NA_integer_)
+  if (f > max_order) {
+    stop("The frequency of the series (", format(f, big.mark = ",", scientific = FALSE),
+         ") is too large (at most ", format(max_order, big.mark = ",", scientific = FALSE),
+         "); pass `frequency =` explicitly.", call. = FALSE)
+  }
+  as.integer(round(f))
 }

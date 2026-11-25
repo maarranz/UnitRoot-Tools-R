@@ -111,7 +111,7 @@ boot_ur <- function(y, trend = "c", bootstrap = c("AWB", "BWB", "DWB", "MBB", "S
     }
     max_lag <- 0L
   }
-  if (!is.null(seed)) set.seed(check_order(seed, "seed"))
+  if (!is.null(seed)) { seed <- check_seed(seed); set.seed(seed) }
   args <- list(data = y, data_name = "y", bootstrap = bootstrap, B = B,
                min_lag = min_lag, max_lag = max_lag, criterion = criterion,
                criterion_scale = criterion_scale, show_progress = FALSE,
