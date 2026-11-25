@@ -39,6 +39,12 @@ kpss_p_range <- function(trend) {
   r
 }
 
+degenerate_kpss <- function(trend) {
+  stop("The residuals of the regression on the deterministic terms are zero: ",
+       "the series is constant", if (trend == "ct") " or an exact linear trend", ". ",
+       "KPSS is not defined.", call. = FALSE)
+}
+
 kpss_p_value <- function(stat, trend) {
   r <- kpss_p_range(trend)
   if (stat <= r[1]) return(0.999)
@@ -126,21 +132,37 @@ kpss <- function(y, trend = "c", kernel = "bartlett", bandwidth = "short",
   trend <- match_trend(trend, allowed = c("c", "ct"))
   kernel <- check_kernel(kernel)
   n <- length(y)
-  t <- seq_len(n)
-  # KPSS does not depend on the units of the series: compute it on the
-  # series divided by its largest absolute value, so that neither the
-  # degeneracy check nor the sums of squares depend on the scale (no
-  # underflow for tiny units, no false "constant" for small ones)
-  scale <- max(abs(y))
-  if (scale > 0) y <- y / scale
-  Z <- if (trend == "c") cbind(const = rep(1, n)) else cbind(const = 1, trend = t)
-  fit <- qr_fit(Z, y)
-  e <- fit$residuals
-  # degenerate when the residuals are rounding error relative to the series
-  if (scale == 0 || max(abs(e)) <= 1e3 * .Machine$double.eps) {
-    stop("The residuals of the regression on the deterministic terms are zero: ",
-         "the series is constant", if (trend == "ct") " or an exact linear trend", ". ",
-         "KPSS is not defined.", call. = FALSE)
+  # Residuals of the regression on the deterministic terms, computed so that
+  # neither the units nor a large level matter (audits of 0.3.0 and 0.3.2):
+  # divide by a power of two (exact: no rounding) to bring the series to unit
+  # scale, then take deviations from the mean (and from the centred trend).
+  # The degeneracy check compares the residuals with the rounding error the
+  # data can carry: constant series and exact trends leave residuals of at
+  # most 1.2 eps * max|y| (n = 10..1e5, levels 1e-200..1e200, slopes 0..1e3
+  # relative to the level), while series with noise of only 8 rounding steps
+  # leave at least 13 eps * max|y|; the threshold is 4.
+  if (max(abs(y)) == 0) degenerate_kpss(trend)
+  p2 <- 2^floor(log2(max(abs(y))))
+  ys <- y / p2
+  # two passes: the first removes the level, the second the rounding left by
+  # the first (the mean of values near a large level is itself rounded, and
+  # KPSS cumulates the residuals, so a leftover of one rounding step matters)
+  tc <- seq_len(n) - (n + 1) / 2
+  e <- ys
+  for (pass in 1:2) {
+    e <- e - mean(e)
+    if (trend == "ct") e <- e - tc * (sum(tc * e) / sum(tc^2))
+  }
+  if (max(abs(e)) <= 4 * .Machine$double.eps * max(abs(ys))) degenerate_kpss(trend)
+  # sums on residuals of unit scale (no underflow or overflow); variances are
+  # reported in the units of the series (multiplied back by se^2 below)
+  se <- max(abs(e))
+  e <- e / se
+  # a variance in the series' units, or NA when that number cannot be
+  # represented (series in units beyond about 1e154 or below 1e-154)
+  in_units <- function(v) {
+    x <- (sqrt(v) * p2 * se)^2
+    if (is.finite(x) && x > 0) x else NA_real_
   }
   bw <- resolve_bandwidth(bandwidth, e, kernel, n_rule = n, n_label = "T")
   if (bw$b - 1 >= n) {
@@ -173,7 +195,8 @@ kpss <- function(y, trend = "c", kernel = "bartlett", bandwidth = "short",
                      else if (pv >= 0.999) "the statistic lies below the 0.999 quantile: the p-value is above 0.999 (0.999 is reported)"),
                    collapse = "; ")),
     level = level,
-    other_statistics = c(gamma0 = unname(v$gamma0), long_run_variance = unname(v$lrv),
+    other_statistics = c(gamma0 = in_units(unname(v$gamma0)),
+                         long_run_variance = in_units(unname(v$lrv)),
                          bandwidth = unname(v$b)),
     engine = engine_internal(), series = series, call = call)
 }

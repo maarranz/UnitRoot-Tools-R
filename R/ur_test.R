@@ -270,10 +270,10 @@ validate_fields <- function(x) {
   }
 
   os <- x$other_statistics
-  if (!is.numeric(os) || any(!is.finite(os)) ||
+  if (!is.numeric(os) || any(is.infinite(os) | is.nan(os)) ||
       (length(os) > 0L && (is.null(names(os)) || any(!nzchar(names(os))) ||
                            anyDuplicated(names(os))))) {
-    fail("`other_statistics` must be a named numeric vector of finite values.")
+    fail("`other_statistics` must be a named numeric vector of finite values (or NA).")
   }
   ocv <- x$other_critical_values
   if (!is.list(ocv) || (length(ocv) > 0L && (is.null(names(ocv)) ||

@@ -1,3 +1,19 @@
+# unitroottools (development version)
+
+Corrections from the final pre-release audit of 0.3.2 (18 November 2026).
+
+* `kpss()`: the variance fields (`gamma0`, `long_run_variance` in
+  `other_statistics`) are in the units of the series again. Since 0.3.1 they
+  were those of the series divided by its largest absolute value. They are
+  `NA` when the number cannot be represented (units beyond about 1e154).
+* `kpss()`: a genuine series on a large level (e.g. 1e14 + noise) is no
+  longer refused as constant, and its statistic is computed to full
+  precision: the residuals are now taken from the series scaled by a power of
+  two (exact) and centred in two passes, and the series is refused only when
+  the residuals are within 4 rounding steps of zero (constant series and
+  exact trends leave at most 1.2; series with noise of 8 rounding steps leave
+  at least 13).
+
 # unitroottools 0.3.2
 
 Fixes found while writing the unit-root Labs (14 November 2026).
