@@ -1,4 +1,27 @@
-# unitroottools (development version)
+# unitroottools 0.3.4
+
+## New: `union_test()`, union of rejections (D22)
+
+* `union_test()` tests for a unit root when it is not known whether a trend
+  belongs or how large the initial condition is (Harvey, Leybourne and
+  Taylor, 2012): ADF and DF-GLS, each with a constant and with a constant and
+  trend, rejecting when any rejects, with a critical value enlarged so that
+  the union as a whole has the nominal size.
+* Critical values and p-value come from the package's own finite-sample
+  response surface for the union statistic, in the sample size and the
+  number of lags (250,000 replications per sample size; the papers give
+  asymptotic constants only). Out of sample its size at 5% is 4.7%-5.3%.
+* `summary()` shows the four component tests, each with its own critical
+  values and p-value; the note says which one drives the statistic.
+* Why it matters: the sequential strategy of `ur_strategy()` rejects a
+  driftless random walk about 13% of the time at the 5% level (three 5%
+  tests in sequence); the union keeps 5%. With a large initial condition
+  DF-GLS has no power and the union keeps most of ADF's; with a trend the
+  tests with a constant only have no power and the union keeps about half.
+  See the vignette and `data-raw/union_validate.R`.
+* The surface is shared in `inst/fixtures/union_response_surface.json`.
+
+## Other changes since 0.3.3
 
 * p-values are exactly the level at the tabulated critical values (ported
   from cointegrationtools 0.1.1, audit M03). Rounding in the interpolation

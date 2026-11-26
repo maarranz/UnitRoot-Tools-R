@@ -362,7 +362,9 @@ decision_line <- function(x) {
 print.ur_test <- function(x, ...) {
   cat(sprintf("%s (%s)\n\n", x$method, x$statistic_name))
   cat(sprintf("  H0: %s\n  H1: %s\n", x$null, x$alternative))
-  cat(sprintf("  Deterministics: %s\n", trend_labels[[x$trend]]))
+  cat(sprintf("  Deterministics: %s\n",
+              if (identical(x$test, "Union")) "constant (2 tests) and constant and trend (2 tests)"
+              else trend_labels[[x$trend]]))
   ll <- lags_line(x)
   if (!is.null(ll)) cat("  ", ll, "\n", sep = "")
   cat(sprintf("  Effective sample: %s\n\n", sample_text(x$nobs, x$sample, x$series)))

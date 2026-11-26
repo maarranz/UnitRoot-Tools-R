@@ -59,6 +59,21 @@ fixed (L'Ecuyer-CMRG streams), so the files are reproducible.
    (5% size between 4.0 and 5.8%) was run interactively; its script was not
    kept.
 
+## Union of rejections (0.3.4, D22): `union_rs`
+
+- `union_simulate.R` (kernel `union_null_stats()` in `tau_kernel.cpp`) — the
+  four statistics (ADF-OLS and DF-GLS, with constant and with trend) on the
+  same random-walk paths, normalised by the package's own 5% critical values
+  (`tau_rs`, `dfgls_rs`); quantiles of their minimum U. Same (T, k) design as
+  τ; 25 x 10,000 replications per T, seed 20261126 (57 minutes on 2 cores).
+  The kernel matches `adf()` and `dfgls()` to 2e-13.
+- `union_fit.R` → `union_rs.rds` (largest residual at 1/5/10% 0.042, RMS
+  ≤ 0.0044). **Depends on `tau_rs` and `dfgls_rs`: rerun the simulation if
+  either is refitted.**
+- `union_validate.R` — out-of-sample size (4.7%-5.3% at 5%, 14 cells,
+  20,000 replications) and power against each component and `ur_strategy()`.
+- `union_export_json.R` → `inst/fixtures/union_response_surface.json`.
+
 ## ADF τ statistics (0.3.3, D21): `tau_rs`
 
 - `tau_simulate.R` (kernel `tau_kernel.cpp`) — τ1, τ2, τ3 under the null,

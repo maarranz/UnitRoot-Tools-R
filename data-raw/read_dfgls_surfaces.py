@@ -1,5 +1,6 @@
 """Minimal reader for inst/fixtures/dfgls_response_surfaces.json (Decision D11)
-and, in the same format, tau_response_surfaces.json (D21; trends n, c, ct).
+and, in the same format, tau_response_surfaces.json (D21; trends n, c, ct) and
+union_response_surface.json (D22; trend "union").
 
 A reference for other implementations (e.g. the Python package UnitRoot-Tools):
 evaluates DF-GLS critical values and p-values exactly as R's unitroottools

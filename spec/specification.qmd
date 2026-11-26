@@ -256,6 +256,21 @@ The ADF-type tests assume that $k$ lagged differences absorb the serial correlat
 
 *Output.* A data frame (class `ur_recursive`) with, for each window: start and end (time points), $N$, $k$, statistic, critical value, p-value and decision; `print()` summarises it and `plot()` draws the statistic against the end date with the critical-value line.
 
+# Union-of-rejections test (0.3.4) {#sec-union}
+
+::: {.callout-important}
+**Decision D22 (settled 26 November 2026): union of rejections with own finite-sample calibration.**
+`union_test()` implements the union of rejections of Harvey, Leybourne and Taylor (2012) over four tests: ADF (OLS detrending) and DF-GLS ($\bar c = -7$, $-13.5$), each with a constant and with a constant and trend. Each statistic is normalised by the absolute value of its own 5% critical value for the same $(T, k)$ from the package's surfaces ($\tau_2$, $\tau_3$: D21; DF-GLS: D11): $U = \min_i t_i / |c_i(0.05; T, k)|$, so that each component rejects at 5% below $-1$. The test rejects for small $U$; its critical values and p-value come from an own response surface for $U$ (driftless random walk; the $(T, k)$ design of D21; 250,000 replications per $T$, all lag orders and the four statistics on the same paths; fitted as D11 on $T \ge 25$), so critical values and p-value agree (exactly at the tabulated levels). The papers use asymptotic scaling constants instead; here the 5% critical value of $U$ is about $-1.14$ at $T = 25$ and $-1.157$ at $T = 1000$.
+:::
+
+*Lags.* One $k$ for the four tests (the calibration is for a common $k$): by default selected by `criterion` on the ADF regression with constant and trend, as in `dfgls()` (MAIC with OLS detrending, Perron and Qu 2007); every regression on its maximal sample $t = k+2, \dots, T$.
+
+*Output.* A `ur_test` with `test = "Union"`, statistic $U$, `trend = "ct"` (the most general component) and the four component statistics in `other_statistics`, each with its own critical values and p-value; the calibration note gives the normalising critical values and the component that attains the minimum. Residual checks use the ADF regression with constant and trend.
+
+*Checks.* Simulation: the marginal 5% rejection rate of each normalised component is 4.8%–5.2% in every cell (an out-of-sample check of the $\tau$ and DF-GLS surfaces). Out-of-sample size of the union (fresh seeds, $T = 33, \dots, 610$ between grid points, $k$ up to 8, 20,000 replications per cell): 4.7%–5.3% at 5% (simulation s.e. 0.15%), the critical-value and p-value rules agreeing exactly. Power at $T = 200$ ($k = 1$, 500 replications): AR(0.9) around a level with a large initial condition ($5\sigma_u$): union 0.90, DF-GLS 0.00, ADF 0.99; AR(0.9) around a trend: union 0.49, tests with a constant only 0.00–0.06, ADF with trend 0.56, DF-GLS with trend 0.78. The original strategy (D-J-SR) rejects a driftless random walk 12.8% of the time at nominal 5% (union 5.6%). Code: `data-raw/union_simulate.R`, `union_fit.R`, `union_validate.R`.
+
+*Dependency.* $U$ is normalised by the $\tau$ and DF-GLS surfaces: if either is refitted, the union simulation must be rerun. The bootstrap union test (Smeekes and Taylor 2012) remains available through bootUR (D17) and is planned with the own engine (v0.5).
+
 # Bootstrap engine (v0.4, planned) {#sec-bootstrap}
 
 ::: {.callout-important}
@@ -487,6 +502,7 @@ Checked against the urca 1.3-4 reference documentation. Each limitation is the d
 | D19 | Residual diagnostics | Correlogram (ACF, PACF, Ljung–Box with $h-k$ df) up to $3s+3$ lags (capped at $N/4$); Breusch–Godfrey F (main) and LM at orders $s$ and $3s+3$; reported in `summary()` and strategy histories; no automatic increase of $k$ | Settled 14 Nov; 0.3.0 |
 | D20 | Recursive and rolling ADF | $k$ selected once on the full sample and fixed (re-selection optional); windows of at least $\max(5s, 30)$ (recursive) or $\max(10s, 40)$ (rolling) observations; pointwise critical values, labelled as such | Settled 14 Nov; 0.3.0 |
 | D21 | $\tau$ critical values and p-values | Own finite-sample response surfaces in $(T, k)$ for $\tau_1, \tau_2, \tau_3$ (also $Z_\tau$ at $k = 0$); MacKinnon shown for comparison; urca not needed | Settled 25 Nov; 0.3.3 |
+| D22 | Union of rejections | HLT (2012) four-test union (ADF and DF-GLS, c and ct), own finite-sample surface for $U$ with p-value; common $k$ | Settled 26 Nov; 0.3.4 |
 | D18 | Own bootstrap engine | Null imposed on $\Delta y$; sieve, wild sieve, stationary and moving block schemes; sieve order by AIC, fixed across replications; test lags re-selected (or fixed) as on the data; strategies under nulls with and without drift (rejection and branch frequencies); no KPSS | Settled 4 Nov; v0.4 |
 
 **Known divergences of the Python implementation (to be resolved there; details in `notes-for-python.md`):** DF-GLS critical values from ARCH depend only on $N = T-k-1$ and are conservative when lags are used (D11); $\tau$ critical values and p-values from MacKinnon (2010 / asymptotic 1994) rather than the shared surfaces (D21); default $k_{\max}$ uses the ceiling, and its cap allows one residual degree of freedom instead of two (D3); plain AIC/BIC from the detrended regression (D7, admissible as an alternative). The Python implementation has no Hamilton strategy yet.

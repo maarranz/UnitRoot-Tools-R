@@ -39,7 +39,7 @@ pak::pak("maarranz/UnitRoot-Tools-R")
 
 To update to the latest version, run the same command again. To install a
 fixed release instead, add its tag, e.g.
-`remotes::install_github("maarranz/UnitRoot-Tools-R@v0.3.3", build_vignettes = TRUE)`
+`remotes::install_github("maarranz/UnitRoot-Tools-R@v0.3.4", build_vignettes = TRUE)`
 (releases are listed in [NEWS.md](NEWS.md)). The package needs
 R 4.1 or later; its only non-base dependency,
 [generics](https://CRAN.R-project.org/package=generics), is installed automatically.
@@ -77,6 +77,7 @@ values and where they come from, and the decision.
 |---|---|
 | `adf()` | Augmented Dickey-Fuller test: τ statistic and the φ statistics, each with critical values and p-value |
 | `select_lags()` | Lag order by AIC, BIC, MAIC or MBIC, all candidates on the same sample, with the full table |
+| `union_test()` | Union of rejections (Harvey-Leybourne-Taylor): ADF and DF-GLS, with constant and with trend, one test of known size when the deterministic terms are uncertain; own finite-sample critical values and p-value |
 | `ur_strategy()` | Choosing the deterministic terms: `"original"` (Dolado-Jenkinson-Sosvilla-Rivero / Enders), `"conservative"`, `"hamilton"`; full history of every step |
 | `pp()` | Phillips-Perron Z_τ test, with its p-value, and Z_α with its own critical values |
 | `kpss()` | KPSS test, with stationarity as the null hypothesis; critical values and p-value from its limiting distribution, computed numerically |
@@ -92,7 +93,7 @@ values and where they come from, and the decision.
 Details that matter in practice:
 
 - **Critical values.** τ (and Z_τ), the φ statistics, DF-GLS, the
-  Ng-Perron and ERS tests and Z_α use this package's own finite-sample
+  Ng-Perron and ERS tests, Z_α and the union test use this package's own finite-sample
   response surfaces in the sample size and the number of lags, estimated by
   Monte Carlo (code in `data-raw/`); critical values and p-values come from
   the same surface. Without lags the τ values agree with MacKinnon's (2010),
@@ -133,7 +134,7 @@ Details that matter in practice:
 | Phase | Content |
 |---|---|
 | v0.4: bootstrap | Own bootstrap engine (sieve, wild sieve, stationary and moving block schemes), able to bootstrap any statistic, including a whole testing strategy |
-| v0.5: specification uncertainty | Monte Carlo tools (size, power, branch frequencies); union-of-rejections test; bootstrap-calibrated strategies; Hamilton's Case 3 (drift under the null), introduced with the Monte Carlo tools |
+| v0.5: specification uncertainty | Monte Carlo tools (size, power, branch frequencies); bootstrap union test (own engine); bootstrap-calibrated strategies; Hamilton's Case 3 (drift under the null), introduced with the Monte Carlo tools |
 | v0.6: robustness | Unit-root tests robust to additive outliers; tests allowing for structural breaks |
 
 ## Specification

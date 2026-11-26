@@ -15,6 +15,9 @@
 //     residuals u_t on [u_{t-1}, du_{t-1..t-k}] over t = k+2..T, without
 //     deterministics (they are in the cointegrating regression).
 //
+// union_null_stats(T, lags, reps) (end of file) gives the four statistics of
+// the union-of-rejections test (OLS and GLS, constant and trend).
+//
 // Interface (R): tau_null_stats(T, lags, reps, nvars = 1) returns an array
 // reps x length(lags) x 3, the third dimension being the cases n, c, ct.
 // All lag orders use the same simulated paths. The RNG is R's (rnorm), so
@@ -197,6 +200,69 @@ NumericVector tau_null_stats(int T, IntegerVector lags, int reps, int nvars = 1)
           out[r + reps * (j + nk * cs)] = a;
         }
       }
+    }
+  }
+  return out;
+}
+
+// GLS detrending (Elliott, Rothenberg and Stock 1996), as gls_detrend() in
+// R/gls_tests.R: regress the quasi-differenced series (a = 1 + cbar/T) on the
+// quasi-differenced deterministic terms (constant; or constant and t = 1..T),
+// and subtract the fitted deterministic component from the series.
+static std::vector<double> gls_detrend(const std::vector<double>& y, bool trend) {
+  int T = y.size(), p = trend ? 2 : 1;
+  double a = 1.0 + (trend ? -13.5 : -7.0) / T;
+  // quasi-differenced columns: z0 = (1, 1-a, 1-a, ...); z1 = (1, t - a(t-1))
+  std::vector<double> G(p * p, 0.0), g(p, 0.0);
+  for (int t = 0; t < T; ++t) {
+    double yq = (t == 0) ? y[0] : y[t] - a * y[t - 1];
+    double z[2];
+    z[0] = (t == 0) ? 1.0 : 1.0 - a;
+    z[1] = (t == 0) ? 1.0 : (t + 1) - a * t;
+    for (int i = 0; i < p; ++i) {
+      g[i] += z[i] * yq;
+      for (int j = 0; j < p; ++j) G[i * p + j] += z[i] * z[j];
+    }
+  }
+  double b0, b1 = 0.0;
+  if (p == 1) {
+    b0 = g[0] / G[0];
+  } else {
+    double det = G[0] * G[3] - G[1] * G[2];
+    b0 = (G[3] * g[0] - G[1] * g[1]) / det;
+    b1 = (G[0] * g[1] - G[2] * g[0]) / det;
+  }
+  std::vector<double> yd(T);
+  for (int t = 0; t < T; ++t) yd[t] = y[t] - b0 - b1 * (t + 1);
+  return yd;
+}
+
+// Union of rejections (Harvey, Leybourne and Taylor 2012): the four
+// statistics on the same random-walk paths, for each lag order:
+//   0 ADF-OLS with constant (tau2), 1 ADF-OLS with trend (tau3),
+//   2 DF-GLS with constant, 3 DF-GLS with trend;
+// all on the maximal sample t = k+2..T. Returns reps x length(lags) x 4.
+// [[Rcpp::export]]
+NumericVector union_null_stats(int T, IntegerVector lags, int reps) {
+  int nk = lags.size();
+  NumericVector out(reps * nk * 4);
+  out.attr("dim") = IntegerVector::create(reps, nk, 4);
+  RNGScope scope;
+  std::vector<double> y(T);
+  for (int r = 0; r < reps; ++r) {
+    NumericVector e = rnorm(T);
+    double acc = 0.0;
+    for (int t = 0; t < T; ++t) { acc += e[t]; y[t] = acc; }
+    std::vector<double> yc = gls_detrend(y, false), yt = gls_detrend(y, true);
+    for (int j = 0; j < nk; ++j) {
+      double a, b, c, u1, u2;
+      adf_taus(y, lags[j], true, &a, &b, &c);
+      out[r + reps * (j + nk * 0)] = b;
+      out[r + reps * (j + nk * 1)] = c;
+      adf_taus(yc, lags[j], false, &a, &u1, &u2);
+      out[r + reps * (j + nk * 2)] = a;
+      adf_taus(yt, lags[j], false, &a, &u1, &u2);
+      out[r + reps * (j + nk * 3)] = a;
     }
   }
   return out;

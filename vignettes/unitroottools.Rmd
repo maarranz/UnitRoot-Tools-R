@@ -172,7 +172,29 @@ deterministic terms).
 Each step has its own p-value. These p-values describe each test on its
 own. The procedure as a whole has no known size: it is a sequence of tests,
 each conditional on the results of the previous ones, so no p-value is given
-for it.
+for it. A simulation shows that it is not small: with a driftless random
+walk ($T = 200$, no lags) the original procedure rejects the unit root about
+14% of the time at the 5% level, because up to three 5% tests
+($\tau_3$, $\tau_2$, $\tau_1$) each get a chance to reject.
+
+**A union of tests** answers the same uncertainty with a single test of
+known size. `union_test()` (Harvey, Leybourne and Taylor, 2012) runs ADF and
+DF-GLS, each with a constant and with a constant and trend, and rejects the
+unit root if *any* of the four rejects, with critical values enlarged so that
+the union as a whole has the nominal size:
+
+```{r}
+union_test(lgdp, lags = 1)
+```
+
+The statistic $U$ is the smallest of the four statistics, each divided by
+the absolute value of its own 5% critical value (so each component rejects
+on its own below $-1$); the union rejects at 5% only below a value of about
+$-1.15$. `summary()` shows the four components with their own critical
+values and p-values. The union does not tell you which deterministic terms
+belong; it tells you whether there is evidence against a unit root whichever
+they are. The price is some power compared with the single test you would
+have chosen had you known the right specification.
 
 ## 6. Other tests
 

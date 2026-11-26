@@ -38,6 +38,7 @@ export(residual_check)
 export(select_lags)
 export(simulate_df)
 export(tidy)
+export(union_test)
 export(ur_strategy)
 export(validate_ur_test)
 importFrom(generics,

@@ -124,3 +124,7 @@ Points the Python implementation should copy:
   Breusch-Godfrey order can be computed.
 - Refuse whole-number arguments above 1e6 (lags, frequency, window sizes)
   before any arithmetic.
+
+## Union of rejections (D22, R 0.3.4)
+
+`union_test()` in R: U = min of the four statistics ADF-c, ADF-ct, DF-GLS-c, DF-GLS-ct, each divided by |its own 5% critical value| at the same (T, k) (from `tau_response_surfaces.json` and `dfgls_response_surfaces.json`), with one common k (selected on the ADF-ct regression) and the maximal sample for all four. Reject for small U; critical values and p-value from `inst/fixtures/union_response_surface.json` (same format; `read_dfgls_surfaces.py` reads it and reproduces the 104 reference values, which include the normalising critical values). Python can implement it from the three files without new simulations.
