@@ -55,6 +55,19 @@ detrended by OLS under \code{trend}; the penalty includes
 }
 
 Ties are broken in favour of the smaller order.
+
+\strong{MAIC: size against power.} Under a unit root \eqn{\tau_N(k)} is of
+order one and MAIC adds lags when the errors have a negative moving-average
+component, which keeps the size of the test: at T = 200, 5\%, with MA(1)
+errors of -0.8, ADF rejects a true unit root 6\% of the time with MAIC,
+28\% with AIC and 53\% with BIC. For a series far from a unit root
+\eqn{\tau_N(k)} is of order \eqn{N}, swamps the \eqn{2k/N} term and
+falls as lags absorb the mean reversion, so MAIC often chooses orders near
+\eqn{k_{\max}}, and power drops: for white noise (T = 200) it chose
+\eqn{k \ge 12} in 15\% of samples and ADF rejected in 92\% of samples
+(100\% with AIC or BIC); for an AR(1) with coefficient 0.5, 85\%. When the
+series looks clearly stationary, compare with \code{criterion = "AIC"} or
+\code{"BIC"} (the full table is returned for that purpose).
 }
 \examples{
 set.seed(1)

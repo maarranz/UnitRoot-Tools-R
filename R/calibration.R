@@ -61,10 +61,17 @@ rs_critical_values <- function(rs, T, k, tail = "lower", levels = c(0.01, 0.05, 
 rs_p_value <- function(rs, stat, T, k, tail = "lower") {
   q <- rs_quantiles(rs, T, k)
   pr <- rs$probs
-  F <- if (stat <= q[1]) pr[1]
+  # a statistic at a tabulated quantile (e.g. the critical value itself) gets
+  # exactly that probability: pnorm(qnorm(p)) can round below p
+  knot <- which(abs(stat - q) <= 1e-10 * max(1, abs(stat)))
+  F <- if (length(knot)) pr[knot[1]]
+       else if (stat <= q[1]) pr[1]
        else if (stat >= q[length(q)]) pr[length(pr)]
        else stats::pnorm(stats::approx(q, stats::qnorm(pr), xout = stat, ties = mean)$y)
   p <- if (tail == "lower") F else 1 - F
+  # upper tail at a knot: 1 - 0.90 is 0.0999...98 in floating point; the
+  # tabulated probabilities have at most four decimals
+  if (length(knot)) p <- round(p, 12)
   p
 }
 

@@ -1,3 +1,18 @@
+# unitroottools (development version)
+
+* p-values are exactly the level at the tabulated critical values (ported
+  from cointegrationtools 0.1.1, audit M03). Rounding in the interpolation
+  (and `1 - 0.90` for the upper-tail φ tests, and the numerical roots behind
+  the KPSS critical values) could give, e.g., p = 0.04999999 at the 5%
+  critical value, where the decision is "do not reject". Decisions were
+  never affected: they are taken from the critical values, and `level` is
+  always a tabulated level, so a p-value at the 0.001 bound never decides.
+* `?select_lags` documents the MAIC trade-off: it keeps the size under
+  negative moving-average errors but often chooses lags near `kmax` for
+  series far from a unit root, which costs power (simulation figures in the
+  help page). MAIC remains the default; its penalty was checked against an
+  independent computation.
+
 # unitroottools 0.3.3
 
 ## Own τ critical values and p-values; urca no longer needed (D21)

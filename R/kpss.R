@@ -49,6 +49,10 @@ kpss_p_value <- function(stat, trend) {
   r <- kpss_p_range(trend)
   if (stat <= r[1]) return(0.999)
   if (stat >= r[2]) return(0.001)
+  # at a tabulated critical value (a root found to 1e-10), exactly its level
+  cv <- kpss_critical_values(trend)
+  knot <- which(abs(stat - cv) <= 1e-10 * max(1, abs(stat)))
+  if (length(knot)) return(as.numeric(names(cv)[knot[1]]))
   kpss_upper_prob(stat, kpss_limit[[c(c = "mu", ct = "tau")[[trend]]]])
 }
 
